@@ -11,11 +11,13 @@ import { cn } from '@/lib/utils'
 
 const short = (sha: string | null | undefined) => (sha ? sha.slice(0, 7) : '—')
 
-function Kv({ k, v, mono = true }: { k: string; v: React.ReactNode; mono?: boolean }) {
+/** One key-value row. `id`: an opaque identifier (delivery id, ObjectId), which may break
+ *  anywhere; every other value wraps only between words. */
+function Kv({ k, v, mono = true, id = false }: { k: string; v: React.ReactNode; mono?: boolean; id?: boolean }) {
   return (
     <div className="flex gap-2 text-xs">
       <dt className="w-24 shrink-0 text-muted-foreground">{k}</dt>
-      <dd className={cn('min-w-0 break-all', mono && 'font-mono')}>{v ?? '—'}</dd>
+      <dd className={cn('min-w-0', id ? 'break-all' : 'break-words', mono && 'font-mono')}>{v ?? '—'}</dd>
     </div>
   )
 }
@@ -25,14 +27,15 @@ function Halves({ data }: { data: TraceResponse }) {
   const mongo = data.mongo
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-2">
+      {/* two cards side by side only when the sheet itself is at least 40rem wide (container query) */}
+      <div className="grid gap-3 @min-[40rem]:grid-cols-2">
         <section className="rounded-lg p-3 ring-1 ring-border" data-testid="trace-mongo">
           <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold">
             <FileJson className="size-3.5" aria-hidden /> MongoDB · elp.github_events
           </h3>
           {mongo ? (
             <dl className="space-y-1">
-              <Kv k="_id" v={mongo['_id']} />
+              <Kv k="_id" v={mongo['_id']} id />
               <Kv k="repo · ref" v={`${mongo.repo} · ${mongo.ref ?? '—'}`} />
               <Kv k="after" v={short(mongo.after)} />
               <Kv k="sender" v={mongo.sender} />
@@ -49,11 +52,11 @@ function Halves({ data }: { data: TraceResponse }) {
           </h3>
           {ev ? (
             <dl className="space-y-1">
-              <Kv k="delivery_id" v={ev.delivery_id} />
+              <Kv k="delivery_id" v={ev.delivery_id} id />
               <Kv k="status" v={`${ev.status}${ev.followups_at ? ' · follow-ups done' : ''}`} mono={false} />
               <Kv k="pushed by" v={ev.sender_login} />
               <Kv k="received" v={formatDateTime(ev.received_at)} mono={false} />
-              <Kv k="mongo_id" v={ev.mongo_id} />
+              <Kv k="mongo_id" v={ev.mongo_id} id />
               <Kv k="commits → rows" v={`${ev.commit_count ?? '—'} → ${ev.contribution_count ?? '—'}`} />
               <Kv k="versions" v={data.postgres?.artifact_versions.map((v) => `${v.artifact_id}@v${v.version_no}`).join(' ') || 'none'} />
             </dl>
@@ -113,7 +116,9 @@ export function TraceSheet({ target, onClose }: { target: TraceTarget | null; on
   return (
     <Sheet open={target !== null} onOpenChange={(o) => !o && onClose()}>
       <SheetContent
-        className="w-full overflow-y-auto sm:max-w-2xl"
+        // the variant prefix matters: the base SheetContent class sets data-[side=right]:sm:max-w-sm,
+        // which beats a plain sm:max-w-2xl (KNOWN_ISSUES #1); SqlSheet uses the same prefix
+        className="overflow-y-auto data-[side=right]:w-full data-[side=right]:sm:max-w-2xl data-[side=right]:xl:max-w-3xl"
         data-testid="trace-sheet"
         // focus the sheet itself, not its first button (whose tooltip would swallow Escape)
         onOpenAutoFocus={(e) => e.preventDefault()}
@@ -126,7 +131,7 @@ export function TraceSheet({ target, onClose }: { target: TraceTarget | null; on
             The raw event in MongoDB next to the rows the projection wrote in Postgres. Metadata only: no commit messages, no file text.
           </SheetDescription>
         </SheetHeader>
-        <div className="px-4 pb-6">
+        <div className="@container px-4 pb-6">
           {trace.isPending ? (
             <div className="space-y-2">
               <Skeleton className="h-28 w-full" />

@@ -374,6 +374,19 @@ export const RULES: Record<string, RuleSpec> = {
     field: 'marks',
     kind: 'validation',
   },
+  // 0007: a direct table write with a second decimal is refused, not rounded
+  assessment_marks_one_decimal: {
+    title: 'Check the marks',
+    message: 'Marks can have at most one decimal place (4.5, not 4.25).',
+    field: 'marks',
+    kind: 'validation',
+  },
+  assessment_marks_precision: {
+    title: 'Check the marks',
+    message: 'Marks must be a number below 1000.',
+    field: 'marks',
+    kind: 'validation',
+  },
   marks: {
     title: 'Check the marks',
     message: 'Marks must be a non-negative number with at most one decimal.',

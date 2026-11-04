@@ -18,6 +18,7 @@ import {
   type TriggerName,
   type ViewName,
 } from '@/sql/sources.generated'
+import raceResults from '@/data/race-results.json'
 
 export type Unit = 'I' | 'II' | 'III' | 'IV' | 'V'
 
@@ -46,8 +47,9 @@ export interface SqlPanel {
   title: string
   /** One sentence: what this panel runs and why it is safe. */
   summary: string
-  /** 'migration' = verbatim from supabase/migrations; 'client' = the supabase-js query. */
-  origin: 'migration' | 'client'
+  /** 'migration' = verbatim from supabase/migrations; 'client' = the supabase-js query;
+   *  'experiment' = verbatim from experiments/race (the race lab, not the product database). */
+  origin: 'migration' | 'client' | 'experiment'
   /** The main statement shown first. */
   sql: string
   file?: string
@@ -84,6 +86,26 @@ function viewSource(name: ViewName): SqlSource {
 function client(sql: string): Pick<SqlPanel, 'sql' | 'origin'> {
   return { origin: 'client', sql: sql.trim() }
 }
+
+/** Innovative Experiment SQL, verbatim (extracted by web/scripts/race-results.mjs). */
+type RaceSqlGroup = keyof typeof raceResults.sql
+function raceSources(group: RaceSqlGroup): SqlSource[] {
+  return raceResults.sql[group].map((x) => ({ label: x.label, sql: x.sql, file: x.file, comment: x.comment || undefined }))
+}
+function race(group: RaceSqlGroup, extra: RaceSqlGroup[] = []): Pick<SqlPanel, 'sql' | 'file' | 'comment' | 'origin' | 'related'> {
+  const [main, ...rest] = raceSources(group)
+  if (!main) throw new Error(`no race SQL for ${group}`)
+  return {
+    origin: 'experiment',
+    sql: main.sql,
+    file: main.file,
+    comment: main.comment,
+    related: [...rest, ...extra.flatMap(raceSources)],
+  }
+}
+const RACE_NOTE =
+  'Runs in the race lab (docker container elp-race-pg, database race), a throwaway copy of the graded fixture plus schema exp. It is not the product database, so no RLS policy applies; only one capacity mechanism is active at a time (exp.use_strategy).'
+const RACE_UNIT_IV: Concept = { unit: 'IV', topic: 'Concurrency control: isolation levels, MVCC snapshots, row locks, SSI' }
 
 /** The SQL text of a policy (generated DO-block policies are reconstructed). */
 export function policySql(name: PolicyName): { table: string; sql: string; file: string; generated: boolean } {
@@ -553,11 +575,12 @@ WHERE c.usn = :usn AND c.project_id = :project AND c.milestone_no = :component;`
     title: 'Record marks',
     summary: 'Upsert one rubric cell, signed by you. Bounds, the lock and membership are checked by trigger.',
     ...fn('public.record_assessment'),
-    related: [helper('private.check_assessment')],
+    related: [helper('private.check_assessment'), helper('private.canonical_marks')],
     rls: ['milestone_select', 'assessment_insert', 'assessment_update'],
-    triggers: ['trg_assessment_check'],
+    triggers: ['trg_assessment_canonical_marks', 'trg_assessment_check'],
     concepts: [
       { unit: 'III', topic: 'CHECK (marks ≥ 0) + trigger (marks ≤ max_marks)' },
+      { unit: 'III', topic: 'CHECK (marks = round(marks, 1)): a second decimal is refused, not rounded by a NUMERIC(4,1) typmod' },
       { unit: 'IV', topic: 'SELECT … FOR SHARE on the milestone so no mark slips in at lock time' },
     ],
   },
@@ -837,6 +860,108 @@ WHERE mongo_ref = :delivery;`),
       { unit: 'V', topic: 'One business key (delivery id, commit SHA) across two stores' },
       { unit: 'III', topic: 'Joins on a natural key: contribution.source_ref = commit SHA' },
     ],
+  },
+  // ======================= race arena (Component 10, Innovative Experiment) =======================
+  'race.matrix': {
+    title: 'The over-admission matrix',
+    summary:
+      'Per strategy × isolation × N: the share of 1000 races that ended above 4/4, the worst final size, how attempts ended and the p50/p95 latency, from exp.experiment_run and exp.experiment_attempt.',
+    ...race('matrix'),
+    algebra:
+      'Cell(s, iso, n) = γ strategy, isolation, n_clients; avg(over_admitted), max(final_size), avg(admitted), avg(aborts_40001), avg(refused)\n' +
+      '                    (ExperimentRun)  ⋈  γ …; percentile_cont(0.5 | 0.95)(latency_ms) (ExperimentRun ⋈ ExperimentAttempt)',
+    rls: [],
+    note: RACE_NOTE,
+    concepts: [RACE_UNIT_IV, { unit: 'III', topic: 'Aggregates, ordered-set aggregates (percentile_cont) and window functions (rank() OVER)' }],
+  },
+  'race.S1': {
+    title: 'S1 · Naive check-then-insert',
+    summary: 'The application counts the members, waits 10 ms, and inserts. No lock and no constraint: only SERIALIZABLE (SSI) notices the write skew.',
+    ...race('S1', ['common']),
+    rls: [],
+    note: RACE_NOTE,
+    concepts: [RACE_UNIT_IV, { unit: 'IV', topic: 'Write skew through a phantom: each transaction inserts a NEW row the other did not read' }],
+  },
+  'race.S2': {
+    title: 'S2 · Fixture trigger (Q35): lock the team row, then COUNT',
+    summary:
+      'The graded fixture’s BEFORE INSERT trigger: SELECT … FOR UPDATE on the team row, then COUNT(*). Correct at READ COMMITTED; at REPEATABLE READ the waiter counts with its old snapshot and over-admits.',
+    ...race('S2', ['common']),
+    rls: [],
+    note: RACE_NOTE + ' The trigger is read from supabase/fixture/03_queries.sql (Q35) and loaded unchanged by setup.sh.',
+    concepts: [RACE_UNIT_IV, { unit: 'IV', topic: 'Locking a surrogate row: a lock-only conflict raises no 40001 under snapshot isolation' }],
+  },
+  'race.S3': {
+    title: 'S3 · Conditional counter',
+    summary: 'The check and the increment are one UPDATE … WHERE member_count < max_size. RC waiters re-check the newest version (EvalPlanQual); RR/SER waiters get 40001.',
+    ...race('S3', ['common']),
+    rls: [],
+    note: RACE_NOTE,
+    concepts: [RACE_UNIT_IV, { unit: 'IV', topic: 'Materialize the conflict: the predicate becomes one row that every joiner writes' }],
+  },
+  'race.S4': {
+    title: 'S4 · Naive + retry on 40001',
+    summary: 'S1 inside a retry loop. At SERIALIZABLE the losers abort, retry with a fresh snapshot and are refused; below SERIALIZABLE nothing aborts, so the loop never runs.',
+    ...race('S4', ['S1', 'common']),
+    rls: [],
+    note: RACE_NOTE,
+    concepts: [RACE_UNIT_IV, { unit: 'IV', topic: 'SSI detects, it does not block: the client must retry' }],
+  },
+  'race.S6': {
+    title: 'S6 · Declarative seat keys',
+    summary:
+      'Capacity becomes data (seat slots 1..max_size) and the rule becomes keys: a PRIMARY KEY per seat, UNIQUE per student, and a deferred FOREIGN KEY from team_member to its seat.',
+    ...race('S6', ['common']),
+    rls: [],
+    note: RACE_NOTE,
+    concepts: [RACE_UNIT_IV, { unit: 'III', topic: 'Declarative integrity: PRIMARY KEY, UNIQUE and a DEFERRABLE INITIALLY DEFERRED foreign key' }],
+  },
+  'race.S7': {
+    title: 'S7 · Write the parent row (product capacity v2)',
+    summary: 'The trigger first runs a no-op UPDATE team SET max_size = max_size, so the conflict is write–write: RC waiters re-read, RR/SER waiters get 40001.',
+    ...race('S7', ['common']),
+    rls: [],
+    note: RACE_NOTE + ' Re-created in schema exp from migration 0002’s enforce_team_capacity(), so the migration files stay untouched.',
+    concepts: [RACE_UNIT_IV, { unit: 'IV', topic: 'First-updater-wins: a row WRITTEN after your snapshot gives 40001' }],
+  },
+  'race.precedence': {
+    title: 'Precedence graph and conflict-serializability, in SQL',
+    summary:
+      'Edges from the logical schedule (different transactions, same item, at least one write), cycles with WITH RECURSIVE, and a serial order from topological levels. The committed projection gives the verdict.',
+    ...race('precedence'),
+    algebra:
+      'Edge = π a.txn, b.txn (ρ a (Ops) ⋈ a.item = b.item ∧ a.txn ≠ b.txn ∧ a.seq < b.seq ∧ (a.op = w ∨ b.op = w) ρ b (Ops))\n' +
+      'Cycle = transitive closure of Edge (WITH RECURSIVE) that returns to its start',
+    rls: [],
+    note: RACE_NOTE + ' The schedule is the clients’ LOGICAL view (reads placed at the snapshot they used), not PostgreSQL’s internal MVCC schedule.',
+    concepts: [
+      { unit: 'IV', topic: 'Conflict serializability: acyclic precedence graph ⇔ conflict-serializable' },
+      { unit: 'III', topic: 'Recursive CTE (WITH RECURSIVE) for graph reachability' },
+    ],
+  },
+  'race.live': {
+    title: 'Run a live race',
+    summary:
+      'POST /race/run (FastAPI, faculty and admins): N asyncpg connections race for T02’s one free seat in the race lab, using experiments/race/harness.py itself. Nothing is written to the reported results.',
+    ...client(`
+-- api/app/race.py -> experiments/race/harness.py (one_client, BODIES), against elp-race-pg:55433/race
+SELECT exp.reset_t02();                    -- T02 back to 3/4
+SELECT exp.use_strategy(:strategy);        -- enable exactly one capacity mechanism
+-- each of the N clients, on its own connection:
+BEGIN ISOLATION LEVEL :isolation;          -- BEGIN takes no snapshot yet
+--   … asyncio.Barrier: all N wait, then go at once …
+--   the strategy's statements (see its card), then
+COMMIT;                                    -- or ROLLBACK on "team is full" / 40001 / 40P01
+-- outcome per client: admitted | refused | serialization_failure (40001) | deadlock (40P01) | error
+SELECT (SELECT count(*) FROM team_member WHERE team_id = 'T02')::int AS final_size,
+       (SELECT max_size FROM team WHERE team_id = 'T02')            AS max_size;
+SELECT exp.reset_t02(); SELECT exp.use_strategy('S1');   -- leave the lab as the harness does`),
+    origin: 'experiment',
+    file: 'api/app/race.py → experiments/race/harness.py',
+    related: raceSources('common'),
+    rls: [],
+    note: RACE_NOTE + ' Unlike the harness, a live race writes no exp.experiment_run / attempt / schedule_log rows. One race at a time: 409 race_busy otherwise; 503 race_lab_offline when the container is down (start it with experiments/race/setup.sh).',
+    concepts: [RACE_UNIT_IV, { unit: 'IV', topic: 'Transactions: BEGIN ISOLATION LEVEL … COMMIT / ROLLBACK, SQLSTATE 40001 and 40P01' }],
   },
 } satisfies Record<string, SqlPanel>
 

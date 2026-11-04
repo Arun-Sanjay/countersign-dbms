@@ -3,7 +3,7 @@ import { Fragment, useMemo, useRef, useState, type KeyboardEvent, type ReactNode
 import { Link, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { useProfile } from '@/auth/AuthProvider'
-import { LiveActivityPanel } from '@/components/activity/LiveActivityPanel'
+import { LiveActivityFeed, LiveStatusChip } from '@/components/activity/LiveActivityPanel'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { DataTable, type Column } from '@/components/DataTable'
 import { EmptyState } from '@/components/EmptyState'
@@ -16,6 +16,7 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useProjectLive, type LiveStatus } from '@/data/activity'
 import {
   useComponentSignatures,
   useLabCieMarks,
@@ -91,10 +92,19 @@ const ABBREV: Record<string, string> = {
   Normalized: 'Norm.',
   and: '&',
 }
-function shortTitle(title: string): string {
+/** Tighter still, for the narrow columns below 1600 px (KNOWN_ISSUES #6). */
+const ABBREV_COMPACT: Record<string, string> = {
+  ...ABBREV,
+  Diagram: 'Diag.',
+  Tables: 'Tab.',
+  Midterm: 'Mid.',
+  Report: 'Rep.',
+}
+
+function shortTitle(title: string, abbrev: Record<string, string> = ABBREV): string {
   return title
     .split(/\s+/)
-    .map((w) => ABBREV[w] ?? w)
+    .map((w) => abbrev[w] ?? w)
     .join(' ')
 }
 
@@ -103,6 +113,12 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? o
 /** /sheet/:projectId — the paper lab evaluation sheet, rebuilt as live tables. */
 export default function RubricSheetPage() {
   const { projectId = '' } = useParams()
+  // one page instance per project: the drawer, entry mode and the Realtime subscription
+  // (its status and feed) all start fresh when the project changes
+  return <RubricSheet key={projectId} projectId={projectId} />
+}
+
+function RubricSheet({ projectId }: { projectId: string }) {
   const profile = useProfile()
   const project = useProjectInfo(projectId)
   const milestones = useMilestones(projectId)
@@ -112,6 +128,9 @@ export default function RubricSheetPage() {
   const taught = useTaughtProjects()
   const evidence = useProjectEvidence(projectId)
   const signatures = useComponentSignatures(projectId)
+  // the page holds the subscription so that its status chip can sit in the header as well as
+  // on the Live activity panel below the fold (KNOWN_ISSUES #6)
+  const live = useProjectLive(projectId)
   // the cell (or input) that opened the drawer gets focus back when it closes
   const returnFocus = useRef<HTMLElement | null>(null)
 
@@ -176,6 +195,7 @@ export default function RubricSheetPage() {
         actions={
           p && ms.length > 0 ? (
             <>
+              <LiveChipLink status={live.status} />
               <EntryToggle entryMode={entryMode} setEntryMode={setEntryMode} canRecord={canRecord} role={profile.role} />
               {isLab ? (
                 <Button asChild variant="outline" size="sm">
@@ -316,17 +336,33 @@ export default function RubricSheetPage() {
               projectId={projectId}
               hiddenByRls={hiddenByRls}
             />
-            <LiveActivityPanel
-              key={projectId}
-              projectId={projectId}
-              description="New evidence for this project, live over a private Realtime channel: who, which artifact, when. Never the text. The sheet and progress refresh themselves."
-            />
+            <div id="live-activity" className="scroll-mt-16">
+              <LiveActivityFeed
+                projectId={projectId}
+                live={live}
+                description="New evidence for this project, live over a private Realtime channel: who, which artifact, when. Never the text. The sheet and progress refresh themselves."
+              />
+            </div>
           </div>
         </div>
       )}
 
       <ClaimDrawer cell={selectedLive} onOpenChange={(o) => !o && setSelected(null)} canRecord={canRecord} returnFocus={returnFocus} />
     </>
+  )
+}
+
+/** The Live chip again, in the page header: one click scrolls to the Live activity panel. */
+function LiveChipLink({ status }: { status: LiveStatus }) {
+  return (
+    <button
+      type="button"
+      className="rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      aria-label={`Realtime: ${status}. Jump to the Live activity panel`}
+      onClick={() => document.getElementById('live-activity')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+    >
+      <LiveStatusChip status={status} testId="live-status-header" />
+    </button>
   )
 }
 
@@ -440,7 +476,7 @@ function SheetGrid(props: SheetGridProps) {
             <th scope="col" rowSpan={2} className={cn(TH, 'sticky left-0 z-20 w-10 min-w-10 bg-muted px-2 text-left align-bottom')}>
               Sl. No.
             </th>
-            <th scope="col" rowSpan={2} className={cn(TH, 'sticky left-10 z-20 min-w-48 bg-muted px-4 text-left align-bottom')}>
+            <th scope="col" rowSpan={2} className={cn(TH, 'sticky left-10 z-20 min-w-40 bg-muted px-3 text-left align-bottom min-[1600px]:min-w-48 min-[1600px]:px-4')}>
               Student
             </th>
             <th scope="colgroup" colSpan={reduced.length} className={cn(TH, 'border-l pb-1 text-[11px] tracking-wide uppercase')}>
@@ -559,7 +595,7 @@ function SheetGrid(props: SheetGridProps) {
                       </td>
                       <th
                         scope="row"
-                        className="sticky left-10 z-10 w-52 max-w-52 border-b bg-card px-4 py-2 text-left font-normal group-hover/row:bg-muted"
+                        className="sticky left-10 z-10 w-44 max-w-44 border-b bg-card px-3 py-2 text-left font-normal group-hover/row:bg-muted min-[1600px]:w-52 min-[1600px]:max-w-52 min-[1600px]:px-4"
                       >
                         <div className="font-medium">{s.name}</div>
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
@@ -702,14 +738,20 @@ function ComponentHead({
   return (
     <th
       scope="col"
-      className={cn(TH, 'w-[4.6rem] min-w-[4.6rem]', first && 'border-l', locked && 'bg-muted/80')}
+      // narrower below 1600 px so that C1..C11 and Lab CIE /50 fit a 1440 px screen with the sidebar open
+      className={cn(TH, 'w-[3.75rem] min-w-[3.75rem] min-[1600px]:w-[4.6rem] min-[1600px]:min-w-[4.6rem]', first && 'border-l', locked && 'bg-muted/80')}
       style={locked ? LOCKED_HATCH : undefined}
       title={`${componentLabel(m.milestone_no)} · ${m.title} (max ${formatMarks(m.max_marks)}, due ${formatDate(m.deadline)})${locked ? ` · locked ${formatDateTime(m.locked_at)}` : ''}`}
     >
       <div className="text-sm font-semibold text-foreground">{componentLabel(m.milestone_no)}</div>
-      <div className="mx-auto line-clamp-2 h-[2.2em] max-w-[4.3rem] text-[10px] leading-[1.1] font-normal break-normal hyphens-auto" lang="en">
+      <div className="mx-auto line-clamp-2 h-[2.2em] max-w-[3.6rem] text-[10px] leading-[1.1] font-normal break-normal hyphens-auto min-[1600px]:max-w-[4.3rem]" lang="en">
         <span className="sr-only">{m.title}</span>
-        <span aria-hidden>{shortTitle(m.title)}</span>
+        <span aria-hidden className="min-[1600px]:hidden">
+          {shortTitle(m.title, ABBREV_COMPACT)}
+        </span>
+        <span aria-hidden className="hidden min-[1600px]:inline">
+          {shortTitle(m.title)}
+        </span>
       </div>
       <div className="flex items-center justify-center gap-0.5 pt-0.5">
         <span className="tabular">/{formatMarks(m.max_marks)}</span>

@@ -4,7 +4,7 @@ test.describe('1 · login and landing page', () => {
   test('login page shows the product, tagline and subtitle', async ({ page }) => {
     await page.goto('/login')
     await expect(page.getByText('Sign in to Countersign')).toBeVisible()
-    await expect(page.getByText('Unified Experiential Learning Platform — RVCE CD252IA')).toBeVisible()
+    await expect(page.getByText('Unified Experiential Learning and Project Intelligence Platform — RVCE CD252IA')).toBeVisible()
     await expect(page.getByText(/every mark has a receipt/i).first()).toBeVisible()
   })
 

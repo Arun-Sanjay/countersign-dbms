@@ -316,11 +316,16 @@ class SqlStore:
 
 def make_store(settings: Settings, http: httpx.Client, backend: str | None = None) -> Store:
     """backend: 'rest' (service key) or 'sql' (INGEST_DB_URL); default: rest when a service
-    key is configured, else sql."""
+    key is configured, else sql. With no backend chosen and neither credential set, the
+    error names both settings; with a backend chosen, it names that backend's setting."""
     import os
 
-    backend = (backend or os.environ.get("INGEST_BACKEND") or "").lower() or (
-        "rest" if settings.service_role_key else "sql")
+    explicit = (backend or os.environ.get("INGEST_BACKEND") or "").lower()
+    if not explicit and not settings.service_role_key and not settings.ingest_db_url:
+        # neither credential: name both ways out, not only the SQL fallback's setting
+        raise ConfigError("the worker needs SUPABASE_SERVICE_ROLE_KEY (REST backend) or "
+                          "INGEST_DB_URL (SQL backend); neither is configured")
+    backend = explicit or ("rest" if settings.service_role_key else "sql")
     if backend == "rest":
         return RestStore(settings, http)
     if backend == "sql":

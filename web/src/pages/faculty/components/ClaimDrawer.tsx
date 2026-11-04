@@ -79,7 +79,8 @@ export function ClaimDrawer({ cell, onOpenChange, canRecord, highlightClaimId, a
     <Sheet open={Boolean(cell)} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full gap-0 overflow-y-auto p-0 outline-none sm:max-w-xl"
+        // data-[side=right]: prefix, or the base class's data-[side=right]:sm:max-w-sm wins (KNOWN_ISSUES #1)
+        className="gap-0 overflow-y-auto p-0 outline-none data-[side=right]:w-full data-[side=right]:sm:max-w-xl"
         aria-describedby={undefined}
         // focus the panel, not its first button: a focused SQL pill would open its tooltip and
         // swallow the first Escape

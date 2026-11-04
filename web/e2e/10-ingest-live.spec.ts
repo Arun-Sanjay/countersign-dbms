@@ -58,6 +58,8 @@ test.describe('10 · ingestion: replayed push → live toast → search', () => 
     await item.getByTestId('trace-open').click()
     const sheet = page.getByTestId('trace-sheet')
     await expect(sheet).toBeVisible()
+    // KNOWN_ISSUES #1: at 1440 px the trace sheet is max-w-3xl (768 px), not the base sheet's 384 px
+    expect((await sheet.boundingBox())?.width ?? 0).toBeGreaterThan(700)
     const mongoHalf = sheet.getByTestId('trace-mongo')
     const offline = sheet.getByText('API offline')
     await expect(mongoHalf.or(offline).first()).toBeVisible({ timeout: 20_000 })
@@ -145,5 +147,20 @@ test.describe('10 · ingestion: replayed push → live toast → search', () => 
     await expect(page.getByRole('option', { name: /T00/ })).toHaveCount(0)
     await expect(page.getByRole('option', { name: /P06/ })).toHaveCount(0)
     await page.keyboard.press('Escape')
+  })
+
+  test('admin: the consistency table says why unequal counts can be consistent', async ({ page }) => {
+    test.skip(process.env.E2E_API_STARTED !== '1', 'needs the API (GET /consistency)')
+    await login(page, 'admin')
+    await page.goto('/admin')
+    await expect(page.getByTestId('consistency-overall')).toBeVisible({ timeout: 20_000 })
+    // KNOWN_ISSUES #4: the demo seed's hand-entered T00 rows (3f9c2ab, 8d41e07) have short
+    // source_refs, so they are counted under Postgres commits but labelled "outside pipeline"
+    const pgOutside = page.getByTestId('consistency-pg-outside')
+    await expect(pgOutside.first()).toBeVisible()
+    await expect(pgOutside.first()).toHaveText(/^\d+ outside pipeline$/)
+    await expect(pgOutside.first()).toHaveAttribute('title', /not a full commit SHA/)
+    // the fixture's Mongo pushes (no delivery id) keep their "n fixture" line
+    await expect(page.getByTestId('consistency-mongo-fixture').first()).toHaveText(/^\d+ fixture$/)
   })
 })

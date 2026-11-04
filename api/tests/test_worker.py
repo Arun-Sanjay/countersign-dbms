@@ -10,6 +10,7 @@ deleted at the end of each test. /ask and /ingest/drain run through the real API
 from __future__ import annotations
 
 import hashlib
+import dataclasses
 import time
 import uuid
 from datetime import UTC, datetime
@@ -23,9 +24,10 @@ from psycopg.types.json import Jsonb
 from pymongo.errors import ServerSelectionTimeoutError
 
 from app import ask as ask_mod
+from app.config import ConfigError
 from app.consistency import consistency
 from app.ingest_rules import artifact_type
-from app.worker import (MAX_READS, SqlStore, Worker, fetch_contents, log_raw_event, note_id_for,
+from app.worker import (MAX_READS, SqlStore, Worker, fetch_contents, log_raw_event, make_store, note_id_for,
                         raw_event_document, scrub_emails, sync_note_version)
 
 REPO = "rvce-el/team-gamma"          # team T03 (project of F02 / lakshmi), see supabase/seed/ingest.sql
@@ -311,6 +313,39 @@ def test_drain_as_admin(client, auth):
     assert body["queue_empty"] is True and body["failed"] == 0
     assert {"processed", "projected", "duplicates", "outcomes"} <= body.keys()
     assert client.post("/ingest/drain", headers=auth("admin"), json={"max_messages": 0}).status_code == 422
+
+
+def test_make_store_without_credentials_names_both_settings(settings, monkeypatch):
+    """KNOWN_ISSUES #2: with neither credential, the message names the service key AND the DB URL;
+    with INGEST_BACKEND chosen, it names only that backend's setting."""
+    monkeypatch.delenv("INGEST_BACKEND", raising=False)
+    bare = dataclasses.replace(settings, service_role_key=None, ingest_db_url=None)
+    with pytest.raises(ConfigError) as exc:
+        make_store(bare, None)  # type: ignore[arg-type]  (fails before any HTTP)
+    msg = str(exc.value)
+    assert "SUPABASE_SERVICE_ROLE_KEY" in msg and "INGEST_DB_URL" in msg and "neither is configured" in msg
+    with pytest.raises(ConfigError, match="^INGEST_DB_URL is not configured$"):
+        make_store(bare, None, "sql")  # type: ignore[arg-type]
+    with pytest.raises(ConfigError, match="^SUPABASE_SERVICE_ROLE_KEY is not configured$"):
+        make_store(bare, None, "rest")  # type: ignore[arg-type]
+    monkeypatch.setenv("INGEST_BACKEND", "sql")
+    with pytest.raises(ConfigError, match="^INGEST_DB_URL is not configured$"):
+        make_store(bare, None)  # type: ignore[arg-type]
+
+
+def test_drain_without_credentials_is_503_naming_both(client, auth, settings, monkeypatch):
+    monkeypatch.delenv("INGEST_BACKEND", raising=False)
+    state = client.app.state          # starlette State: restore by hand (monkeypatch's undo loses it)
+    saved = state.settings
+    state.settings = dataclasses.replace(settings, service_role_key=None, ingest_db_url=None)
+    try:
+        r = client.post("/ingest/drain", headers=auth("admin"))
+    finally:
+        state.settings = saved
+    assert r.status_code == 503, r.text
+    detail = r.json()["detail"]
+    assert detail["code"] == "worker_unconfigured"
+    assert "SUPABASE_SERVICE_ROLE_KEY" in detail["message"] and "INGEST_DB_URL" in detail["message"]
 
 
 # ---------------------------------------------------------------- /ask

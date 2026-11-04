@@ -6,7 +6,9 @@ immutable versions, the ingestion worker (pgmq -> Mongo raw log -> Postgres proj
 cross-database consistency check, and the permission-aware /ask. Authorisation is always
 asked of Postgres AS THE CALLER (PostgREST + the caller's JWT). The one exception is
 POST /ingest/drain: after checking that the caller is an admin, it runs the worker, whose
-pipeline RPCs are service_role-only (app/worker.py).
+pipeline RPCs are service_role-only (app/worker.py). POST /race/run (faculty and admins) runs
+one race of the Innovative Experiment in the separate race-lab container, never in the
+product database (app/race.py).
 
 Run:  cd api && uv run uvicorn app.main:app --reload --port 8000
 """
@@ -27,6 +29,7 @@ from pydantic import BaseModel, Field
 
 from . import ask as ask_mod
 from . import notes as notes_mod
+from . import race as race_mod
 from . import trace as trace_mod
 from . import worker as worker_mod
 from .auth import Authenticator, Caller, Postgrest, problem, require_team, visible_teams
@@ -51,7 +54,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Countersign API", version="0.1.0", lifespan=lifespan,
-              description="Every mark has a receipt. Unified Experiential Learning Platform — RVCE CD252IA.")
+              description="Every mark has a receipt. Unified Experiential Learning and Project Intelligence Platform — RVCE CD252IA.")
 
 # CORS is configured from settings at import time (origins only; no secrets involved).
 app.add_middleware(
@@ -217,3 +220,16 @@ def ingest_status(who: CallerDep, pg: PgDep) -> dict[str, Any]:
 def post_ask(request: Request, body: ask_mod.AskIn, who: CallerDep, pg: PgDep) -> dict[str, Any]:
     st = request.app.state
     return jsonable_encoder(ask_mod.ask(st.settings, st.http, pg, who, body, st))
+
+
+# ---------------------------------------------------------------- race arena (Component 10)
+
+@app.post("/race/run")
+async def race_run(body: race_mod.RaceIn, who: CallerDep) -> dict[str, Any]:
+    """Faculty and admins: run ONE race of the Innovative Experiment (N clients, one free seat
+    in T02) against the throwaway race lab elp-race-pg (port 55433), with the harness's own code.
+    503 race_lab_offline when the container is down (start it with experiments/race/setup.sh);
+    409 race_busy while another race or the harness is running. Nothing is written to the
+    reported results; T02 is reset to 3/4 afterwards."""
+    race_mod.require_staff(who)
+    return await race_mod.run_race(body)

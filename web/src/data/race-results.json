@@ -1,0 +1,2352 @@
+{
+ "meta": {
+  "races": 72000,
+  "attempts": 2556000,
+  "trialsPerCell": 1000,
+  "cells": 72,
+  "scheduleOps": 120558,
+  "postgres": "17.11",
+  "window": "2026-11-04 17:15 to 17:28 UTC",
+  "team": "T02",
+  "capacity": 4,
+  "freeSeats": 1,
+  "sources": [
+   "experiments/race/results/cell_summary.csv",
+   "experiments/race/results/outcome_mix.csv",
+   "experiments/race/results/over_admission_by_cell.csv",
+   "experiments/race/results/serializability_n2.csv",
+   "experiments/race/results/schedule_examples_n2.csv",
+   "experiments/race/results/results.md"
+  ]
+ },
+ "cells": [
+  {
+   "s": "S1",
+   "iso": "RC",
+   "n": 2,
+   "trials": 1000,
+   "over": 100,
+   "worst": 5,
+   "cap": 4,
+   "meanExcess": 1,
+   "admitted": 2,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 13.34,
+   "p95": 17.42,
+   "rank": 6,
+   "mix": {
+    "admitted": 2000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S1",
+   "iso": "RC",
+   "n": 8,
+   "trials": 1000,
+   "over": 100,
+   "worst": 11,
+   "cap": 4,
+   "meanExcess": 7,
+   "admitted": 8,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 13.5,
+   "p95": 17.09,
+   "rank": 6,
+   "mix": {
+    "admitted": 8000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S1",
+   "iso": "RC",
+   "n": 32,
+   "trials": 1000,
+   "over": 100,
+   "worst": 35,
+   "cap": 4,
+   "meanExcess": 31,
+   "admitted": 32,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 14.6,
+   "p95": 17.01,
+   "rank": 6,
+   "mix": {
+    "admitted": 32000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S1",
+   "iso": "RC",
+   "n": 100,
+   "trials": 1000,
+   "over": 100,
+   "worst": 103,
+   "cap": 4,
+   "meanExcess": 99,
+   "admitted": 100,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 18.13,
+   "p95": 20.43,
+   "rank": 6,
+   "mix": {
+    "admitted": 100000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S1",
+   "iso": "RR",
+   "n": 2,
+   "trials": 1000,
+   "over": 100,
+   "worst": 5,
+   "cap": 4,
+   "meanExcess": 1,
+   "admitted": 2,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 13.43,
+   "p95": 17.61,
+   "rank": 6,
+   "mix": {
+    "admitted": 2000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S1",
+   "iso": "RR",
+   "n": 8,
+   "trials": 1000,
+   "over": 100,
+   "worst": 11,
+   "cap": 4,
+   "meanExcess": 7,
+   "admitted": 8,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 13.43,
+   "p95": 17.29,
+   "rank": 6,
+   "mix": {
+    "admitted": 8000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S1",
+   "iso": "RR",
+   "n": 32,
+   "trials": 1000,
+   "over": 100,
+   "worst": 35,
+   "cap": 4,
+   "meanExcess": 31,
+   "admitted": 32,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 14.47,
+   "p95": 17.02,
+   "rank": 6,
+   "mix": {
+    "admitted": 32000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S1",
+   "iso": "RR",
+   "n": 100,
+   "trials": 1000,
+   "over": 100,
+   "worst": 103,
+   "cap": 4,
+   "meanExcess": 99,
+   "admitted": 100,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 18.15,
+   "p95": 20.44,
+   "rank": 5,
+   "mix": {
+    "admitted": 100000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S1",
+   "iso": "SER",
+   "n": 2,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 1,
+   "refused": 0,
+   "retries": 0,
+   "p50": 13.11,
+   "p95": 17.4,
+   "rank": 5,
+   "mix": {
+    "admitted": 1000,
+    "refused": 0,
+    "serialization_failure": 1000,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S1",
+   "iso": "SER",
+   "n": 8,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 7,
+   "refused": 0,
+   "retries": 0,
+   "p50": 13.4,
+   "p95": 17.07,
+   "rank": 5,
+   "mix": {
+    "admitted": 1000,
+    "refused": 0,
+    "serialization_failure": 7000,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S1",
+   "iso": "SER",
+   "n": 32,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 31,
+   "refused": 0,
+   "retries": 0,
+   "p50": 15.07,
+   "p95": 16.55,
+   "rank": 5,
+   "mix": {
+    "admitted": 1000,
+    "refused": 0,
+    "serialization_failure": 31000,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S1",
+   "iso": "SER",
+   "n": 100,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 99,
+   "refused": 0,
+   "retries": 0,
+   "p50": 21.78,
+   "p95": 25.61,
+   "rank": 5,
+   "mix": {
+    "admitted": 1000,
+    "refused": 0,
+    "serialization_failure": 99000,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S2",
+   "iso": "RC",
+   "n": 2,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 0,
+   "refused": 1,
+   "retries": 0,
+   "p50": 0.52,
+   "p95": 0.71,
+   "rank": 1,
+   "mix": {
+    "admitted": 1000,
+    "refused": 1000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S2",
+   "iso": "RC",
+   "n": 8,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 0,
+   "refused": 7,
+   "retries": 0,
+   "p50": 1.03,
+   "p95": 1.47,
+   "rank": 2,
+   "mix": {
+    "admitted": 1000,
+    "refused": 7000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S2",
+   "iso": "RC",
+   "n": 32,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 0,
+   "refused": 31,
+   "retries": 0,
+   "p50": 2.36,
+   "p95": 3.7,
+   "rank": 2,
+   "mix": {
+    "admitted": 1000,
+    "refused": 31000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S2",
+   "iso": "RC",
+   "n": 100,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 0,
+   "refused": 99,
+   "retries": 0,
+   "p50": 7.12,
+   "p95": 12.08,
+   "rank": 2,
+   "mix": {
+    "admitted": 1000,
+    "refused": 99000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S2",
+   "iso": "RR",
+   "n": 2,
+   "trials": 1000,
+   "over": 100,
+   "worst": 5,
+   "cap": 4,
+   "meanExcess": 1,
+   "admitted": 2,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 0.48,
+   "p95": 0.71,
+   "rank": 1,
+   "mix": {
+    "admitted": 2000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S2",
+   "iso": "RR",
+   "n": 8,
+   "trials": 1000,
+   "over": 100,
+   "worst": 11,
+   "cap": 4,
+   "meanExcess": 7,
+   "admitted": 8,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 1.16,
+   "p95": 2.08,
+   "rank": 4,
+   "mix": {
+    "admitted": 8000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S2",
+   "iso": "RR",
+   "n": 32,
+   "trials": 1000,
+   "over": 100,
+   "worst": 35,
+   "cap": 4,
+   "meanExcess": 31,
+   "admitted": 32,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 4.37,
+   "p95": 8.09,
+   "rank": 4,
+   "mix": {
+    "admitted": 32000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S2",
+   "iso": "RR",
+   "n": 100,
+   "trials": 1000,
+   "over": 100,
+   "worst": 103,
+   "cap": 4,
+   "meanExcess": 98.99,
+   "admitted": 99.99,
+   "aborts": 0,
+   "refused": 0.01,
+   "retries": 0,
+   "p50": 14.55,
+   "p95": 28.98,
+   "rank": 6,
+   "mix": {
+    "admitted": 99989,
+    "refused": 11,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S2",
+   "iso": "SER",
+   "n": 2,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 1,
+   "refused": 0,
+   "retries": 0,
+   "p50": 0.52,
+   "p95": 0.75,
+   "rank": 2,
+   "mix": {
+    "admitted": 1000,
+    "refused": 0,
+    "serialization_failure": 1000,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S2",
+   "iso": "SER",
+   "n": 8,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 7,
+   "refused": 0,
+   "retries": 0,
+   "p50": 1.11,
+   "p95": 1.74,
+   "rank": 3,
+   "mix": {
+    "admitted": 1000,
+    "refused": 2,
+    "serialization_failure": 6998,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S2",
+   "iso": "SER",
+   "n": 32,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 30.96,
+   "refused": 0.04,
+   "retries": 0,
+   "p50": 2.57,
+   "p95": 4.14,
+   "rank": 4,
+   "mix": {
+    "admitted": 1000,
+    "refused": 40,
+    "serialization_failure": 30960,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S2",
+   "iso": "SER",
+   "n": 100,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 98.91,
+   "refused": 0.09,
+   "retries": 0,
+   "p50": 7.28,
+   "p95": 12.21,
+   "rank": 4,
+   "mix": {
+    "admitted": 1000,
+    "refused": 92,
+    "serialization_failure": 98908,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S3",
+   "iso": "RC",
+   "n": 2,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 0,
+   "refused": 1,
+   "retries": 0,
+   "p50": 0.59,
+   "p95": 0.84,
+   "rank": 3,
+   "mix": {
+    "admitted": 1000,
+    "refused": 1000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S3",
+   "iso": "RC",
+   "n": 8,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 0,
+   "refused": 7,
+   "retries": 0,
+   "p50": 1.12,
+   "p95": 1.91,
+   "rank": 3,
+   "mix": {
+    "admitted": 1000,
+    "refused": 7000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S3",
+   "iso": "RC",
+   "n": 32,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 0,
+   "refused": 31,
+   "retries": 0,
+   "p50": 3.47,
+   "p95": 6.45,
+   "rank": 4,
+   "mix": {
+    "admitted": 1000,
+    "refused": 31000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S3",
+   "iso": "RC",
+   "n": 100,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 0,
+   "refused": 99,
+   "retries": 0,
+   "p50": 9.72,
+   "p95": 17.07,
+   "rank": 4,
+   "mix": {
+    "admitted": 1000,
+    "refused": 99000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S3",
+   "iso": "RR",
+   "n": 2,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 1,
+   "refused": 0,
+   "retries": 0,
+   "p50": 0.63,
+   "p95": 0.91,
+   "rank": 3,
+   "mix": {
+    "admitted": 1000,
+    "refused": 0,
+    "serialization_failure": 1000,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S3",
+   "iso": "RR",
+   "n": 8,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 7,
+   "refused": 0,
+   "retries": 0,
+   "p50": 1.02,
+   "p95": 1.37,
+   "rank": 2,
+   "mix": {
+    "admitted": 1000,
+    "refused": 0,
+    "serialization_failure": 7000,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S3",
+   "iso": "RR",
+   "n": 32,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 31,
+   "refused": 0,
+   "retries": 0,
+   "p50": 2.06,
+   "p95": 2.64,
+   "rank": 2,
+   "mix": {
+    "admitted": 1000,
+    "refused": 1,
+    "serialization_failure": 30999,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S3",
+   "iso": "RR",
+   "n": 100,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 98.98,
+   "refused": 0.02,
+   "retries": 0,
+   "p50": 4.88,
+   "p95": 6.92,
+   "rank": 2,
+   "mix": {
+    "admitted": 1000,
+    "refused": 23,
+    "serialization_failure": 98977,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S3",
+   "iso": "SER",
+   "n": 2,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 1,
+   "refused": 0,
+   "retries": 0,
+   "p50": 0.64,
+   "p95": 0.96,
+   "rank": 3,
+   "mix": {
+    "admitted": 1000,
+    "refused": 0,
+    "serialization_failure": 1000,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S3",
+   "iso": "SER",
+   "n": 8,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 7,
+   "refused": 0,
+   "retries": 0,
+   "p50": 1.06,
+   "p95": 1.59,
+   "rank": 2,
+   "mix": {
+    "admitted": 1000,
+    "refused": 0,
+    "serialization_failure": 7000,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S3",
+   "iso": "SER",
+   "n": 32,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 31,
+   "refused": 0,
+   "retries": 0,
+   "p50": 2.01,
+   "p95": 2.62,
+   "rank": 1,
+   "mix": {
+    "admitted": 1000,
+    "refused": 1,
+    "serialization_failure": 30999,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S3",
+   "iso": "SER",
+   "n": 100,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 98.92,
+   "refused": 0.08,
+   "retries": 0,
+   "p50": 4.57,
+   "p95": 6.02,
+   "rank": 1,
+   "mix": {
+    "admitted": 1000,
+    "refused": 82,
+    "serialization_failure": 98918,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S4",
+   "iso": "RC",
+   "n": 2,
+   "trials": 1000,
+   "over": 100,
+   "worst": 5,
+   "cap": 4,
+   "meanExcess": 1,
+   "admitted": 2,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 13.18,
+   "p95": 17.28,
+   "rank": 5,
+   "mix": {
+    "admitted": 2000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S4",
+   "iso": "RC",
+   "n": 8,
+   "trials": 1000,
+   "over": 100,
+   "worst": 11,
+   "cap": 4,
+   "meanExcess": 7,
+   "admitted": 8,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 13.31,
+   "p95": 16.75,
+   "rank": 5,
+   "mix": {
+    "admitted": 8000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S4",
+   "iso": "RC",
+   "n": 32,
+   "trials": 1000,
+   "over": 100,
+   "worst": 35,
+   "cap": 4,
+   "meanExcess": 31,
+   "admitted": 32,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 14.36,
+   "p95": 16.6,
+   "rank": 5,
+   "mix": {
+    "admitted": 32000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S4",
+   "iso": "RC",
+   "n": 100,
+   "trials": 1000,
+   "over": 100,
+   "worst": 103,
+   "cap": 4,
+   "meanExcess": 99,
+   "admitted": 100,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 17.93,
+   "p95": 20.3,
+   "rank": 5,
+   "mix": {
+    "admitted": 100000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S4",
+   "iso": "RR",
+   "n": 2,
+   "trials": 1000,
+   "over": 100,
+   "worst": 5,
+   "cap": 4,
+   "meanExcess": 1,
+   "admitted": 2,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 12.89,
+   "p95": 17.17,
+   "rank": 5,
+   "mix": {
+    "admitted": 2000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S4",
+   "iso": "RR",
+   "n": 8,
+   "trials": 1000,
+   "over": 100,
+   "worst": 11,
+   "cap": 4,
+   "meanExcess": 7,
+   "admitted": 8,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 13.31,
+   "p95": 16.54,
+   "rank": 5,
+   "mix": {
+    "admitted": 8000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S4",
+   "iso": "RR",
+   "n": 32,
+   "trials": 1000,
+   "over": 100,
+   "worst": 35,
+   "cap": 4,
+   "meanExcess": 31,
+   "admitted": 32,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 14.32,
+   "p95": 16.53,
+   "rank": 5,
+   "mix": {
+    "admitted": 32000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S4",
+   "iso": "RR",
+   "n": 100,
+   "trials": 1000,
+   "over": 100,
+   "worst": 103,
+   "cap": 4,
+   "meanExcess": 99,
+   "admitted": 100,
+   "aborts": 0,
+   "refused": 0,
+   "retries": 0,
+   "p50": 17.92,
+   "p95": 20.21,
+   "rank": 4,
+   "mix": {
+    "admitted": 100000,
+    "refused": 0,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S4",
+   "iso": "SER",
+   "n": 2,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 1,
+   "refused": 1,
+   "retries": 0.5,
+   "p50": 16.75,
+   "p95": 22.83,
+   "rank": 6,
+   "mix": {
+    "admitted": 1000,
+    "refused": 1000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S4",
+   "iso": "SER",
+   "n": 8,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 7,
+   "refused": 7,
+   "retries": 0.88,
+   "p50": 16.94,
+   "p95": 20.44,
+   "rank": 6,
+   "mix": {
+    "admitted": 1000,
+    "refused": 7000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S4",
+   "iso": "SER",
+   "n": 32,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 31.02,
+   "refused": 31,
+   "retries": 0.97,
+   "p50": 18.58,
+   "p95": 21.1,
+   "rank": 6,
+   "mix": {
+    "admitted": 1000,
+    "refused": 31000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S4",
+   "iso": "SER",
+   "n": 100,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 99.22,
+   "refused": 99,
+   "retries": 0.99,
+   "p50": 27.29,
+   "p95": 31.87,
+   "rank": 6,
+   "mix": {
+    "admitted": 1000,
+    "refused": 99000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S6",
+   "iso": "RC",
+   "n": 2,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 0,
+   "refused": 1,
+   "retries": 0,
+   "p50": 0.82,
+   "p95": 1.69,
+   "rank": 4,
+   "mix": {
+    "admitted": 1000,
+    "refused": 1000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S6",
+   "iso": "RC",
+   "n": 8,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 0,
+   "refused": 7,
+   "retries": 0,
+   "p50": 1.34,
+   "p95": 1.93,
+   "rank": 4,
+   "mix": {
+    "admitted": 1000,
+    "refused": 7000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S6",
+   "iso": "RC",
+   "n": 32,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 0,
+   "refused": 31,
+   "retries": 0,
+   "p50": 2.57,
+   "p95": 3.38,
+   "rank": 1,
+   "mix": {
+    "admitted": 1000,
+    "refused": 31000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S6",
+   "iso": "RC",
+   "n": 100,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 0,
+   "refused": 99,
+   "retries": 0,
+   "p50": 6.47,
+   "p95": 8.23,
+   "rank": 1,
+   "mix": {
+    "admitted": 1000,
+    "refused": 99000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S6",
+   "iso": "RR",
+   "n": 2,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 1,
+   "refused": 0,
+   "retries": 0,
+   "p50": 0.88,
+   "p95": 1.43,
+   "rank": 4,
+   "mix": {
+    "admitted": 1000,
+    "refused": 0,
+    "serialization_failure": 1000,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S6",
+   "iso": "RR",
+   "n": 8,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 7,
+   "refused": 0,
+   "retries": 0,
+   "p50": 1.22,
+   "p95": 1.68,
+   "rank": 3,
+   "mix": {
+    "admitted": 1000,
+    "refused": 0,
+    "serialization_failure": 7000,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S6",
+   "iso": "RR",
+   "n": 32,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 30.88,
+   "refused": 0.12,
+   "retries": 0,
+   "p50": 2.5,
+   "p95": 4,
+   "rank": 3,
+   "mix": {
+    "admitted": 1000,
+    "refused": 124,
+    "serialization_failure": 30876,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S6",
+   "iso": "RR",
+   "n": 100,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 98.88,
+   "refused": 0.12,
+   "retries": 0,
+   "p50": 5.5,
+   "p95": 7.34,
+   "rank": 3,
+   "mix": {
+    "admitted": 1000,
+    "refused": 122,
+    "serialization_failure": 98878,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S6",
+   "iso": "SER",
+   "n": 2,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 1,
+   "refused": 0,
+   "retries": 0,
+   "p50": 0.7,
+   "p95": 1.13,
+   "rank": 4,
+   "mix": {
+    "admitted": 1000,
+    "refused": 0,
+    "serialization_failure": 1000,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S6",
+   "iso": "SER",
+   "n": 8,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 7,
+   "refused": 0,
+   "retries": 0,
+   "p50": 1.12,
+   "p95": 1.96,
+   "rank": 4,
+   "mix": {
+    "admitted": 1000,
+    "refused": 3,
+    "serialization_failure": 6997,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S6",
+   "iso": "SER",
+   "n": 32,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 30.97,
+   "refused": 0.03,
+   "retries": 0,
+   "p50": 2.32,
+   "p95": 3.2,
+   "rank": 3,
+   "mix": {
+    "admitted": 1000,
+    "refused": 28,
+    "serialization_failure": 30972,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S6",
+   "iso": "SER",
+   "n": 100,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 98.99,
+   "refused": 0.01,
+   "retries": 0,
+   "p50": 5.36,
+   "p95": 6.94,
+   "rank": 3,
+   "mix": {
+    "admitted": 1000,
+    "refused": 8,
+    "serialization_failure": 98992,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S7",
+   "iso": "RC",
+   "n": 2,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 0,
+   "refused": 1,
+   "retries": 0,
+   "p50": 0.53,
+   "p95": 0.81,
+   "rank": 2,
+   "mix": {
+    "admitted": 1000,
+    "refused": 1000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S7",
+   "iso": "RC",
+   "n": 8,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 0,
+   "refused": 7,
+   "retries": 0,
+   "p50": 1.06,
+   "p95": 1.46,
+   "rank": 1,
+   "mix": {
+    "admitted": 1000,
+    "refused": 7000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S7",
+   "iso": "RC",
+   "n": 32,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 0,
+   "refused": 31,
+   "retries": 0,
+   "p50": 2.62,
+   "p95": 4.3,
+   "rank": 3,
+   "mix": {
+    "admitted": 1000,
+    "refused": 31000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S7",
+   "iso": "RC",
+   "n": 100,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 0,
+   "refused": 99,
+   "retries": 0,
+   "p50": 6.71,
+   "p95": 12.1,
+   "rank": 3,
+   "mix": {
+    "admitted": 1000,
+    "refused": 99000,
+    "serialization_failure": 0,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S7",
+   "iso": "RR",
+   "n": 2,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 1,
+   "refused": 0,
+   "retries": 0,
+   "p50": 0.53,
+   "p95": 0.83,
+   "rank": 2,
+   "mix": {
+    "admitted": 1000,
+    "refused": 0,
+    "serialization_failure": 1000,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S7",
+   "iso": "RR",
+   "n": 8,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 7,
+   "refused": 0,
+   "retries": 0,
+   "p50": 0.91,
+   "p95": 1.18,
+   "rank": 1,
+   "mix": {
+    "admitted": 1000,
+    "refused": 0,
+    "serialization_failure": 7000,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S7",
+   "iso": "RR",
+   "n": 32,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 31,
+   "refused": 0.01,
+   "retries": 0,
+   "p50": 1.89,
+   "p95": 2.4,
+   "rank": 1,
+   "mix": {
+    "admitted": 1000,
+    "refused": 5,
+    "serialization_failure": 30995,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S7",
+   "iso": "RR",
+   "n": 100,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 98.99,
+   "refused": 0.01,
+   "retries": 0,
+   "p50": 4.62,
+   "p95": 5.99,
+   "rank": 1,
+   "mix": {
+    "admitted": 1000,
+    "refused": 13,
+    "serialization_failure": 98987,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S7",
+   "iso": "SER",
+   "n": 2,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 1,
+   "refused": 0,
+   "retries": 0,
+   "p50": 0.53,
+   "p95": 0.71,
+   "rank": 1,
+   "mix": {
+    "admitted": 1000,
+    "refused": 0,
+    "serialization_failure": 1000,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S7",
+   "iso": "SER",
+   "n": 8,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 7,
+   "refused": 0,
+   "retries": 0,
+   "p50": 0.92,
+   "p95": 1.22,
+   "rank": 1,
+   "mix": {
+    "admitted": 1000,
+    "refused": 1,
+    "serialization_failure": 6999,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S7",
+   "iso": "SER",
+   "n": 32,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 30.96,
+   "refused": 0.04,
+   "retries": 0,
+   "p50": 1.95,
+   "p95": 2.64,
+   "rank": 2,
+   "mix": {
+    "admitted": 1000,
+    "refused": 41,
+    "serialization_failure": 30959,
+    "deadlock": 0,
+    "error": 0
+   }
+  },
+  {
+   "s": "S7",
+   "iso": "SER",
+   "n": 100,
+   "trials": 1000,
+   "over": 0,
+   "worst": 4,
+   "cap": 4,
+   "meanExcess": 0,
+   "admitted": 1,
+   "aborts": 98.38,
+   "refused": 0.62,
+   "retries": 0,
+   "p50": 4.61,
+   "p95": 6.29,
+   "rank": 2,
+   "mix": {
+    "admitted": 1000,
+    "refused": 617,
+    "serialization_failure": 98383,
+    "deadlock": 0,
+    "error": 0
+   }
+  }
+ ],
+ "serializability": [
+  {
+   "s": "S1",
+   "iso": "RC",
+   "runs": 1000,
+   "serializable": 0,
+   "notSerializable": 1000,
+   "overAdmitted": 1000,
+   "verdictMatches": 1000,
+   "cycleOnlyWithAborted": 0,
+   "brokenByDbms": 0
+  },
+  {
+   "s": "S1",
+   "iso": "RR",
+   "runs": 1000,
+   "serializable": 0,
+   "notSerializable": 1000,
+   "overAdmitted": 1000,
+   "verdictMatches": 1000,
+   "cycleOnlyWithAborted": 0,
+   "brokenByDbms": 0
+  },
+  {
+   "s": "S1",
+   "iso": "SER",
+   "runs": 1000,
+   "serializable": 1000,
+   "notSerializable": 0,
+   "overAdmitted": 0,
+   "verdictMatches": 1000,
+   "cycleOnlyWithAborted": 753,
+   "brokenByDbms": 753
+  },
+  {
+   "s": "S2",
+   "iso": "RC",
+   "runs": 1000,
+   "serializable": 1000,
+   "notSerializable": 0,
+   "overAdmitted": 0,
+   "verdictMatches": 1000,
+   "cycleOnlyWithAborted": 0,
+   "brokenByDbms": 0
+  },
+  {
+   "s": "S2",
+   "iso": "RR",
+   "runs": 1000,
+   "serializable": 0,
+   "notSerializable": 1000,
+   "overAdmitted": 1000,
+   "verdictMatches": 1000,
+   "cycleOnlyWithAborted": 0,
+   "brokenByDbms": 0
+  },
+  {
+   "s": "S2",
+   "iso": "SER",
+   "runs": 1000,
+   "serializable": 1000,
+   "notSerializable": 0,
+   "overAdmitted": 0,
+   "verdictMatches": 1000,
+   "cycleOnlyWithAborted": 0,
+   "brokenByDbms": 0
+  },
+  {
+   "s": "S3",
+   "iso": "RC",
+   "runs": 1000,
+   "serializable": 1000,
+   "notSerializable": 0,
+   "overAdmitted": 0,
+   "verdictMatches": 1000,
+   "cycleOnlyWithAborted": 0,
+   "brokenByDbms": 0
+  },
+  {
+   "s": "S3",
+   "iso": "RR",
+   "runs": 1000,
+   "serializable": 1000,
+   "notSerializable": 0,
+   "overAdmitted": 0,
+   "verdictMatches": 1000,
+   "cycleOnlyWithAborted": 0,
+   "brokenByDbms": 0
+  },
+  {
+   "s": "S3",
+   "iso": "SER",
+   "runs": 1000,
+   "serializable": 1000,
+   "notSerializable": 0,
+   "overAdmitted": 0,
+   "verdictMatches": 1000,
+   "cycleOnlyWithAborted": 0,
+   "brokenByDbms": 0
+  },
+  {
+   "s": "S4",
+   "iso": "RC",
+   "runs": 1000,
+   "serializable": 0,
+   "notSerializable": 1000,
+   "overAdmitted": 1000,
+   "verdictMatches": 1000,
+   "cycleOnlyWithAborted": 0,
+   "brokenByDbms": 0
+  },
+  {
+   "s": "S4",
+   "iso": "RR",
+   "runs": 1000,
+   "serializable": 0,
+   "notSerializable": 1000,
+   "overAdmitted": 1000,
+   "verdictMatches": 1000,
+   "cycleOnlyWithAborted": 0,
+   "brokenByDbms": 0
+  },
+  {
+   "s": "S4",
+   "iso": "SER",
+   "runs": 1000,
+   "serializable": 1000,
+   "notSerializable": 0,
+   "overAdmitted": 0,
+   "verdictMatches": 1000,
+   "cycleOnlyWithAborted": 805,
+   "brokenByDbms": 805
+  },
+  {
+   "s": "S6",
+   "iso": "RC",
+   "runs": 1000,
+   "serializable": 1000,
+   "notSerializable": 0,
+   "overAdmitted": 0,
+   "verdictMatches": 1000,
+   "cycleOnlyWithAborted": 1000,
+   "brokenByDbms": 0
+  },
+  {
+   "s": "S6",
+   "iso": "RR",
+   "runs": 1000,
+   "serializable": 1000,
+   "notSerializable": 0,
+   "overAdmitted": 0,
+   "verdictMatches": 1000,
+   "cycleOnlyWithAborted": 0,
+   "brokenByDbms": 0
+  },
+  {
+   "s": "S6",
+   "iso": "SER",
+   "runs": 1000,
+   "serializable": 1000,
+   "notSerializable": 0,
+   "overAdmitted": 0,
+   "verdictMatches": 1000,
+   "cycleOnlyWithAborted": 0,
+   "brokenByDbms": 0
+  },
+  {
+   "s": "S7",
+   "iso": "RC",
+   "runs": 1000,
+   "serializable": 1000,
+   "notSerializable": 0,
+   "overAdmitted": 0,
+   "verdictMatches": 1000,
+   "cycleOnlyWithAborted": 0,
+   "brokenByDbms": 0
+  },
+  {
+   "s": "S7",
+   "iso": "RR",
+   "runs": 1000,
+   "serializable": 1000,
+   "notSerializable": 0,
+   "overAdmitted": 0,
+   "verdictMatches": 1000,
+   "cycleOnlyWithAborted": 0,
+   "brokenByDbms": 0
+  },
+  {
+   "s": "S7",
+   "iso": "SER",
+   "runs": 1000,
+   "serializable": 1000,
+   "notSerializable": 0,
+   "overAdmitted": 0,
+   "verdictMatches": 1000,
+   "cycleOnlyWithAborted": 0,
+   "brokenByDbms": 0
+  }
+ ],
+ "examples": [
+  {
+   "runId": 72721,
+   "s": "S1",
+   "iso": "RC",
+   "finalSize": 5,
+   "cap": 4,
+   "schedule": "r2(team:T02) r2(members:T02) r1(team:T02) r1(members:T02) w1(members:T02) c1 w2(members:T02) c2",
+   "sql": {
+    "edges": "T1->T2, T2->T1",
+    "verdict": "NOT conflict-serializable",
+    "cycleOrSerialOrder": "T1 -> T2 -> T1",
+    "cycleInclAborted": "T1 -> T2 -> T1"
+   }
+  },
+  {
+   "runId": 76721,
+   "s": "S1",
+   "iso": "RR",
+   "finalSize": 5,
+   "cap": 4,
+   "schedule": "r2(team:T02) r2(members:T02) r1(team:T02) r1(members:T02) w2(members:T02) c2 w1(members:T02) c1",
+   "sql": {
+    "edges": "T1->T2, T2->T1",
+    "verdict": "NOT conflict-serializable",
+    "cycleOrSerialOrder": "T1 -> T2 -> T1",
+    "cycleInclAborted": "T1 -> T2 -> T1"
+   }
+  },
+  {
+   "runId": 80721,
+   "s": "S1",
+   "iso": "SER",
+   "finalSize": 4,
+   "cap": 4,
+   "schedule": "r1(team:T02) r1(members:T02) r2(team:T02) r2(members:T02) w1(members:T02) c1 a2[40001]",
+   "sql": {
+    "edges": "(none)",
+    "verdict": "conflict-serializable",
+    "cycleOrSerialOrder": "T1",
+    "cycleInclAborted": null
+   }
+  },
+  {
+   "runId": 84721,
+   "s": "S2",
+   "iso": "RC",
+   "finalSize": 4,
+   "cap": 4,
+   "schedule": "r2(team:T02) r2(members:T02) w2(members:T02) c2 r1(team:T02) r1(members:T02) a1[refused]",
+   "sql": {
+    "edges": "(none)",
+    "verdict": "conflict-serializable",
+    "cycleOrSerialOrder": "T2",
+    "cycleInclAborted": null
+   }
+  },
+  {
+   "runId": 88721,
+   "s": "S2",
+   "iso": "RR",
+   "finalSize": 5,
+   "cap": 4,
+   "schedule": "r2(team:T02) r2(members:T02) r1(team:T02) r1(members:T02) w2(members:T02) c2 w1(members:T02) c1",
+   "sql": {
+    "edges": "T1->T2, T2->T1",
+    "verdict": "NOT conflict-serializable",
+    "cycleOrSerialOrder": "T1 -> T2 -> T1",
+    "cycleInclAborted": "T1 -> T2 -> T1"
+   }
+  },
+  {
+   "runId": 92721,
+   "s": "S2",
+   "iso": "SER",
+   "finalSize": 4,
+   "cap": 4,
+   "schedule": "r2(team:T02) r2(members:T02) w2(members:T02) c2 a1[40001]",
+   "sql": {
+    "edges": "(none)",
+    "verdict": "conflict-serializable",
+    "cycleOrSerialOrder": "T2",
+    "cycleInclAborted": null
+   }
+  },
+  {
+   "runId": 96721,
+   "s": "S3",
+   "iso": "RC",
+   "finalSize": 4,
+   "cap": 4,
+   "schedule": "r1(counter:T02) w1(counter:T02) w1(members:T02) c1 r2(counter:T02) a2[refused]",
+   "sql": {
+    "edges": "(none)",
+    "verdict": "conflict-serializable",
+    "cycleOrSerialOrder": "T1",
+    "cycleInclAborted": null
+   }
+  },
+  {
+   "runId": 100721,
+   "s": "S3",
+   "iso": "RR",
+   "finalSize": 4,
+   "cap": 4,
+   "schedule": "r2(counter:T02) w2(counter:T02) w2(members:T02) c2 a1[40001]",
+   "sql": {
+    "edges": "(none)",
+    "verdict": "conflict-serializable",
+    "cycleOrSerialOrder": "T2",
+    "cycleInclAborted": null
+   }
+  },
+  {
+   "runId": 104721,
+   "s": "S3",
+   "iso": "SER",
+   "finalSize": 4,
+   "cap": 4,
+   "schedule": "r2(counter:T02) w2(counter:T02) w2(members:T02) c2 a1[40001]",
+   "sql": {
+    "edges": "(none)",
+    "verdict": "conflict-serializable",
+    "cycleOrSerialOrder": "T2",
+    "cycleInclAborted": null
+   }
+  },
+  {
+   "runId": 108721,
+   "s": "S4",
+   "iso": "RC",
+   "finalSize": 5,
+   "cap": 4,
+   "schedule": "r1(team:T02) r1(members:T02) r2(team:T02) r2(members:T02) w1(members:T02) w2(members:T02) c1 c2",
+   "sql": {
+    "edges": "T1->T2, T2->T1",
+    "verdict": "NOT conflict-serializable",
+    "cycleOrSerialOrder": "T1 -> T2 -> T1",
+    "cycleInclAborted": "T1 -> T2 -> T1"
+   }
+  },
+  {
+   "runId": 112721,
+   "s": "S4",
+   "iso": "RR",
+   "finalSize": 5,
+   "cap": 4,
+   "schedule": "r2(team:T02) r2(members:T02) r1(team:T02) r1(members:T02) w1(members:T02) w2(members:T02) c1 c2",
+   "sql": {
+    "edges": "T1->T2, T2->T1",
+    "verdict": "NOT conflict-serializable",
+    "cycleOrSerialOrder": "T1 -> T2 -> T1",
+    "cycleInclAborted": "T1 -> T2 -> T1"
+   }
+  },
+  {
+   "runId": 116721,
+   "s": "S4",
+   "iso": "SER",
+   "finalSize": 4,
+   "cap": 4,
+   "schedule": "r2(team:T02) r2(members:T02) r1(team:T02) r1(members:T02) w2(members:T02) w1(members:T02) a1[40001] c2 r1.1(team:T02) r1.1(members:T02) a1.1[refused]",
+   "sql": {
+    "edges": "(none)",
+    "verdict": "conflict-serializable",
+    "cycleOrSerialOrder": "T2",
+    "cycleInclAborted": "T1 -> T2 -> T1"
+   }
+  },
+  {
+   "runId": 120721,
+   "s": "S6",
+   "iso": "RC",
+   "finalSize": 4,
+   "cap": 4,
+   "schedule": "r2(seats:T02) r1(seats:T02) w2(seats:T02) w2(members:T02) c2 r1(seats:T02) a1[refused]",
+   "sql": {
+    "edges": "(none)",
+    "verdict": "conflict-serializable",
+    "cycleOrSerialOrder": "T2",
+    "cycleInclAborted": "T1 -> T2 -> T1"
+   }
+  },
+  {
+   "runId": 124721,
+   "s": "S6",
+   "iso": "RR",
+   "finalSize": 4,
+   "cap": 4,
+   "schedule": "r2(seats:T02) w2(seats:T02) w2(members:T02) c2 a1[40001]",
+   "sql": {
+    "edges": "(none)",
+    "verdict": "conflict-serializable",
+    "cycleOrSerialOrder": "T2",
+    "cycleInclAborted": null
+   }
+  },
+  {
+   "runId": 128721,
+   "s": "S6",
+   "iso": "SER",
+   "finalSize": 4,
+   "cap": 4,
+   "schedule": "r2(seats:T02) w2(seats:T02) w2(members:T02) c2 a1[40001]",
+   "sql": {
+    "edges": "(none)",
+    "verdict": "conflict-serializable",
+    "cycleOrSerialOrder": "T2",
+    "cycleInclAborted": null
+   }
+  },
+  {
+   "runId": 132721,
+   "s": "S7",
+   "iso": "RC",
+   "finalSize": 4,
+   "cap": 4,
+   "schedule": "w2(team:T02) r2(members:T02) w2(members:T02) c2 w1(team:T02) r1(members:T02) a1[refused]",
+   "sql": {
+    "edges": "(none)",
+    "verdict": "conflict-serializable",
+    "cycleOrSerialOrder": "T2",
+    "cycleInclAborted": null
+   }
+  },
+  {
+   "runId": 136721,
+   "s": "S7",
+   "iso": "RR",
+   "finalSize": 4,
+   "cap": 4,
+   "schedule": "r2(members:T02) w2(team:T02) w2(members:T02) c2 a1[40001]",
+   "sql": {
+    "edges": "(none)",
+    "verdict": "conflict-serializable",
+    "cycleOrSerialOrder": "T2",
+    "cycleInclAborted": null
+   }
+  },
+  {
+   "runId": 140721,
+   "s": "S7",
+   "iso": "SER",
+   "finalSize": 4,
+   "cap": 4,
+   "schedule": "r2(members:T02) w2(team:T02) w2(members:T02) c2 a1[40001]",
+   "sql": {
+    "edges": "(none)",
+    "verdict": "conflict-serializable",
+    "cycleOrSerialOrder": "T2",
+    "cycleInclAborted": null
+   }
+  }
+ ],
+ "sql": {
+  "S1": [
+   {
+    "label": "Client: check, think, insert",
+    "file": "experiments/race/harness.py",
+    "comment": "",
+    "sql": "-- body_naive() in experiments/race/harness.py ($1 = 'T02', $2 = the racer's USN)\nSELECT (SELECT count(*) FROM team_member WHERE team_id = $1)::int AS n,\n       (SELECT max_size FROM team WHERE team_id = $1) AS cap;\nSELECT pg_sleep(0.01);\nINSERT INTO team_member (team_id, usn, role, joined_at) VALUES ($1, $2, 'member', current_date);\n-- COUNT >= max_size -> ROLLBACK (\"team is full\"); else COMMIT. No lock, no constraint."
+   }
+  ],
+  "S2": [
+   {
+    "label": "check_team_capacity() + trg_team_capacity (fixture Q35)",
+    "file": "supabase/fixture/03_queries.sql",
+    "comment": "",
+    "sql": "-- Q35. Create a trigger that stops a student from joining a team that is already full.\nCREATE OR REPLACE FUNCTION check_team_capacity() RETURNS TRIGGER AS $$\nDECLARE\n    current_size INT;\n    capacity     INT;\nBEGIN\n    SELECT max_size INTO capacity FROM team WHERE team_id = NEW.team_id FOR UPDATE;\n    SELECT COUNT(*) INTO current_size FROM team_member WHERE team_id = NEW.team_id;\n    IF current_size >= capacity THEN\n        RAISE EXCEPTION 'Team % is full (% / %)', NEW.team_id, current_size, capacity;\n    END IF;\n    RETURN NEW;\nEND;\n$$ LANGUAGE plpgsql;\n\nCREATE TRIGGER trg_team_capacity\nBEFORE INSERT ON team_member\nFOR EACH ROW EXECUTE FUNCTION check_team_capacity();"
+   },
+   {
+    "label": "Client: a plain INSERT",
+    "file": "experiments/race/harness.py",
+    "comment": "",
+    "sql": "-- body_trigger_q35() in experiments/race/harness.py ($1 = 'T02', $2 = the racer's USN)\nINSERT INTO team_member (team_id, usn, role, joined_at) VALUES ($1, $2, 'member', current_date);\n-- the BEFORE INSERT trigger above locks the team row FOR UPDATE, then COUNTs"
+   }
+  ],
+  "S3": [
+   {
+    "label": "exp.team_counter",
+    "file": "experiments/race/schema.sql",
+    "comment": "-- S3 — conditional counter. The capacity test and the increment are ONE statement:\n--   UPDATE exp.team_counter SET member_count = member_count + 1\n--   WHERE team_id = $1 AND member_count < max_size RETURNING member_count;\n-- Under READ COMMITTED a waiting UPDATE re-checks its WHERE on the newest row version\n-- (EvalPlanQual), under RR/SER it fails with 40001 if the row changed after its snapshot.",
+    "sql": "CREATE TABLE exp.team_counter (\n    team_id      VARCHAR(5) PRIMARY KEY REFERENCES team(team_id) ON DELETE CASCADE,\n    member_count INT NOT NULL CHECK (member_count >= 0),\n    max_size     INT NOT NULL,\n    CHECK (member_count <= max_size)              -- belt and braces: the counter itself can never overflow\n);"
+   },
+   {
+    "label": "Client: conditional UPDATE, then INSERT",
+    "file": "experiments/race/harness.py",
+    "comment": "",
+    "sql": "-- body_counter() in experiments/race/harness.py ($1 = 'T02', $2 = the racer's USN)\nUPDATE exp.team_counter SET member_count = member_count + 1 \nWHERE team_id = $1 AND member_count < max_size RETURNING member_count;\nINSERT INTO team_member (team_id, usn, role, joined_at) VALUES ($1, $2, 'member', current_date);\n-- no row back from the UPDATE -> ROLLBACK (\"team is full\")"
+   }
+  ],
+  "S4": [
+   {
+    "label": "Client: S1 inside a retry loop",
+    "file": "experiments/race/harness.py",
+    "comment": "",
+    "sql": "-- body_naive() in experiments/race/harness.py ($1 = 'T02', $2 = the racer's USN)\nSELECT (SELECT count(*) FROM team_member WHERE team_id = $1)::int AS n,\n       (SELECT max_size FROM team WHERE team_id = $1) AS cap;\nSELECT pg_sleep(0.01);\nINSERT INTO team_member (team_id, usn, role, joined_at) VALUES ($1, $2, 'member', current_date);\n-- on SQLSTATE 40001 / 40P01: ROLLBACK, sleep 1-5 ms x 2^(retry-1), BEGIN again and re-run (at most 5 retries)\n-- one_client() in harness.py: the retry loop"
+   }
+  ],
+  "S6": [
+   {
+    "label": "exp.team_seat_slot",
+    "file": "experiments/race/schema.sql",
+    "comment": "-- S6 — declarative seats. Capacity becomes DATA (a finite set of seat keys) and the\n-- rule becomes KEYS: a seat can be held once (PK), a seat must exist (FK to the slot\n-- table, seat_no 1..max_size), a member must hold a seat (deferred FK from team_member,\n-- added only while S6 is the active strategy, see exp.use_strategy()).",
+    "sql": "CREATE TABLE exp.team_seat_slot (\n    team_id VARCHAR(5) REFERENCES team(team_id) ON DELETE CASCADE,\n    seat_no INT CHECK (seat_no BETWEEN 1 AND 6),\n    PRIMARY KEY (team_id, seat_no)\n);"
+   },
+   {
+    "label": "exp.team_seat",
+    "file": "experiments/race/schema.sql",
+    "comment": "",
+    "sql": "CREATE TABLE exp.team_seat (\n    team_id VARCHAR(5)  NOT NULL,\n    seat_no INT         NOT NULL,\n    usn     VARCHAR(10) NOT NULL REFERENCES student(usn) ON DELETE CASCADE,\n    PRIMARY KEY (team_id, seat_no),                                   -- one holder per seat\n    UNIQUE (team_id, usn),                                            -- one seat per student per team\n    FOREIGN KEY (team_id, seat_no) REFERENCES exp.team_seat_slot ON DELETE CASCADE  -- seat_no in 1..max_size\n);"
+   },
+   {
+    "label": "exp.claim_seat()",
+    "file": "experiments/race/schema.sql",
+    "comment": "-- S6 join: claim the lowest free seat; ON CONFLICT DO NOTHING when someone beat us to it.\n-- Returns the seat number, or NULL if this attempt lost the seat (caller loops / refuses).",
+    "sql": "CREATE FUNCTION exp.claim_seat(p_team VARCHAR, p_usn VARCHAR) RETURNS INT\nLANGUAGE sql AS $$\n    INSERT INTO exp.team_seat (team_id, seat_no, usn)\n    SELECT s.team_id, s.seat_no, p_usn\n    FROM exp.team_seat_slot s\n    WHERE s.team_id = p_team\n      AND NOT EXISTS (SELECT 1 FROM exp.team_seat x\n                      WHERE x.team_id = s.team_id AND x.seat_no = s.seat_no)\n    ORDER BY s.seat_no\n    LIMIT 1\n    ON CONFLICT (team_id, seat_no) DO NOTHING\n    RETURNING seat_no\n$$;"
+   },
+   {
+    "label": "Client: claim a seat, then INSERT",
+    "file": "experiments/race/harness.py",
+    "comment": "",
+    "sql": "-- body_seats() in experiments/race/harness.py ($1 = 'T02', $2 = the racer's USN)\nSELECT exp.claim_seat($1, $2);\nINSERT INTO team_member (team_id, usn, role, joined_at) VALUES ($1, $2, 'member', current_date);\nSELECT count(*) FROM exp.team_seat_slot s WHERE s.team_id = $1 AND NOT EXISTS \n(SELECT 1 FROM exp.team_seat x WHERE x.team_id = s.team_id AND x.seat_no = s.seat_no);\n-- NULL seat -> count free seats; 0 -> ROLLBACK (\"team is full\")"
+   }
+  ],
+  "S7": [
+   {
+    "label": "exp.enforce_team_capacity_v2()",
+    "file": "experiments/race/schema.sql",
+    "comment": "-- S7 — \"write the parent\" (the product's capacity v2, migration 0002, re-created here in\n-- schema exp so the migration files are untouched). The no-op UPDATE takes the team row\n-- lock AND creates a new row version: RR/SER waiters get 40001, RC waiters re-read.",
+    "sql": "CREATE FUNCTION exp.enforce_team_capacity_v2()\nRETURNS trigger LANGUAGE plpgsql SET search_path = '' AS $$\nDECLARE\n    cap          INT;\n    current_size INT;\nBEGIN\n    IF TG_OP = 'UPDATE' AND NEW.team_id = OLD.team_id THEN\n        RETURN NEW;\n    END IF;\n    UPDATE public.team SET max_size = max_size\n    WHERE team_id = NEW.team_id\n    RETURNING max_size INTO cap;\n    IF NOT FOUND THEN\n        RETURN NEW;\n    END IF;\n    SELECT count(*) INTO current_size FROM public.team_member WHERE team_id = NEW.team_id;\n    IF current_size >= cap THEN\n        RAISE EXCEPTION 'Team % is full (% / %)', NEW.team_id, current_size, cap\n            USING ERRCODE = 'check_violation', CONSTRAINT = 'team_capacity';\n    END IF;\n    RETURN NEW;\nEND $$;"
+   },
+   {
+    "label": "trg_team_capacity_v2",
+    "file": "experiments/race/schema.sql",
+    "comment": "",
+    "sql": "CREATE TRIGGER trg_team_capacity_v2\nBEFORE INSERT OR UPDATE OF team_id ON team_member\nFOR EACH ROW EXECUTE FUNCTION exp.enforce_team_capacity_v2();"
+   },
+   {
+    "label": "Client: a plain INSERT",
+    "file": "experiments/race/harness.py",
+    "comment": "",
+    "sql": "-- body_trigger_v2() in experiments/race/harness.py ($1 = 'T02', $2 = the racer's USN)\nINSERT INTO team_member (team_id, usn, role, joined_at) VALUES ($1, $2, 'member', current_date);\n-- the BEFORE INSERT trigger writes the team row (no-op UPDATE), then COUNTs"
+   }
+  ],
+  "common": [
+   {
+    "label": "exp.use_strategy()",
+    "file": "experiments/race/schema.sql",
+    "comment": "-- Only one capacity mechanism is active at a time.",
+    "sql": "CREATE FUNCTION exp.use_strategy(p TEXT) RETURNS VOID LANGUAGE plpgsql AS $$\nBEGIN\n    IF p IS NULL OR p NOT IN ('S1','S2','S3','S4','S6','S7') THEN\n        RAISE EXCEPTION 'unknown strategy %', p;\n    END IF;\n    IF to_regproc('public.check_team_capacity') IS NULL THEN\n        RAISE EXCEPTION 'Q35 trigger function missing: load the Q35 block first';\n    END IF;\n    ALTER TABLE public.team_member DISABLE TRIGGER trg_team_capacity;\n    ALTER TABLE public.team_member DISABLE TRIGGER trg_team_capacity_v2;\n    ALTER TABLE public.team_member DROP CONSTRAINT IF EXISTS team_member_needs_seat;\n    IF p = 'S2' THEN\n        ALTER TABLE public.team_member ENABLE TRIGGER trg_team_capacity;\n    ELSIF p = 'S7' THEN\n        ALTER TABLE public.team_member ENABLE TRIGGER trg_team_capacity_v2;\n    ELSIF p = 'S6' THEN\n        ALTER TABLE public.team_member ADD CONSTRAINT team_member_needs_seat\n            FOREIGN KEY (team_id, usn) REFERENCES exp.team_seat (team_id, usn)\n            DEFERRABLE INITIALLY DEFERRED;\n    END IF;\nEND $$;"
+   },
+   {
+    "label": "exp.reset_t02()",
+    "file": "experiments/race/schema.sql",
+    "comment": "-- Put T02 back to 3/4 for every mechanism.",
+    "sql": "CREATE FUNCTION exp.reset_t02() RETURNS VOID LANGUAGE sql AS $$\n    DELETE FROM public.team_member WHERE team_id = 'T02' AND usn LIKE '1RV99%';\n    DELETE FROM exp.team_seat      WHERE team_id = 'T02' AND usn LIKE '1RV99%';\n    UPDATE exp.team_counter c\n    SET member_count = (SELECT count(*) FROM public.team_member m WHERE m.team_id = c.team_id)\n    WHERE c.team_id = 'T02';\n$$;"
+   }
+  ],
+  "matrix": [
+   {
+    "label": "exp.v_cell_summary",
+    "file": "experiments/race/analysis.sql",
+    "comment": "",
+    "sql": "CREATE OR REPLACE VIEW exp.v_cell_summary AS\nWITH run_stats AS (\n    SELECT strategy, isolation, n_clients,\n           count(*)                                         AS trials,\n           avg(over_admitted::int)                          AS over_rate,\n           max(final_size)                                  AS worst_final_size,\n           max(max_size)                                    AS max_size,\n           avg(admitted)                                    AS mean_admitted,\n           avg(aborts_40001)                                AS mean_aborts_40001,\n           avg(refused)                                     AS mean_refused,\n           avg(duration_ms)                                 AS mean_duration_ms\n    FROM exp.experiment_run\n    GROUP BY strategy, isolation, n_clients\n), att_stats AS (\n    SELECT r.strategy, r.isolation, r.n_clients,\n           percentile_cont(0.50) WITHIN GROUP (ORDER BY a.latency_ms) AS p50_ms,\n           percentile_cont(0.95) WITHIN GROUP (ORDER BY a.latency_ms) AS p95_ms,\n           avg(a.retries)                                              AS mean_retries,\n           count(*) FILTER (WHERE a.outcome = 'deadlock')              AS deadlocks,\n           count(*) FILTER (WHERE a.outcome = 'error')                 AS errors\n    FROM exp.experiment_run r JOIN exp.experiment_attempt a USING (run_id)\n    GROUP BY r.strategy, r.isolation, r.n_clients\n)\nSELECT s.strategy, s.isolation, s.n_clients, s.trials,\n       round(100 * s.over_rate, 1)          AS over_admission_pct,\n       s.worst_final_size || '/' || s.max_size AS worst_size,\n       round(s.mean_admitted, 2)            AS mean_admitted,\n       round(s.mean_aborts_40001, 2)        AS mean_aborts_40001,\n       round(s.mean_refused, 2)             AS mean_refused,\n       round(a.mean_retries, 2)             AS mean_retries,\n       a.deadlocks, a.errors,\n       round(a.p50_ms::numeric, 2)          AS p50_ms,\n       round(a.p95_ms::numeric, 2)          AS p95_ms,\n       -- window function: latency rank of each strategy among its peers (same isolation, same N)\n       rank() OVER (PARTITION BY s.isolation, s.n_clients ORDER BY a.p95_ms) AS p95_rank\nFROM run_stats s JOIN att_stats a USING (strategy, isolation, n_clients);"
+   }
+  ],
+  "precedence": [
+   {
+    "label": "exp.v_precedence_edge_scoped",
+    "file": "experiments/race/analysis.sql",
+    "comment": "-- scope = 'committed' : committed projection (the textbook test, used for the verdict)\n-- scope = 'all'       : every attempted transaction, aborted ones included. A cycle here that is\n--                       absent from the committed projection runs through an aborted transaction:\n--                       either the DBMS broke it (40001, see cycle_broken_by_dbms) or the client\n--                       rolled that transaction back itself after \"team is full\".",
+    "sql": "CREATE OR REPLACE VIEW exp.v_precedence_edge_scoped AS\nWITH ops AS (\n    SELECT s.run_id, s.seq, s.txn, s.op, s.item,\n           EXISTS (SELECT 1 FROM exp.v_committed_txn c\n                   WHERE c.run_id = s.run_id AND c.txn = s.txn) AS committed\n    FROM exp.schedule_log s\n    WHERE s.op IN ('r', 'w')\n), scopes(scope) AS (VALUES ('committed'), ('all'))\nSELECT sc.scope, a.run_id, a.txn AS from_txn, b.txn AS to_txn,\n       string_agg(DISTINCT format('%s%s(%s) < %s%s(%s)',\n                                  a.op, substr(a.txn, 2), a.item, b.op, substr(b.txn, 2), b.item), '; ') AS because\nFROM scopes sc\nJOIN ops a ON sc.scope = 'all' OR a.committed\nJOIN ops b ON  b.run_id = a.run_id\n           AND b.item   = a.item\n           AND b.txn   <> a.txn              -- different transactions\n           AND b.seq    > a.seq              -- a precedes b in the schedule\n           AND (a.op = 'w' OR b.op = 'w')    -- at least one write\n           AND (sc.scope = 'all' OR b.committed)\nGROUP BY sc.scope, a.run_id, a.txn, b.txn;"
+   },
+   {
+    "label": "exp.v_committed_txn",
+    "file": "experiments/race/analysis.sql",
+    "comment": "",
+    "sql": "CREATE OR REPLACE VIEW exp.v_committed_txn AS\nSELECT run_id, txn FROM exp.schedule_log WHERE op = 'c';"
+   },
+   {
+    "label": "exp.v_precedence_cycle",
+    "file": "experiments/race/analysis.sql",
+    "comment": "-- Cycle detection: walk every edge path; a path that returns to its start is a cycle.",
+    "sql": "CREATE OR REPLACE VIEW exp.v_precedence_cycle AS\nWITH RECURSIVE walk (scope, run_id, start_txn, cur_txn, path, closed) AS (\n    SELECT scope, run_id, from_txn, to_txn, ARRAY[from_txn, to_txn], from_txn = to_txn\n    FROM exp.v_precedence_edge_scoped\n  UNION ALL\n    SELECT w.scope, w.run_id, w.start_txn, e.to_txn, w.path || e.to_txn, e.to_txn = w.start_txn\n    FROM walk w\n    JOIN exp.v_precedence_edge_scoped e\n      ON e.scope = w.scope AND e.run_id = w.run_id AND e.from_txn = w.cur_txn\n    WHERE NOT w.closed\n      AND (e.to_txn = w.start_txn OR e.to_txn <> ALL (w.path))   -- no revisits except closing\n)\nSELECT DISTINCT ON (scope, run_id) scope, run_id, array_to_string(path, ' -> ') AS cycle\nFROM walk WHERE closed\nORDER BY scope, run_id, cardinality(path), path;"
+   },
+   {
+    "label": "exp.v_serial_order",
+    "file": "experiments/race/analysis.sql",
+    "comment": "-- Serial order for acyclic graphs: topological levels (longest path from a source).",
+    "sql": "CREATE OR REPLACE VIEW exp.v_serial_order AS\nWITH RECURSIVE lvl (run_id, txn, depth) AS (\n    SELECT c.run_id, c.txn, 0\n    FROM exp.v_committed_txn c\n    WHERE NOT EXISTS (SELECT 1 FROM exp.v_precedence_edge e\n                      WHERE e.run_id = c.run_id AND e.to_txn = c.txn)\n  UNION ALL\n    SELECT l.run_id, e.to_txn, l.depth + 1\n    FROM lvl l JOIN exp.v_precedence_edge e ON e.run_id = l.run_id AND e.from_txn = l.txn\n    WHERE l.depth < 16                                       -- guard (graphs here have <= 7 nodes)\n), node AS (\n    SELECT run_id, txn, max(depth) AS depth FROM lvl GROUP BY run_id, txn\n)\nSELECT run_id, string_agg(txn, ' -> ' ORDER BY depth, txn) AS serial_order\nFROM node GROUP BY run_id;"
+   },
+   {
+    "label": "exp.v_run_serializability",
+    "file": "experiments/race/analysis.sql",
+    "comment": "",
+    "sql": "CREATE OR REPLACE VIEW exp.v_run_serializability AS\nSELECT r.run_id, r.strategy, r.isolation, r.trial_no, r.final_size, r.max_size, r.over_admitted,\n       (SELECT string_agg(s.op || substr(s.txn, 2) ||\n                          CASE WHEN s.op IN ('r', 'w') THEN '(' || s.item || ')'\n                               ELSE coalesce('[' || s.item || ']', '') END, ' ' ORDER BY s.seq)\n        FROM exp.schedule_log s WHERE s.run_id = r.run_id)                         AS logical_schedule,\n       (SELECT string_agg(e.from_txn || '->' || e.to_txn, ', ' ORDER BY e.from_txn, e.to_txn)\n        FROM exp.v_precedence_edge e WHERE e.run_id = r.run_id)                    AS edges,\n       cy.cycle,\n       CASE WHEN cy.cycle IS NULL THEN 'conflict-serializable'\n            ELSE 'NOT conflict-serializable' END                                   AS verdict,\n       CASE WHEN cy.cycle IS NULL THEN so.serial_order END                         AS equivalent_serial_order,\n       ca.cycle                                                                    AS cycle_incl_aborted,\n       -- a cycle that exists only when aborted transactions are included, AND one of the\n       -- transactions on it was killed by the DBMS (40001 ...), not rolled back by the client\n       -- after a \"team is full\" answer (e.g. an RC loser that read the seat set twice and saw\n       -- two different states is on a cycle too, but nobody had to break it)\n       (cy.cycle IS NULL AND ca.cycle IS NOT NULL AND EXISTS (\n            SELECT 1 FROM exp.schedule_log s\n            WHERE s.run_id = r.run_id AND s.op = 'a' AND s.item IS DISTINCT FROM 'refused'\n              AND s.txn = ANY (string_to_array(ca.cycle, ' -> '))))                AS cycle_broken_by_dbms\nFROM exp.experiment_run r\nLEFT JOIN exp.v_precedence_cycle cy ON cy.run_id = r.run_id AND cy.scope = 'committed'\nLEFT JOIN exp.v_precedence_cycle ca ON ca.run_id = r.run_id AND ca.scope = 'all'\nLEFT JOIN exp.v_serial_order     so ON so.run_id = r.run_id\nWHERE r.n_clients = 2\n  AND EXISTS (SELECT 1 FROM exp.schedule_log s WHERE s.run_id = r.run_id);"
+   }
+  ]
+ }
+}

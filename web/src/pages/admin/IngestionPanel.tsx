@@ -127,10 +127,30 @@ const CONSISTENCY_COLUMNS: Column<ConsistencyRow>[] = [
     sortValue: (r) => r.mongo_commits,
     cell: (r) => {
       const outside = r.outside_pipeline?.mongo_commits ?? 0
+      const untracked = r.not_projected ?? []
       return (
-        <span className="tabular" title={outside ? `includes ${outside} fixture commit(s) that never went through the pipeline` : undefined}>
+        <span className="tabular">
           {r.mongo_commits}
-          {outside ? <span className="block text-[11px] text-muted-foreground">{outside} fixture</span> : null}
+          {outside ? (
+            <span
+              className="block text-[11px] text-muted-foreground"
+              title={`includes ${outside} fixture commit(s) that never went through the pipeline`}
+              data-testid="consistency-mongo-fixture"
+            >
+              {outside} fixture
+            </span>
+          ) : null}
+          {untracked.length ? (
+            // why "6 · 6 · matched 5" can still be consistent: these commits touched only untracked
+            // files, so no contribution row is expected (KNOWN_ISSUES #4)
+            <span
+              className="block text-[11px] text-muted-foreground"
+              title={`touched only untracked files, so nothing to project: ${untracked.map((s) => s.slice(0, 7)).join(', ')}`}
+              data-testid="consistency-not-projected"
+            >
+              {untracked.length} not projected (untracked files)
+            </span>
+          ) : null}
         </span>
       )
     },
@@ -140,12 +160,27 @@ const CONSISTENCY_COLUMNS: Column<ConsistencyRow>[] = [
     header: 'Postgres commits',
     align: 'right',
     sortValue: (r) => r.postgres_commits ?? r.postgres_github_contributions,
-    cell: (r) => (
-      <span className="tabular" title="distinct commit SHAs; rows = contribution rows, one per (commit, author, artifact), i.e. per tracked file">
-        {r.postgres_commits ?? '—'}
-        <span className="block text-[11px] text-muted-foreground">{r.postgres_github_contributions} rows</span>
-      </span>
-    ),
+    cell: (r) => {
+      const outside = r.outside_pipeline?.postgres_contributions ?? 0
+      return (
+        <span className="tabular">
+          <span title="distinct commit SHAs; rows = contribution rows, one per (commit, author, artifact), i.e. per tracked file">
+            {r.postgres_commits ?? '—'}
+            <span className="block text-[11px] text-muted-foreground">{r.postgres_github_contributions} rows</span>
+          </span>
+          {outside ? (
+            // seeded or hand-entered rows whose source_ref is not a full 40-hex SHA: reported, not compared
+            <span
+              className="block text-[11px] text-muted-foreground"
+              title={`${outside} contribution row(s) whose source_ref is not a full commit SHA (seeded or hand-entered): they never went through the pipeline, so they are not compared`}
+              data-testid="consistency-pg-outside"
+            >
+              {outside} outside pipeline
+            </span>
+          ) : null}
+        </span>
+      )
+    },
   },
   {
     key: 'matched',

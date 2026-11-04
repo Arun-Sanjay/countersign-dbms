@@ -21,7 +21,7 @@ function page(load: () => Promise<{ default: ComponentType }>): Pick<RouteObject
  *   student  /hub  /team  /projects/:projectId  /notes  /faculty-view
  *   faculty  /teaching  /sheet/:projectId  /contested  /marks/:projectId     (admins may open these too)
  *   admin    /admin
- *   all      /search
+ *   all      /search  /race (Race arena: the Innovative Experiment; live races for faculty/admins)
  *   shared   /login  /about
  */
 export const routes: RouteObject[] = [
@@ -67,7 +67,10 @@ export const routes: RouteObject[] = [
               },
               {
                 element: <RequireRole roles={['student', 'faculty', 'admin']} />,
-                children: [{ path: '/search', ...page(() => import('@/pages/shared/SearchPage')) }],
+                children: [
+                  { path: '/search', ...page(() => import('@/pages/shared/SearchPage')) },
+                  { path: '/race', ...page(() => import('@/pages/race/RacePage')) },
+                ],
               },
               {
                 element: <RequireRole roles={['admin']} />,

@@ -18,11 +18,11 @@ const STATUS: Record<LiveStatus, { label: string; dot: string; title: string }> 
   closed: { label: 'Closed', dot: 'bg-muted-foreground/50', title: 'The channel was closed' },
 }
 
-export function LiveStatusChip({ status }: { status: LiveStatus }) {
+export function LiveStatusChip({ status, testId = 'live-status' }: { status: LiveStatus; testId?: string }) {
   const s = STATUS[status]
   return (
     <span
-      data-testid="live-status"
+      data-testid={testId}
       data-status={status}
       title={s.title}
       className="inline-flex h-5 items-center gap-1.5 rounded-full px-2 text-xs font-medium text-muted-foreground ring-1 ring-border ring-inset"

@@ -51,6 +51,7 @@ The relational CRUD goes through supabase-js under RLS ("fat DB, thin API", `doc
 | POST | `/ingest/drain` | **Admin only** (`403 admin_required` otherwise). Body `{max_messages?: 1..500, vt?: 5..3600}`. Drains the queue now (the demo's "sync now" button) and returns `{processed, projected, duplicates, ignored, failed, dead_letters, contributions, note_versions, queue_empty, outcomes[]}`. `503 worker_unconfigured` when neither a service key nor `INGEST_DB_URL` is set. |
 | GET | `/ingest/trace?delivery_id=` or `?contribution_id=` | **Admins and teaching faculty** (`403 staff_only` for students; `404` when RLS on `ingest_event` hides the delivery). One push side by side: the Mongo `github_events` document (ref, before/after, sender, logged_at, per commit the SHA, credited USN, paths, commit time; no messages, no file text, no e-mail) and the Postgres `ingest_event`, `contribution` and `artifact_version` rows it produced, matched by SHA, plus the exact queries (`queries`). Backs the drill-down sheet in the web app. |
 | GET | `/ingest/status` | Admins and teaching faculty: deliveries by status (as the caller, RLS) and `waiting` / `oldest_waiting`: how many are still queued, raw_stored or failed. Non-zero with nothing moving means no worker is running. |
+| POST | `/race/run` | **Faculty and admins** (`403 staff_only` for students). Body `{strategy: S1\|S2\|S3\|S4\|S6\|S7, isolation: RC\|RR\|SER, n: 2..100}`. Runs ONE race of the Innovative Experiment against the race lab (`elp-race-pg`, port 55433, `RACE_DSN`), using `experiments/race/harness.py` itself (`app/race.py`), never the product database. Returns `{admitted, refused, aborted, errors, aborts_40001, retries, final_size, max_size, over_admitted, duration_ms, clients[], schedule (N = 2 only), lab}`. Writes nothing to the reported `exp.*` results; T02 is reset to 3/4 afterwards. `503 race_lab_offline` (with the start command `experiments/race/setup.sh`) when the container is down or not loaded; `409 race_busy` during another race or a harness run. |
 | POST | `/ask` | Body `{question, team_id?, author_usn?, since?: YYYY-MM-DD, limit?: 1..10 (default 5)}`. Retrieval by `search_chunks` **as the caller** (RLS) with the same filters, then an answer with numbered citations (details below). `team_id` outside the caller's teams gives 403 like every team endpoint. |
 
 ### `POST /notes`
@@ -213,12 +214,12 @@ the DB's `DETAIL` keys:
 | Status | Codes |
 |---|---|
 | 401 | `auth_required`, `invalid_token` |
-| 403 | `profile_required`, `team_access_denied`, `student_required`, `note_author_required`, `admin_required`, `permission_denied` |
+| 403 | `profile_required`, `team_access_denied`, `student_required`, `note_author_required`, `admin_required`, `staff_only`, `permission_denied` |
 | 404 | `team_not_found`, `note_not_found` |
-| 409 | `version_conflict`, `note_team_mismatch` |
+| 409 | `version_conflict`, `note_team_mismatch`, `race_busy` |
 | 422 | `team_id`, `document_validation`, pydantic validation errors |
-| 502 | `postgres_unavailable`, `postgres_error` |
-| 503 | `worker_unconfigured` |
+| 502 | `postgres_unavailable`, `postgres_error`, `race_error` |
+| 503 | `worker_unconfigured`, `race_lab_offline` |
 
 ## Configuration
 
@@ -231,6 +232,7 @@ the defaults.
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY` | — | Override the target. Use the anon/publishable key only. |
 | `MONGO_TARGET` | `atlas` | `atlas` uses `MONGODB_URI`, or reads it from `../atlas-credentials.env` at startup without printing it. `local` uses `mongodb://127.0.0.1:57018/?directConnection=true`. |
 | `MONGO_DB` | `elp` | |
+| `RACE_DSN` | `postgresql://postgres:localdev@localhost:55433/race` | `POST /race/run` only: the throwaway race-lab container from `experiments/race/setup.sh` (its documented local password). Never returned; errors name only host:port/database. |
 | `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | |
 | `INGEST_BACKEND` | `rest` if a service key is set, else `sql` | How the worker reaches the pipeline RPCs. |
 | `SUPABASE_SERVICE_ROLE_KEY` | local: from `supabase status` | **Worker only.** Never used for a user request, never printed. Remote: set it in the environment. |
@@ -292,6 +294,7 @@ tests cover:
 - the member and staff privacy tiers;
 - create, update and history, including stale-version 409 and author-only edits;
 - consistency for student, faculty and teamless callers, with no commit messages leaked;
+- `tests/test_race.py`: `/race/run` needs a token (401) and a staff role (403 for students), validates the body (no S5, N 2..100), answers 503 `race_lab_offline` with the start command when nothing listens (RACE_DSN pointed at a closed port; the password is never echoed), and, when `elp-race-pg` is up, runs real races whose counts add up (skipped otherwise).
 - `tests/test_worker.py`:
   - **worker idempotency.** One message is processed twice and the raw log is replayed into
     the notes, with no new rows on either side.

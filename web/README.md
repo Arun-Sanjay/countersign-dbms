@@ -1,6 +1,6 @@
 # Countersign web
 
-*Every mark has a receipt.* This is the React front end for the Unified Experiential Learning Platform (RVCE CD252IA).
+*Every mark has a receipt.* This is the React front end for the Unified Experiential Learning and Project Intelligence Platform (RVCE CD252IA).
 
 Stack: Vite 8, React 19, TypeScript (strict), Tailwind v4, shadcn/ui (radix-nova, Geist), react-router 8, TanStack Query, supabase-js, zod and react-hook-form, plus lucide, sonner and prism-react-renderer.
 
@@ -32,6 +32,7 @@ Vite env modes: `vite` (mode `development`) loads `.env.local`. `vite --mode rem
 | `smoke` | Chrome smoke test of the running dev server (see below) |
 | `env:local` | regenerate `.env.local` from `supabase status` |
 | `sql:extract` | regenerate `src/sql/sources.generated.ts` from the migrations |
+| `race:results` | regenerate `src/data/race-results.json` (Race arena data: aggregates + verbatim SQL) from `experiments/race`; also run by `build` / `build:remote` (`--if-present` keeps the committed file when `experiments/` is absent) |
 | `types:gen` | regenerate `src/data/database.types.ts` from the local DB (`supabase gen types`) |
 
 **Personas.** These are created by `scripts/create_personas.py` (repo root). All use the password `Countersign@2026`.
@@ -51,7 +52,7 @@ If the local DB was reset, re-create the personas:
 
 ```bash
 npm run e2e              # resets the local DB (supabase db reset) + personas, starts Vite on :5173
-                         # and the FastAPI on :8000 when the elp-mongo-local container is up, runs e2e/01..10
+                         # and the FastAPI on :8000 when the elp-mongo-local container is up, runs e2e/01..11
 E2E_API=0 npm run e2e    # without the API (the /notes spec then checks the offline state)
 E2E_SKIP_RESET=1 npm run e2e   # skip the reset (specs assume the seed state)
 npm run e2e:typecheck    # tsc for the e2e code
@@ -85,6 +86,7 @@ src/
                             MarksPage /marks/:projectId   (admins can open these too)
   pages/admin/              AdminPage /admin (+ IngestionPanel: ingest_event, Sync now, consistency)
   pages/shared/             SearchPage /search (search_chunks + POST /ask; students, faculty, admins)
+  pages/race/               RacePage /race: the Innovative Experiment (every role; live races faculty/admins)
   components/activity/      LiveActivityPanel: Realtime broadcast (team:<id> students, project:<id> staff) + recent feed;
                             TraceSheet: one push, Mongo raw event next to its Postgres rows (GET /ingest/trace)
 ```
@@ -92,7 +94,8 @@ src/
 ## Search, live activity, ingestion
 
 - **`/search`** calls `search_chunks()` as the signed-in user. Filters are team, author and since. Each result card shows the artifact, version, author, time and a highlighted snippet, plus the score breakdown: FTS rank, vector rank and RRF = Σ 1/(60 + rank). **Ask** posts to the API's `POST /ask` (`VITE_API_URL`, default `http://localhost:8000`). The answer's `[n]` markers link to the cited result cards. When the API is down or has no `/ask`, the page says so and search keeps working.
-- **Live activity.** On `/sheet/:projectId`, staff subscribe to the private Realtime channel `project:<id>` (teaching faculty and admins only); RLS on `realtime.messages` decides who may join. Each new contribution shows a toast `New evidence: <usn> · <artifact> · <source>` and a feed entry, and the page refreshes its sheet, progress and evidence queries. Clicking a GitHub feed item opens the **trace sheet**: the Mongo raw event and the Postgres rows of that push side by side, with the queries that ran. The student project page subscribes to `team:<id>` for the student's own team only (another team's activity never reaches a student, the same rows RLS hides): toasts appear on every tab, and the feed and GitHub commit timeline are on the **Activity** tab. Admin inbox rows open the same trace sheet.
+- **Live activity.** On `/sheet/:projectId`, staff subscribe to the private Realtime channel `project:<id>` (teaching faculty and admins only); RLS on `realtime.messages` decides who may join. Each new contribution shows a toast `New evidence: <usn> · <artifact> · <source>` and a feed entry, and the page refreshes its sheet, progress and evidence queries. Clicking a GitHub feed item opens the **trace sheet**: the Mongo raw event and the Postgres rows of that push side by side, with the queries that ran. The student project page subscribes to `team:<id>` for the student's own team only (another team's activity never reaches a student, the same rows RLS hides): toasts appear on every tab, and the feed and GitHub commit timeline are on the **Activity** tab. Admin inbox rows open the same trace sheet. The sheet header repeats the Live status chip (click it to jump to the panel). A countersign is not broadcast, so the rubric sheet and the cell drawer refetch whenever the window regains focus (`refetchOnWindowFocus: 'always'` on those two queries only; `lib/query.ts` also listens to the window `focus` event, because `visibilitychange` does not fire when switching between two visible windows).
+- **`/race` (Race arena).** Component 10 in the app: the over-admission heatmap (strategy × isolation × N, hover/click for the outcome mix), p95 latency (SVG chart with a table view), the six strategies with their SQL, and two N = 2 precedence graphs (cyclic S2/RR, acyclic S2/RC) drawn by `src/lib/precedence.ts`. Data: `src/data/race-results.json` (`npm run race:results`). **Run a live race** posts to `POST /race/run` (faculty and admins) and animates each client's outcome; with the race lab down it shows *Race lab offline* and `experiments/race/setup.sh`. Spec: `e2e/11-race.spec.ts` (mocks the API, so it needs neither the API nor the container).
 - **Admin → Ingestion.** The `ingest_event` table with status chips. **Sync now** calls `POST /ingest/drain`. The consistency table comes from `GET /consistency`.
 
 ## Conventions for page owners

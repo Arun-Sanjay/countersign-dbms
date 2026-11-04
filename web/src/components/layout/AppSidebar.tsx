@@ -12,6 +12,7 @@ import {
   NotebookPen,
   ScrollText,
   Search,
+  Swords,
   TriangleAlert,
   Users,
   type LucideIcon,
@@ -234,7 +235,12 @@ export function AppSidebar() {
 
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
-            <NavItems items={[{ to: '/about', label: 'How it works', icon: Info }]} />
+            <NavItems
+              items={[
+                { to: '/about', label: 'How it works', icon: Info },
+                { to: '/race', label: 'Race arena', icon: Swords },
+              ]}
+            />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

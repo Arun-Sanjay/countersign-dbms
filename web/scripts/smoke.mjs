@@ -33,7 +33,7 @@ try {
   // 1. login page
   await page.goto(`${BASE}/login`)
   await page.getByText('Sign in to Countersign').waitFor()
-  check('login page renders', await page.getByText('Unified Experiential Learning Platform — RVCE CD252IA').isVisible())
+  check('login page renders', await page.getByText('Unified Experiential Learning and Project Intelligence Platform — RVCE CD252IA').isVisible())
   check('persona panel lists 7 personas', (await page.locator('[data-testid^="persona-"]').count()) === 7)
   await page.screenshot({ path: path.join(OUT, '01-login.png') })
 

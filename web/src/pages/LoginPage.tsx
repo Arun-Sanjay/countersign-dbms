@@ -177,7 +177,7 @@ export default function LoginPage() {
           <div className="w-full max-w-xl space-y-8">
             <div className="space-y-1.5">
               <h2 className="text-2xl font-semibold tracking-tight">Sign in to Countersign</h2>
-              <p className="text-sm text-muted-foreground">Unified Experiential Learning Platform — RVCE CD252IA</p>
+              <p className="text-sm text-muted-foreground">Unified Experiential Learning and Project Intelligence Platform — RVCE CD252IA</p>
             </div>
 
             {envError ? (

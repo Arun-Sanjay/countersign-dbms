@@ -8,6 +8,17 @@ rule at each of PostgreSQL's three isolation levels, whether the team ever ends 
 Measured results are in [`results/results.md`](results/results.md); the narrative is in
 [`FINDINGS.md`](FINDINGS.md).
 
+**In the app:** the **Race arena** page (`/race`, sidebar under *How it works*; every role may
+open it) shows the matrix, the latency, the six strategies with their SQL, and two worked
+precedence graphs. Its data is `web/src/data/race-results.json`, built from `results/` and
+`schema.sql` / `analysis.sql` / `harness.py` by `web/scripts/race-results.mjs`
+(`npm run race:results`; also run by `npm run build`), aggregates only. The script recomputes every
+example's precedence graph in TypeScript and fails if it disagrees with `analysis.sql`. Its
+**Run a live race** panel (faculty and admins) calls the API's `POST /race/run`, which imports
+`harness.py` and runs ONE race against this container. A live race writes nothing to the `exp`
+result tables, resets T02 to 3/4 afterwards, and answers 409 while the harness is running and
+503 `race_lab_offline` when the container is down.
+
 ## Files
 
 | File | What it is |

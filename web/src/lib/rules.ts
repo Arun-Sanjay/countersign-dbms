@@ -63,7 +63,8 @@ export const countersignSchema = z
   })
 export type CountersignInput = z.infer<typeof countersignSchema>
 
-/** record_assessment: marks >= 0, one decimal (NUMERIC(4,1)), <= milestone.max_marks (trigger) */
+/** record_assessment: marks >= 0 (CHECK), at most one decimal (CHECK assessment_marks_one_decimal, 0007:
+ *  refused, never rounded), <= milestone.max_marks (trigger) */
 export function marksSchema(maxMarks: number) {
   return z.object({
     marks: z

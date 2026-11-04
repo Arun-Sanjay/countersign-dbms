@@ -143,10 +143,10 @@ sequenceDiagram
 │   ├── lab/                   graded lab documents (Markdown sources, PDF, DOCX, build scripts)
 │   └── screenshots/           the screenshots above
 ├── supabase/
-│   ├── migrations/            0001 core schema … 0006 ingest worker (all six applied to the live project)
+│   ├── migrations/            0001 core schema … 0007 strict marks (all applied to the live project)
 │   ├── fixture/               FROZEN graded Test fixture: 01_schema, 02_seed, 03_queries (Q1–Q37)
 │   ├── seed/                  demo.sql (Sanvid, P06 "CD252IA Lab 2026-27", T00, claims, marks), ingest.sql
-│   ├── tests/                 pgTAP: constraints, RLS matrix, RPCs, abuse cases, ingest, worker
+│   ├── tests/                 pgTAP: constraints, RLS matrix, RPCs, abuse cases, ingest, worker, strict marks
 │   ├── functions/github-webhook/   Edge Function: HMAC check, then one RPC
 │   └── config.toml            local stack config (sign-ups off, verify_jwt = false for the webhook)
 ├── mongo/                     04_mongo.js (FROZEN, M1–M25), seed.js, validators.js, portfolio_merge.js
@@ -255,13 +255,13 @@ web app anywhere public.
 
 | Suite | Command | Where it runs | Result (5 Nov 2026) |
 |:--|:--|:--|:--|
-| pgTAP: constraint gallery, RLS matrix, RPCs, abuse cases, ingest, worker | `npx -y supabase@latest test db` | local Supabase stack, freshly reset (`scripts/reset_local.sh`) | **657** assertions pass (45 + 298 + 126 + 53 + 119 + 16) |
+| pgTAP: constraint gallery, RLS matrix, RPCs, abuse cases, ingest, worker, strict marks | `npx -y supabase@latest test db` | local Supabase stack, freshly reset (`scripts/reset_local.sh`) | **701** assertions pass (46 + 298 + 126 + 53 + 119 + 16 + 43) |
 | Fixture regression, SQL (gate G1) | `scripts/test_fixture.sh [-v]` | throwaway `postgres:17` container, port 55432 | **37/37** Q1–Q37 match Appendix H |
 | Fixture regression, MongoDB (gate G1) | `scripts/test_mongo_fixture.sh [-v]` | throwaway `mongo:8` container, port 57017 | **25/25** M1–M25 match Appendix H |
 | Mongo validators | `scripts/check_mongo_validators.sh --local` | scratch database in `elp-mongo-local` | fixture writes accepted, 6 malformed writes rejected |
-| API + worker | `cd api && MONGO_TARGET=local uv run pytest -q` | local stack + personas + `elp-mongo-local` | **47** pass |
+| API + worker | `cd api && MONGO_TARGET=local uv run pytest -q` | local stack + personas + `elp-mongo-local` | **60** pass (`test_api.py` 24, `test_worker.py` 25, `test_race.py` 11) |
 | Web static checks | `cd web && npm run typecheck && npm run lint && npm run build` | local | clean |
-| Web end-to-end (Playwright, installed Chrome) | `cd web && npm run e2e` | **local only** (resets the local DB first) | **38** pass across `e2e/01`–`10` |
+| Web end-to-end (Playwright, installed Chrome) | `cd web && npm run e2e` | **local only** (resets the local DB first) | **44** pass across `e2e/01`–`11` |
 | Race harness (Component 10) | see below | throwaway `elp-race-pg` container, port 55433 | 72,000 races; findings in `experiments/race/` |
 
 Notes:
@@ -295,7 +295,8 @@ docker rm -f elp-race-pg                      # clean up
 ```
 
 `report.py` rewrites `experiments/race/results/`, so run it only to regenerate the reported
-results. The full procedure is in [`experiments/race/README.md`](experiments/race/README.md). The
+results (then `cd web && npm run race:results` to refresh the Race arena page's data). The
+full procedure is in [`experiments/race/README.md`](experiments/race/README.md). The
 headline finding, in [`FINDINGS.md`](experiments/race/FINDINGS.md): *a correct-looking
 lock-then-check trigger is only correct at READ COMMITTED*. Under REPEATABLE READ the fixture
 trigger let a team end at 103/4. The product's capacity v2 trigger (write the parent row) holds at
@@ -374,11 +375,11 @@ As of 5 November 2026.
 
 | Area | State |
 |:--|:--|
-| Live Supabase project `countersign-dbms` (ap-south-1, PG 17.11) | **Built.** Migrations 0001–0006 applied; fixture, demo and ingest seeds loaded; 7 personas; sign-ups disabled |
-| Relational core, RLS, RPCs, triggers, views | **Built and tested** (pgTAP 657) |
+| Live Supabase project `countersign-dbms` (ap-south-1, PG 17.11) | **Built.** Migrations 0001–0007 applied; fixture, demo and ingest seeds loaded; 7 personas; sign-ups disabled; github-webhook function deployed |
+| Relational core, RLS, RPCs, triggers, views | **Built and tested** (pgTAP 701) |
 | Frozen graded fixture | **Green.** Q1–Q37 37/37, M1–M25 25/25 |
-| Web app (student, faculty, admin) | **Built** (e2e 38). Runs on localhost against either stack; no hosted deployment yet (needs `npx vercel login`) |
-| FastAPI (notes with immutable versions, consistency, ingest drain/trace/status) | **Built** (pytest 47). Runs on a laptop; not hosted |
+| Web app (student, faculty, admin) | **Built** (e2e 44). Runs on localhost against either stack; no hosted deployment yet (needs `npx vercel login`) |
+| FastAPI (notes with immutable versions, consistency, ingest drain/trace/status) | **Built** (pytest 60). Runs on a laptop; not hosted |
 | GitHub ingestion: Edge Function, pgmq, worker, Mongo log, projection, Realtime | **Built and deployed.** 16 replayed deliveries → 9 projected, 29 contributions, 58 chunks on the live project |
 | Real repository webhook on GitHub | **Pending.** No hook is configured on `Arun-Sanjay/countersign-dbms` yet (`ingest/README.md`, cloud setup step 4) |
 | File text for real pushes (`GITHUB_FETCH_CONTENTS=1`) | **Built, untested against GitHub** (needs a `GITHUB_TOKEN`; the repository is private) |
@@ -386,12 +387,13 @@ As of 5 November 2026.
 | Embeddings (Voyage `voyage-4`, 1024 dims, HNSW) | **Built, unused.** Pending `VOYAGE_API_KEY`; 0 of 58 chunks embedded |
 | `/ask` | **Extractive with citations** today. Generative answers with server-checked citations are built and unit-tested with stubs. Pending `ANTHROPIC_API_KEY` |
 | Innovative Experiment (race harness, 72,000 races, precedence graphs in SQL) | **Done** (local Docker) |
+| Race arena page `/race` (the experiment in the app: matrix, latency, strategies + SQL, precedence graphs, live race via `POST /race/run`) | **Built** (e2e `11-race`, pytest `test_race.py`). The live panel needs the local race lab (`experiments/race/setup.sh`) |
 | CI (`fixture.yml`) | **Written, not pushed** (needs the `workflow` scope) |
 | Keep-alive for the free project | **Manual** (`docs/RUNBOOK.md` §3); no scheduled job yet |
 | GitHub OAuth identity binding, limited Atlas app user | **Pending.** Identities are verified by an admin seed; the API uses the Atlas admin URI, locally only |
-| Viva practice, audit hash chain, consent ledger, Yjs co-editing, Race Arena page | **Planned** (`docs/PLAN.md` §3, phases P4–P5) |
+| Viva practice, audit hash chain, consent ledger, Yjs co-editing | **Planned** (`docs/PLAN.md` §3, phases P4–P5) |
 
-Open app issues found in the demo rehearsal, with repro and proposed fix: [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md).
+App issues found in the demo rehearsal, with repro and the fix made for each (all seven fixed, 5 November 2026): [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md).
 
 ## Safety rules
 

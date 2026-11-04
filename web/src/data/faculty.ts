@@ -183,6 +183,10 @@ export function useRubricSheet(projectId: string) {
   return useQuery({
     queryKey: facultyKeys.sheet(projectId),
     enabled: Boolean(projectId),
+    // a teammate's countersign elsewhere changes the claim glyphs, and Realtime only broadcasts
+    // new contributions: refetch whenever the faculty window comes back (KNOWN_ISSUES #5).
+    // 'always' ignores staleTime; read-only, so no form state is lost.
+    refetchOnWindowFocus: 'always',
     queryFn: async (): Promise<RubricCell[]> => {
       const { data, error } = await supabase
         .from('v_rubric_sheet')
@@ -352,6 +356,8 @@ export function useCellClaims(cell: { usn: string; projectId: string; milestoneN
   return useQuery({
     queryKey: cell ? facultyKeys.cellClaims(cell.usn, cell.projectId, cell.milestoneNo) : [...keys.faculty.all, 'claims', 'none'],
     enabled: Boolean(cell),
+    // the open drawer shows countersigns too: same rule as useRubricSheet (KNOWN_ISSUES #5)
+    refetchOnWindowFocus: 'always',
     queryFn: async (): Promise<CellClaim[]> => {
       const { data, error } = await supabase
         .from('claim')

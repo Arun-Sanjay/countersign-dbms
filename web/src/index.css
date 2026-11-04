@@ -233,3 +233,26 @@
     background-position: center;
   }
 }
+
+/*
+ * Race arena (/race): six categorical series, one per strategy, in a fixed order (S1 S2 S3 S4
+ * S6 S7). Validated with the dataviz palette checker (adjacent CVD ΔE ≥ 8.4, normal-vision ΔE
+ * ≥ 19.3 in both modes); the light steps of slots 3–5 are below 3:1 on white, so the latency
+ * chart always has a legend and a table view.
+ */
+.race-viz {
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+}
+.dark .race-viz {
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+}

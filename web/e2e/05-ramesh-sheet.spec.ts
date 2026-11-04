@@ -18,6 +18,14 @@ test.describe('5 · ramesh: the P06 rubric sheet', () => {
     await expect(grid).toContainText('/50')
     await expect(page.getByText('No recorded evidence yet').first()).toBeVisible()
     await expect(page.locator('body')).not.toContainText(/ghost/i)
+
+    // KNOWN_ISSUES #6: at 1440 px with the sidebar open, C1..C11 and Lab CIE /50 fit without
+    // scrolling sideways, and the Live chip is in the header, above the fold
+    const overflow = await grid.evaluate((t) => t.parentElement!.scrollWidth - t.parentElement!.clientWidth)
+    expect(overflow).toBeLessThanOrEqual(0)
+    await expect(grid.getByRole('columnheader', { name: /Lab CIE/ })).toBeInViewport()
+    await expect(page.getByTestId('live-status-header')).toBeInViewport()
+    await expect(page.getByTestId('live-status-header')).toHaveAttribute('data-status', /connecting|live/)
   })
 
   test('enters a mark on C2 within the max, then is stopped above the max', async ({ page }) => {
@@ -26,6 +34,8 @@ test.describe('5 · ramesh: the P06 rubric sheet', () => {
     await page.locator(cell(MEERA, 2)).click()
     const drawer = page.getByRole('dialog').filter({ hasText: 'Requirement Specification' })
     await expect(drawer).toBeVisible()
+    // KNOWN_ISSUES #1: the drawer is max-w-xl (576 px) at 1440 px, not the base sheet's 384 px
+    expect((await drawer.boundingBox())?.width ?? 0).toBeGreaterThan(560)
     const marks = drawer.getByLabel('Marks (0–5)')
     await expect(marks).toBeVisible()
 

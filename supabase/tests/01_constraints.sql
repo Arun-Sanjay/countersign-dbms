@@ -5,7 +5,7 @@
 --   23P01 exclusion_violation   55000 object_not_in_prerequisite_state
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(45);
+SELECT plan(46);
 
 -- ===================== A. Declarative CHECK constraints =====================
 SELECT throws_ok(
@@ -51,6 +51,11 @@ SELECT throws_ok(
     $$INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by)
       VALUES ('1RV24CY047', 'P06', 5, -1, 'F01')$$,
     '23514', NULL, 'CHECK: marks cannot be negative');
+
+SELECT throws_ok(
+    $$INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by)
+      VALUES ('1RV24CY047', 'P06', 5, 4.25, 'F01')$$,
+    '23514', NULL, 'CHECK: marks have at most one decimal; 4.25 is refused, not rounded (0007)');
 
 SELECT throws_ok(
     $$INSERT INTO academic_term (term_id, name, start_date, end_date)
