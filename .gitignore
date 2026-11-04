@@ -1,0 +1,20 @@
+# secrets — never commit
+*.env
+*.env.*
+.env*
+!*.env.example
+!.env.example
+*.pem
+
+# deps / build
+node_modules/
+dist/
+.vercel/
+__pycache__/
+.venv/
+*.pyc
+
+# local
+.DS_Store
+supabase/.temp/
+supabase/.branches/
