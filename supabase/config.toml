@@ -69,7 +69,7 @@ schema_paths = []
 enabled = true
 # Specifies an ordered list of seed files to load during db reset.
 # Supports glob patterns relative to supabase directory: "./seeds/*.sql"
-sql_paths = ["./fixture/02_seed.sql"]
+sql_paths = ["./fixture/02_seed.sql", "./seed/demo.sql"]
 
 [db.network_restrictions]
 # Enable management of network restrictions.
@@ -174,7 +174,9 @@ enable_refresh_token_rotation = true
 # Requires enable_refresh_token_rotation = true.
 refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project. Existing users can still sign in.
-enable_signup = true
+# Off: accounts are created by an admin (scripts/create_personas.py, Auth Admin API).
+# The same switch must be off on the remote project (Dashboard > Auth > Providers).
+enable_signup = false
 # Allow/disallow anonymous sign-ins to your project.
 enable_anonymous_sign_ins = false
 # Allow/disallow testing manual linking of accounts
