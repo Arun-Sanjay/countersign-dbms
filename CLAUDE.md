@@ -14,3 +14,11 @@ Source of truth: `PROJECT_MASTER.md` (vision, schema, seed, verified queries, ru
 ## Local
 - Local PG17: `docker start elp-pg17` (port 54329, password `localdev`). Race check: `experiments/race/rr_trigger_check.sh`.
 - Python via `uv` (3.12), Node 24. Tools via npx: `npx supabase`, `npx mongosh`, `npx vercel`.
+
+## Cloud
+- Supabase: org "dbms lab" (mzbudtauwftenatrsuyy), project `countersign-dbms`, ref `oowtsesgkhhbojjmmlgk`, ap-south-1, PG 17.11.
+  Secrets in `supabase/.env` (SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD, SUPABASE_PROJECT_REF) — git-ignored.
+  Apply: `set -a; . supabase/.env; set +a; npx supabase db push --remote --yes`. Ad-hoc SQL: Management API `POST /v1/projects/$REF/database/query`.
+  The claude.ai Supabase MCP is NOT authorized for this org — use the CLI/API with the token instead (and never touch Teron).
+- MongoDB Atlas: MongoDB 8.0, database `elp`, URI in `atlas-credentials.env` (atlasAdmin user — setup only, never in app env).
+  Seed: `npx mongosh "$MONGODB_URI" --quiet < mongo/seed.js`.
