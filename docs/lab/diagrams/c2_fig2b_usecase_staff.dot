@@ -1,8 +1,9 @@
-// C2 SRS, Figure 2b (revision 1.1): UML use-case diagram, primary actors Faculty and
+// C2 SRS, Figure 2b (revision 1.2): UML use-case diagram, primary actors Faculty and
 // Administrator, secondary actors GitHub, Obsidian, Voyage AI and Anthropic Claude API.
 // The Administrator is NOT associated with "Record marks": an admin has no faculty_id and
 // record_assessment() raises 42501 faculty_required (supabase/tests/03_rpc.sql §H).
-// Solid ellipse = built; dashed ellipse = specified, not built (status as of 4 Nov 2026).
+// Solid ellipse = built; dashed ellipse = specified, not built (status as of 5 Nov 2026). Dashed lines = associations
+// with the AI model services, which are planned (no API keys yet).
 digraph usecase_staff {
     graph [rankdir=LR, fontname="DejaVu Sans", fontsize=13, nodesep=0.14, ranksep=0.7, pad=0.15, newrank=true];
     node  [fontname="DejaVu Sans", fontsize=13];
@@ -26,12 +27,13 @@ digraph usecase_staff {
         fix    [label="Correct records: unlock, delete\nmarks, verified skills, team\nplacement [FR4, FR7, FR8]"];
         rec    [label="Maintain students, faculty, terms,\nofferings, enrolment [FR1]"];
         proj   [label="Define project, components,\nrequired skills [FR2]"];
-        ask    [label="Ask the cited assistant [FR9]", style="dashed,filled"];
-        ingest [label="Ingest GitHub / Obsidian\nwork [FR5]", style="dashed,filled"];
+        ask    [label="Search submitted text;\nask with citations [FR9]"];
+        ingest [label="Ingest GitHub / Obsidian\nwork; trace a push [FR5]"];
+        repo   [label="Register repositories;\nverify identities [FR5]"];
     }
     { rank=same; admin; github; obsidian; voyage; claude; }
-    faculty -> {cons mark ask hub cie sheet lock};
-    {hub cie sheet lock fix rec proj} -> admin;
+    faculty -> {cons mark ask hub cie sheet lock ingest};
+    {hub cie sheet lock fix rec proj repo ingest} -> admin;
     ingest -> {github obsidian};
-    ask -> {voyage claude};
+    ask -> {voyage claude} [style=dashed];
 }

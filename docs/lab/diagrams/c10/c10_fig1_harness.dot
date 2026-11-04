@@ -1,0 +1,23 @@
+// C10 Innovative Experiment - Figure 1: one trial of the race harness (experiments/race/harness.py).
+// Render: docs/lab/build_c10.sh. Caption is in C10_Innovative_Experiment.md.
+digraph Harness {
+  graph [rankdir=TB, nodesep=0.45, ranksep=0.32, fontname="DejaVu Sans", pad=0.15, bgcolor="white"];
+  node  [fontname="DejaVu Sans", fontsize=12, shape=box, style="rounded,filled", fillcolor="#f4f6f8", color="#5d6d7e", width=3.0];
+  edge  [fontname="DejaVu Sans", fontsize=10.5, color="#34495e", arrowsize=0.75];
+
+  reset   [label=<<B>1. reset</B> (admin connection)<BR/>exp.use_strategy(S) once per block<BR/>exp.reset_t02(): T02 back to 3/4>];
+  begin   [label=<<B>2. N racer connections</B> (asyncpg)<BR/>each runs BEGIN ISOLATION LEVEL L<BR/><I>BEGIN takes no snapshot yet</I>>, fillcolor="#e8eef5"];
+  barrier [label=<<B>3. asyncio.Barrier(N)</B><BR/>releases all N clients together<BR/>(skew ~0.1 ms at N = 8,<BR/>1 to 1.5 ms at N = 100)>, style="filled", fillcolor="#fef9e7", color="#d68910"];
+  body    [label=<<B>4. strategy body</B> (S1 ... S7)<BR/>then COMMIT; each attempt is<BR/>admitted, refused, 40001,<BR/>40P01 or error>, fillcolor="#e8eef5"];
+  count   [label=<<B>5. final COUNT(*)</B> of T02 (admin)<BR/>over_admitted =<BR/>final_size &gt; max_size>];
+  log     [label=<<B>6. logger connection</B>: COPY into<BR/>exp.experiment_run,<BR/>exp.experiment_attempt,<BR/>exp.schedule_log (N = 2 only)<BR/><I>then the next trial (1000 per cell)</I>>, fillcolor="#e9f7ef", color="#1e8449"];
+
+  db [label=<<B>PostgreSQL 17.11</B><BR/>Docker container elp-race-pg<BR/>max_connections = 300<BR/>fixture 01 + 02 + Q35 (verbatim)<BR/>+ schema exp (S3, S6, S7 objects)>, fillcolor="#eaf2f8", color="#1f3b5c", width=2.6];
+  rec [label=<<B>logical schedule recorder</B><BR/>r / w / c / a ops, one global<BR/>sequence counter (N = 2 only)>, fillcolor="#fdf2e9", color="#ba4a00", width=2.6];
+
+  reset -> begin -> barrier -> body -> count -> log;
+  body -> db  [label="N backends\nrace for T02", dir=both];
+  body -> rec [style=dashed];
+  {rank=same; body; db;}
+  {rank=same; count; rec;}
+}

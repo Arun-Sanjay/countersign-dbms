@@ -1,46 +1,44 @@
-// C2 SRS, Figure 1 (revision 1.1): Product perspective (system context).
-// Solid = built and exercised by a test run on 4 Nov 2026 (C2_SRS.md §4).
-// Dashed = specified, not built. Dotted = a link by shared keys, not a network call.
+// C2 SRS, Figure 1 (revision 1.2): Product perspective (system context).
+// Solid = built and exercised by a recorded test run (C2_SRS.md §4, 5 Nov 2026).
+// Dashed = specified, not built (only the AI model services remain).
+// Dotted = a link by shared keys, not a network call.
 digraph context {
-    graph [rankdir=TB, fontname="DejaVu Sans", fontsize=13, nodesep=0.3, ranksep=0.55, pad=0.15, newrank=true];
+    graph [rankdir=TB, fontname="DejaVu Sans", fontsize=13, nodesep=0.3, ranksep=0.5, pad=0.15, newrank=true];
     node  [fontname="DejaVu Sans", fontsize=13, shape=box, style="rounded,filled", fillcolor="#ffffff", color="#333333"];
     edge  [fontname="DejaVu Sans", fontsize=13, color="#333333", arrowsize=0.8];
 
     student [label="Student\n(U1)", style="filled", fillcolor="#eef3fb"];
     faculty [label="Faculty\n(U2)", style="filled", fillcolor="#eef3fb"];
     admin   [label="Administrator\n(U3)", style="filled", fillcolor="#eef3fb"];
-    { rank=same; student; faculty; admin; }
+    github  [label="GitHub\nteam repository\n(push webhook)", style="filled", fillcolor="#eef3fb"];
+    { rank=same; student; faculty; admin; github; }
 
     subgraph cluster_system {
         label="Countersign (system boundary)"; labeljust=r; fontsize=13; style="rounded"; color="#1f4e79"; penwidth=1.6;
         web   [label="Web client\nReact 19 + TypeScript\n(Vite, Tailwind, shadcn)"];
         auth  [label="Supabase Auth\n(JWT, auth.uid())"];
-        api   [label="Data API (PostgREST)\ntables, views,\n/rest/v1/rpc/<name>"];
-        svc   [label="FastAPI service\nnotes + note_versions,\nconsistency report,\nexport_pg"];
-        planned [label="Ingest worker,\nRAG orchestration\n(planned; reads Postgres\nvia the Data API as\nthe requesting user)", style="rounded,dashed"];
-        pg    [label="PostgreSQL 17\n26 public tables\n+ private.note,\n6 views, 16 RPCs,\nRLS default-deny", fillcolor="#fdf6e3"];
-        mongo [label="MongoDB 8\nnotes, note_versions,\ngithub_events,\nportfolios", fillcolor="#fdf6e3"];
-        { rank=same; web; auth; }
-        { rank=same; svc; api; planned; }
+        edgef [label="Edge Function\ngithub-webhook\n(HMAC check)"];
+        api   [label="Data API (PostgREST)\ntables, views, RPCs;\nRealtime (broadcast)"];
+        svc   [label="FastAPI service\nnotes, /consistency,\n/ask, /ingest/*;\ningest worker"];
+        pg    [label="PostgreSQL 17\n29 public tables\n+ private.note, 6 views,\nRLS default-deny,\npgmq, pgvector"];
+        mongo [label="MongoDB 8\nnotes, note_versions,\ngithub_events, portfolios"];
+        { rank=same; web; auth; edgef; }
+        { rank=same; svc; api; }
         { rank=same; pg; mongo; }
     }
 
-    ext [shape=plain, label=<<TABLE BORDER="1" STYLE="dashed" CELLBORDER="0" CELLPADDING="4" CELLSPACING="0">
-          <TR><TD><B>External systems (planned, outside the boundary)</B></TD></TR>
-          <TR><TD ALIGN="LEFT">GitHub: push webhooks, OAuth identity</TD></TR>
-          <TR><TD ALIGN="LEFT">Voyage AI: embeddings (1024-d)</TD></TR>
-          <TR><TD ALIGN="LEFT">Anthropic Claude API: cited answers</TD></TR></TABLE>>];
+    ai [label="AI model services (planned):\nVoyage AI embeddings,\nAnthropic Claude answers;\nsent only chunks the caller may read", style="rounded,dashed"];
 
     student -> web; faculty -> web; admin -> web;
+    github -> edgef [label="signed push"];
     web -> auth [label="sign-in"];
     web -> api  [label="HTTPS + JWT"];
     web -> svc  [label="HTTPS + JWT"];
-    api -> pg   [label="SQL as\n'authenticated'"];
-    svc -> api  [label="caller's JWT", constraint=false];
+    edgef -> api [label="ingest_receive()"];
+    api -> pg   [label="SQL as the\ncaller's role"];
+    svc -> api  [label="caller's JWT;\nworker: service role", constraint=false];
     svc -> mongo [label="app user"];
-    planned -> mongo [style=dashed];
-    svc -> api -> planned [style=invis];
-    pg -> mongo [style=dotted, dir=both, label="shared keys:\nartifact_id, usn,\nteam_id, mongo_ref", constraint=false];
-    planned -> ext [style=dashed, dir=both, minlen=2];
-    mongo -> ext [style=invis];
+    pg -> mongo [style=dotted, dir=both, label="shared keys:\nartifact_id, usn,\nteam_id, mongo_ref,\ncommit SHA", constraint=false];
+    svc -> ai [style=dashed, dir=both];
+    mongo -> ai [style=invis];
 }

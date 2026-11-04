@@ -1,0 +1,28 @@
+% LaTeX header for C10_Innovative_Experiment.pdf (used by build_c10.sh).
+\usepackage{float}
+\let\origfigure\figure
+\let\endorigfigure\endfigure
+\renewenvironment{figure}[1][2] {\expandafter\origfigure\expandafter[H]} {\endorigfigure}
+% Figure numbers are written in the caption text, so LaTeX adds none.
+\usepackage{caption}
+\captionsetup[figure]{labelformat=empty,font=small}
+% Tables: footnotesize by default; \smalltablestrue ... \smalltablesfalse for the wide matrix.
+\usepackage{etoolbox}
+\newif\ifsmalltables
+\AtBeginEnvironment{longtable}{\ifsmalltables\scriptsize\else\footnotesize\fi}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+% allow line breaks after underscores in long SQL identifiers
+\renewcommand{\_}{\textunderscore\allowbreak}
+% Code lines in C10_Innovative_Experiment.md are kept to at most 90 characters, which fit
+% the A4 text width at the 0.82-scaled monospace font set in build_c10.sh.
+\setlength{\emergencystretch}{3em}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize RVCE, CD252IA: Component 10 Innovative Experiment}
+\fancyhead[R]{\footnotesize Countersign}
+\fancyfoot[C]{\footnotesize \thepage}
+\setlength{\headheight}{14pt}
+% contents to level 2 (\tableofcontents is placed by c2_rvce.lua)
+\setcounter{tocdepth}{2}

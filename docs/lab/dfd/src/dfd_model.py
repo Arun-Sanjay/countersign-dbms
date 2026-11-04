@@ -22,9 +22,14 @@ Running this script:
 Everything (diagrams, flow tables, balancing tables, access matrix) is generated from the lists
 below, so a diagram and its tables cannot disagree.
 
-Sources of every element: supabase/migrations/2026110400000{2,3,4}_*.sql (tables, RLS policies,
-column grants, triggers, RPCs, views), mongo/validators.js, mongo/portfolio_merge.js,
-api/app/{main,notes,consistency,export_pg}.py.
+Sources of every element: supabase/migrations/2026110400000{2,3,4}_*.sql and
+2026110500000{5,6}_*.sql (tables, RLS policies, column grants, triggers, RPCs, views, the ingest
+inbox, search_chunks, the Realtime broadcast), supabase/functions/github-webhook,
+mongo/validators.js, mongo/portfolio_merge.js,
+api/app/{main,notes,consistency,export_pg,worker,ask,trace}.py.
+Revision 3 (5 Nov 2026): ingestion (GitHub, Obsidian vault notes), search and cited answers, and
+the Realtime notices are built; only the AI model service flows, the student-facing portfolio
+export and the derivation of verified skill levels remain planned.
 """
 import math
 import os
@@ -82,6 +87,7 @@ STORES = OrderedDict([
     ("D12", ("Notes", "MongoDB", ["notes"])),
     ("D13", ("Note versions", "MongoDB", ["note_versions"])),
     ("D14", ("Portfolios", "MongoDB", ["portfolios"])),
+    ("D15", ("Ingest registry", "PostgreSQL", ["team_repo", "student_identity"])),
 ])
 
 # ---------------------------------------------------------------------------------------
@@ -93,7 +99,7 @@ P1 = OrderedDict([
              "admin writes under RLS;\nsemester_hub(), v_semester_hub", ["FR1", "FR2", "FR3"], "implemented")),
     ("2.0", ("Form teams", "join_team(), leave_team();\ntrg_team_member_history_guard", ["FR4"], "implemented")),
     ("3.0", ("Capture work\nand evidence",
-             "editor saves under RLS; private-note RPCs;\nAPI /notes, /consistency;\nwebhook worker [planned]",
+             "editor saves under RLS; private-note RPCs;\nAPI /notes, /consistency, /ingest;\nEdge Function -> ingest_receive(),\npgmq worker -> project_push()",
              ["FR5", "FR11"], "partial")),
     ("4.0", ("File and countersign\nclaims", "file_claim(), add_claim_evidence(),\ncountersign_claim(); claim policies",
              ["FR6", "FR7"], "implemented")),
@@ -101,7 +107,7 @@ P1 = OrderedDict([
              ["FR7", "FR2"], "implemented")),
     ("6.0", ("Maintain skills and\nrecommend teammates", "find_teammates(), find_full_cover(),\nskill_gap(), skill_subtree()",
              ["FR8", "FR4"], "partial")),
-    ("7.0", ("Answer questions\nwith citations", "search_chunks(), /rag/ask\n[planned]", ["FR9"], "planned")),
+    ("7.0", ("Answer questions\nwith citations", "search_chunks() (RRF);\nPOST /ask (extractive);\nmodel answer [planned]", ["FR9"], "partial")),
     ("8.0", ("Build portfolio", "export_pg.py + portfolio_merge.js\n(admin-run batch); v_what_faculty_sees",
              ["FR10", "FR7", "FR11"], "partial")),
 ])
@@ -121,13 +127,13 @@ L0 = OrderedDict([
     ("C03", ("STU", "SYS", "claims, evidence and verdicts\n(incl. amendments, withdrawals)")),
     ("C04", ("STU", "SYS", "component submissions")),
     ("C05", ("STU", "SYS", "declared skills, matching queries\nand preview requests")),
-    ("C06", ("STU", "SYS", "questions and portfolio\nexport requests")),
+    ("C06", ("STU", "SYS", "questions")),
     ("C07", ("SYS", "STU", "semester hub and\nmembership results")),
-    ("C08", ("SYS", "STU", "version history, team notes,\nown private notes, consistency report")),
+    ("C08", ("SYS", "STU", "work history, notes, consistency report\nand live evidence notices")),
     ("C09", ("SYS", "STU", "claim receipts, status\nand countersign queue")),
     ("C10", ("SYS", "STU", "submission receipts,\nown marks and lab CIE")),
     ("C11", ("SYS", "STU", "teammate suggestions, skill gap\nand faculty-view preview")),
-    ("C12", ("SYS", "STU", "cited answers and\nportfolio export")),
+    ("C12", ("SYS", "STU", "cited answers")),
     ("C13", ("FAC", "SYS", "marks entries and\ncomponent locks")),
     ("C14", ("FAC", "SYS", "questions")),
     ("C15", ("SYS", "FAC", "rubric sheet, progress, lab CIE,\nreceipts and lock summaries")),
@@ -135,7 +141,7 @@ L0 = OrderedDict([
     ("C17", ("SYS", "FAC", "contested claims\nand claim trail")),
     ("C18", ("SYS", "FAC", "taught offerings and\nproject summaries")),
     ("C19", ("SYS", "FAC", "cited answers")),
-    ("C20", ("ADM", "SYS", "directory, term and\nenrollment records")),
+    ("C20", ("ADM", "SYS", "directory, enrollment, repository\nand identity records")),
     ("C21", ("ADM", "SYS", "project, component\nand team definitions")),
     ("C22", ("ADM", "SYS", "skill taxonomy, required skills,\ncourse concepts, verified levels")),
     ("C23", ("SYS", "ADM", "directory listings\nand institution totals")),
@@ -143,10 +149,12 @@ L0 = OrderedDict([
     ("C25", ("OBS", "SYS", "vault notes\n(markdown + frontmatter)")),
     ("C26", ("SYS", "AI",  "text to embed and\npermission-filtered prompts")),
     ("C27", ("AI",  "SYS", "embeddings and\ndrafted cited answers")),
-    ("C28", ("SYS", "FAC", "note metadata, version receipts\nand consistency report")),
+    ("C28", ("SYS", "FAC", "note metadata, live notices, ingest\ntrace and consistency report")),
     ("C29", ("ADM", "SYS", "component locks / unlocks\nand mark corrections")),
-    ("C30", ("SYS", "ADM", "oversight reports\nand lock summaries")),
+    ("C30", ("SYS", "ADM", "oversight reports, lock summaries,\ningest status and trace")),
     ("C31", ("SYS", "ADM", "portfolio rebuild report")),
+    ("C32", ("STU", "SYS", "portfolio export requests")),
+    ("C33", ("SYS", "STU", "portfolio export")),
 ])
 
 # ---------------------------------------------------------------------------------------
@@ -157,20 +165,24 @@ F1 = OrderedDict([
     ("F02", ("ADM", "1.0", "term, offering and\nenrollment records", "C20", False)),
     ("F03", ("ADM", "1.0", "user-role mappings", "C20", False)),
     ("F04", ("ADM", "1.0", "project and component\ndefinitions", "C21", False)),
+    ("F56", ("ADM", "1.0", "repository registrations\nand verified identities", "C20", False)),
     ("F05", ("1.0", "ADM", "directory listings\nand totals", "C23", False)),
     ("F06", ("1.0", "STU", "semester hub", "C07", False)),
     ("F07", ("1.0", "FAC", "taught offerings and\nproject summaries", "C18", False)),
     ("F08", ("ADM", "2.0", "team definitions\nand placements", "C21", False)),
     ("F09", ("STU", "2.0", "join / leave request", "C01", False)),
     ("F10", ("2.0", "STU", "membership result", "C07", False)),
-    ("F11", ("GH",  "3.0", "push event", "C24", True)),
-    ("F12", ("OBS", "3.0", "vault note commit", "C25", True)),
+    ("F11", ("GH",  "3.0", "push event (signed)", "C24", False)),
+    ("F12", ("OBS", "3.0", "vault note commit", "C25", False)),
     ("F13", ("STU", "3.0", "artifact, version or link\n(+ AI-assistance)", "C02", False)),
     ("F47", ("STU", "3.0", "team note\n(title, content, status)", "C02", False)),
     ("F14", ("STU", "3.0", "private note", "C02", False)),
     ("F15", ("3.0", "STU", "version history and\nown private notes", "C08", False)),
     ("F48", ("3.0", "STU", "team notes and\nconsistency report", "C08", False)),
     ("F49", ("3.0", "FAC", "final-note metadata, version\nreceipts, consistency report", "C28", False)),
+    ("F57", ("3.0", "STU", "live evidence notice\n(ids and time only)", "C08", False)),
+    ("F58", ("3.0", "FAC", "live evidence notices\nand ingest trace", "C28", False)),
+    ("F59", ("3.0", "ADM", "ingest status and trace,\nconsistency report", "C30", False)),
     ("F16", ("3.0", "AI",  "chunk text", "C26", True)),
     ("F17", ("AI",  "3.0", "chunk embeddings", "C27", True)),
     ("F18", ("STU", "4.0", "claim, amendment\nor withdrawal", "C03", False)),
@@ -197,14 +209,14 @@ F1 = OrderedDict([
     ("F34", ("STU", "6.0", "declared skill levels", "C05", False)),
     ("F35", ("STU", "6.0", "teammate /\nskill-gap query", "C05", False)),
     ("F36", ("6.0", "STU", "teammate suggestions\nand skill gap", "C11", False)),
-    ("F37", ("STU", "7.0", "question", "C06", True)),
-    ("F38", ("FAC", "7.0", "question", "C14", True)),
-    ("F39", ("7.0", "STU", "cited answer", "C12", True)),
-    ("F40", ("7.0", "FAC", "cited answer", "C19", True)),
+    ("F37", ("STU", "7.0", "question (+ team, author,\nsince filters)", "C06", False)),
+    ("F38", ("FAC", "7.0", "question", "C14", False)),
+    ("F39", ("7.0", "STU", "cited answer\n(chunk ids, snippets)", "C12", False)),
+    ("F40", ("7.0", "FAC", "cited answer\n(submitted text only)", "C19", False)),
     ("F41", ("7.0", "AI",  "question and permitted\nchunks (prompt)", "C26", True)),
     ("F42", ("AI",  "7.0", "query embedding and\ncited draft answer", "C27", True)),
-    ("F43", ("STU", "8.0", "portfolio export request", "C06", True)),
-    ("F44", ("8.0", "STU", "portfolio export", "C12", True)),
+    ("F43", ("STU", "8.0", "portfolio export request", "C32", True)),
+    ("F44", ("8.0", "STU", "portfolio export", "C33", True)),
     ("F46", ("STU", "8.0", "faculty-view\npreview request", "C05", False)),
     ("F45", ("8.0", "STU", "faculty-view preview", "C11", False)),
     ("F55", ("8.0", "ADM", "portfolio rebuild report\n(students exported, stamped)", "C31", False)),
@@ -228,6 +240,7 @@ S1 = [
     ("S04", "1.0", "D4", "R",  "artifact, artifact_version, contribution\n(counts for the faculty hub)", False),
     ("S05", "1.0", "D6", "R",  "claim (status counts)", False),
     ("S06", "1.0", "D7", "R",  "submission (counts\nfor the faculty hub)", False),
+    ("S60", "1.0", "D15", "RW", "team_repo, student_identity\n(admin writes)", False),
     # 2.0 Form teams
     ("S07", "2.0", "D1", "R",  "enrollment", False),
     ("S08", "2.0", "D2", "R",  "project (offering_id)", False),
@@ -238,16 +251,17 @@ S1 = [
     ("S13", "2.0", "D7", "R",  "submission.submitted_by", False),
     ("S14", "2.0", "D8", "R",  "assessment.usn", False),
     # 3.0 Capture work and evidence
-    ("S15", "3.0", "D2", "R",  "milestone\n(component of an artifact)", False),
-    ("S16", "3.0", "D3", "R",  "team, team_member\n(membership, visible teams)", False),
+    ("S15", "3.0", "D2", "R",  "milestone (component of an artifact;\nopen one by receive time)", False),
+    ("S16", "3.0", "D3", "R",  "team, team_member\n(membership, credit check)", False),
     ("S17", "3.0", "D4", "RW", "artifact (title, visibility, owner)", False),
     ("S18", "3.0", "D4", "RA", "artifact_version, contribution", False),
     ("S19", "3.0", "D5", "A",  "artifact_chunk (content;\nembedding [planned])", False),
     ("S20", "3.0", "D10", "RW", "private.note (owner only)", False),
     ("S21", "3.0", "D11", "R",  "github_events\n(commit SHAs per author)", False),
-    ("S22", "3.0", "D11", "A",  "github_events (raw push)", True),
-    ("S23", "3.0", "D12", "RW", "notes", False),
+    ("S22", "3.0", "D11", "A",  "github_events (raw push,\n_id = delivery id)", False),
+    ("S23", "3.0", "D12", "RW", "notes (team notes;\nvault notes from pushes)", False),
     ("S24", "3.0", "D13", "RA", "note_versions", False),
+    ("S61", "3.0", "D15", "R",  "team_repo (track_paths),\nstudent_identity (verified)", False),
     # 4.0 File and countersign claims
     ("S25", "4.0", "D1", "R",  "student (names)", False),
     ("S26", "4.0", "D2", "R",  "milestone (locked_at, title)", False),
@@ -271,10 +285,12 @@ S1 = [
     ("S42", "6.0", "D9", "W",  "student_skill (own); skill, project_skill,\ncourse_skill, skill_evidence (admin, F33)", False),
     ("S43", "6.0", "D4", "R",  "contribution (to derive\nskill_evidence)", True),
     ("S44", "6.0", "D6", "R",  "claim, confirmed (to derive\nskill_evidence)", True),
-    # 7.0 Answer questions with citations (planned)
-    ("S45", "7.0", "D4", "R",  "artifact (citation metadata)", True),
-    ("S46", "7.0", "D5", "R",  "artifact_chunk (tsv, embedding),\nRLS-filtered", True),
-    ("S47", "7.0", "D6", "R",  "claim (confirmed)", True),
+    # 7.0 Answer questions with citations (retrieval and extractive answers built;
+    #     the model-written answer and the embeddings are the planned AI flows F41, F42)
+    ("S62", "7.0", "D1", "R",  "student (author name)", False),
+    ("S63", "7.0", "D3", "R",  "team (caller's teams,\nfilter check)", False),
+    ("S45", "7.0", "D4", "R",  "artifact (title, team), artifact_version\n(latest snapshot)", False),
+    ("S46", "7.0", "D5", "R",  "artifact_chunk (tsv; embedding\nwhen supplied), under RLS", False),
     # 8.0 Build portfolio
     ("S48", "8.0", "D1", "R",  "student (name, semester)", False),
     ("S49", "8.0", "D2", "R",  "project (title, status);\nmilestone (preview)", False),
@@ -293,7 +309,9 @@ S1 = [
 # Store local to one process: written and read only inside 8.0, so it belongs to the
 # decomposition of 8.0 and is not drawn at Level 1 (documented in the catalogue).
 LOCAL_STORES = [("pg_portfolio_export", "MongoDB", "8.0",
-                 "written by app/export_pg.py, read by portfolio_merge.js ($unionWith)")]
+                 "written by app/export_pg.py, read by portfolio_merge.js ($unionWith)"),
+                ("ingest_event + pgmq queue github_ingest", "PostgreSQL", "3.0",
+                 "written by ingest_receive(), read and updated by the worker RPCs")]
 
 # ---------------------------------------------------------------------------------------
 # Level 2 of 4.0 File and countersign claims
@@ -859,7 +877,7 @@ def run_checks():
     if impl_only:
         bad(f"implemented processes lose an input or output without planned flows: {impl_only}")
     ok("Level 1: every implemented or partial process keeps an input and an output when the planned "
-       "flows are removed (7.0 is planned as a whole)")
+       "flows are removed (no process is planned as a whole)")
 
     for sid in STORES:
         r = any(x[2] == sid and "R" in x[3] for x in S1)

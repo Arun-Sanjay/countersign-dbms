@@ -1,7 +1,7 @@
-// C2 SRS, Figure 2a (revision 1.1): UML use-case diagram, primary actor Student.
+// C2 SRS, Figure 2a (revision 1.2): UML use-case diagram, primary actor Student.
 // Actors are UML stick figures (c2_actor.png); associations are plain lines.
 // Solid ellipse = built; dashed ellipse = specified, not built or only partly built
-// (status as of 4 Nov 2026, C2_SRS.md §1.5). Each use case names the FR it realises.
+// (status as of 5 Nov 2026, C2_SRS.md §1.5, revision 1.2). Each use case names the FR it realises.
 digraph usecase_student {
     graph [rankdir=LR, fontname="DejaVu Sans", fontsize=13, nodesep=0.14, ranksep=0.7, pad=0.15, newrank=true];
     node  [fontname="DejaVu Sans", fontsize=13];
@@ -24,9 +24,10 @@ digraph usecase_student {
         fview  [label="Preview what faculty\nsees [FR7]"];
         cie    [label="View own lab CIE marks [FR7]"];
         cons   [label="View cross-store\nconsistency [FR11]"];
+        search [label="Search project text;\nask with citations [FR9]"];
+        live   [label="Receive live evidence\nnotices [FR7]"];
         port   [label="Export portfolio [FR10]", style="dashed,filled"];
-        ask    [label="Ask the cited assistant [FR9]", style="dashed,filled"];
     }
-    student -> {hub join find art notes claim sign submit fview cie cons port ask};
-    ask -> {voyage claude};
+    student -> {hub join find art notes claim sign submit fview cie cons live search port};
+    search -> {voyage claude} [style=dashed];
 }

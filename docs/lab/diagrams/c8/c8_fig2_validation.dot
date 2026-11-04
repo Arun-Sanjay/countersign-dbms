@@ -1,0 +1,47 @@
+// C8 Figure 2: the three validation layers, traced for one input (marks for Meera, P06 C2, max 5).
+// Render: docs/lab/build_c8.sh. Caption is in C8_Forms_Security_Validation.md.
+digraph Validation {
+  graph [rankdir=TB, nodesep=0.3, ranksep=0.35, fontname="DejaVu Sans", pad=0.2, bgcolor="white"];
+  node  [fontname="DejaVu Sans", fontsize=13, shape=plain];
+  edge  [fontname="DejaVu Sans", fontsize=11, color="#444444", arrowsize=0.8];
+
+  input [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+    <TR><TD BGCOLOR="#e8eaf6"><B>Input</B>: ramesh (F01) types a mark for Meera Iyer, P06 / C2 (max_marks = 5)</TD></TR>
+   </TABLE>>];
+
+  l1 [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD COLSPAN="2" BGCOLOR="#e3f2fd"><B>Layer 1: zod in the browser</B> (web/src/lib/rules.ts, marksSchema(5))</TD></TR>
+    <TR><TD ALIGN="LEFT">number, &#8805; 0, &#8804; max, one decimal<BR ALIGN="LEFT"/>remarks &#8804; 200 characters<BR ALIGN="LEFT"/></TD>
+        <TD ALIGN="LEFT"><FONT COLOR="#c0392b">"7" &#8594; "The maximum for this component is 5."</FONT><BR ALIGN="LEFT"/>no request is sent (fast feedback only)<BR ALIGN="LEFT"/></TD></TR>
+   </TABLE>>];
+
+  l2 [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD COLSPAN="2" BGCOLOR="#fff3e0"><B>Layer 2: RPC pre-check</B> (record_assessment, SECURITY INVOKER)</TD></TR>
+    <TR><TD ALIGN="LEFT">caller is faculty, teaches P06,<BR ALIGN="LEFT"/>milestone exists, marks &#8805; 0, 1 decimal<BR ALIGN="LEFT"/></TD>
+        <TD ALIGN="LEFT"><FONT COLOR="#c0392b">4.25 &#8594; 22023, DETAIL marks</FONT><BR ALIGN="LEFT"/><FONT COLOR="#c0392b">lakshmi &#8594; 42501, teaches_project_required</FONT><BR ALIGN="LEFT"/></TD></TR>
+   </TABLE>>];
+
+  l3 [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD COLSPAN="2" BGCOLOR="#eef5ee"><B>Layer 3: the table</B> (holds for the RPC AND for a direct INSERT)</TD></TR>
+    <TR><TD ALIGN="LEFT">trigger trg_assessment_check:<BR ALIGN="LEFT"/>marks &#8804; milestone.max_marks, not locked,<BR ALIGN="LEFT"/>student in a team of the project<BR ALIGN="LEFT"/></TD>
+        <TD ALIGN="LEFT"><FONT COLOR="#c0392b">7 &#8594; 23514, assessment_marks_le_max</FONT><BR ALIGN="LEFT"/></TD></TR>
+    <TR><TD ALIGN="LEFT">CHECK (marks &gt;= 0), NUMERIC(4,1), NOT NULL, FKs<BR ALIGN="LEFT"/></TD>
+        <TD ALIGN="LEFT"><FONT COLOR="#c0392b">-1 &#8594; 23514, assessment_marks_check</FONT><BR ALIGN="LEFT"/></TD></TR>
+    <TR><TD ALIGN="LEFT">RLS assessment_insert WITH CHECK:<BR ALIGN="LEFT"/>teaches_project AND assessed_by = me<BR ALIGN="LEFT"/></TD>
+        <TD ALIGN="LEFT"><FONT COLOR="#c0392b">lakshmi direct &#8594; 42501 (RLS)</FONT><BR ALIGN="LEFT"/></TD></TR>
+   </TABLE>>];
+
+  back [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+    <TR><TD BGCOLOR="#f3e5f5"><B>Back in the browser</B>: PostgREST returns {code, message, details}; errors.ts maps<BR/>DETAIL rule key &#8594; constraint name &#8594; SQLSTATE to a friendly message on the right field</TD></TR>
+   </TABLE>>];
+
+  input -> l1;
+  l1 -> l2 [label=" passes (e.g. 4.5, or a client that skips the form)"];
+  l2 -> l3 [label=" passes"];
+  l3 -> back [label=" any refusal (or the row is written)"];
+}

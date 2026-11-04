@@ -1,0 +1,69 @@
+// C8 Figure 1: who talks to the database, with which credential, and which layer decides.
+// Render: docs/lab/build_c8.sh. Caption is in C8_Forms_Security_Validation.md.
+digraph Security {
+  graph [rankdir=TB, nodesep=0.2, ranksep=0.4, fontname="DejaVu Sans", pad=0.2, bgcolor="white", newrank=true];
+  node  [fontname="DejaVu Sans", fontsize=13, shape=plain];
+  edge  [fontname="DejaVu Sans", fontsize=11, color="#444444", arrowsize=0.8];
+
+  browser [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#e8eaf6"><B>Browser (React)</B></TD></TR>
+    <TR><TD ALIGN="LEFT">publishable (anon) key<BR ALIGN="LEFT"/>+ the user's JWT<BR ALIGN="LEFT"/>zod rules (layer 1)<BR ALIGN="LEFT"/></TD></TR>
+   </TABLE>>];
+  github [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#f5f5f5"><B>GitHub</B></TD></TR>
+    <TR><TD ALIGN="LEFT">push webhook,<BR ALIGN="LEFT"/>signed body<BR ALIGN="LEFT"/></TD></TR>
+   </TABLE>>];
+
+  auth [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#fff3e0"><B>Supabase Auth</B></TD></TR>
+    <TR><TD ALIGN="LEFT">email + password<BR ALIGN="LEFT"/>sign-ups disabled<BR ALIGN="LEFT"/>JWT: sub = user id,<BR ALIGN="LEFT"/>role = authenticated<BR ALIGN="LEFT"/></TD></TR>
+   </TABLE>>];
+  rest [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#fff3e0"><B>PostgREST</B></TD></TR>
+    <TR><TD ALIGN="LEFT">verifies the JWT, then<BR ALIGN="LEFT"/>SET ROLE authenticated<BR ALIGN="LEFT"/>(anon if no JWT);<BR ALIGN="LEFT"/>exposes schema public<BR ALIGN="LEFT"/></TD></TR>
+   </TABLE>>];
+  api [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#e3f2fd"><B>FastAPI</B></TD></TR>
+    <TR><TD ALIGN="LEFT">/notes, /ask: checks the<BR ALIGN="LEFT"/>JWT, forwards the SAME<BR ALIGN="LEFT"/>user JWT (no service<BR ALIGN="LEFT"/>key for user reads)<BR ALIGN="LEFT"/></TD></TR>
+   </TABLE>>];
+  edge_fn [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#fce4ec"><B>Edge Function</B></TD></TR>
+    <TR><TD ALIGN="LEFT">github-webhook: HMAC-<BR ALIGN="LEFT"/>SHA256 of the raw body,<BR ALIGN="LEFT"/>constant-time compare,<BR ALIGN="LEFT"/>else 401<BR ALIGN="LEFT"/></TD></TR>
+   </TABLE>>];
+  worker [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#fce4ec"><B>Ingestion worker</B></TD></TR>
+    <TR><TD ALIGN="LEFT">service_role, server<BR ALIGN="LEFT"/>side only (pipeline<BR ALIGN="LEFT"/>RPCs + MongoDB)<BR ALIGN="LEFT"/></TD></TR>
+   </TABLE>>];
+
+  db [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#30475e"><FONT COLOR="white"><B>PostgreSQL 17 (the guarantee)</B></FONT></TD></TR>
+    <TR><TD ALIGN="LEFT" BGCOLOR="#eef5ee"><B>1 Privileges</B>: anon has none; authenticated<BR ALIGN="LEFT"/>DML only, column grants on 11 tables,<BR ALIGN="LEFT"/>no TRUNCATE; schema private: no grants<BR ALIGN="LEFT"/></TD></TR>
+    <TR><TD ALIGN="LEFT" BGCOLOR="#eef5ee"><B>2 RLS</B>: 101 policies TO authenticated on 29<BR ALIGN="LEFT"/>tables; auth.uid() &#8594; app_user &#8594; app.* helpers<BR ALIGN="LEFT"/>security_invoker views; SECURITY INVOKER RPCs<BR ALIGN="LEFT"/></TD></TR>
+    <TR><TD ALIGN="LEFT" BGCOLOR="#eef5ee"><B>3 Integrity</B>: CHECK / FK / UNIQUE / EXCLUDE +<BR ALIGN="LEFT"/>SECURITY DEFINER triggers (hold for every caller)<BR ALIGN="LEFT"/></TD></TR>
+    <TR><TD ALIGN="LEFT" BGCOLOR="#f3e5f5"><B>Realtime</B>: realtime.send() metadata only;<BR ALIGN="LEFT"/>RLS on realtime.messages (can_watch_topic)<BR ALIGN="LEFT"/></TD></TR>
+   </TABLE>>];
+
+  browser -> auth [label="sign in", constraint=false];
+  browser -> rest [label="JWT + anon key"];
+  github -> worker [style=invis];
+  browser -> api  [label="JWT"];
+  api -> rest     [label="the user's JWT"];
+  rest -> db      [label="role authenticated"];
+  github -> edge_fn [label="signed POST"];
+  edge_fn -> db   [label="ingest_receive()\nservice_role"];
+  worker -> db    [label="project_push()\nservice_role"];
+  
+
+  {rank=same; auth; browser; github}
+  {rank=same; api; edge_fn}
+  {rank=same; rest; worker}
+  auth -> browser [style=invis];
+}

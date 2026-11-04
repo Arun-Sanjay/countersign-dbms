@@ -1,0 +1,58 @@
+// C7 Midterm Report, Figure 1: system architecture as built on 5 Nov 2026.
+// Solid = built and exercised by a test or a live run; dashed = built but not exercised
+// against the real service. Hosting on Vercel is planned and is named in the caption only. Live-project facts were read on 5 Nov 2026 through the
+// Supabase Management API (read-only query): migrations 0001-0006, 10 ingest_event rows
+// (9 projected, 1 ignored), 29 GitHub contributions, 58 chunks, 7 app_user rows.
+digraph architecture {
+    graph [rankdir=TB, fontname="DejaVu Sans", fontsize=13, nodesep=0.3, ranksep=0.42, pad=0.12,
+           compound=true, newrank=true];
+    node  [fontname="DejaVu Sans", fontsize=13, shape=box, style="rounded,filled", fillcolor="#ffffff", color="#333333"];
+    edge  [fontname="DejaVu Sans", fontsize=13, color="#333333", arrowsize=0.8];
+
+    subgraph cluster_users {
+        label="Users (personas, @example.edu; sign-up disabled)"; style=rounded; color="#666666";
+        browser [label="Browser: React 19 + TypeScript SPA\n(Vite, Tailwind, shadcn/ui)\npublishable key only; runs locally"];
+    }
+
+    github [label="GitHub repository\n(push events)", fillcolor="#f2f2f2"];
+
+    subgraph cluster_supa {
+        label="Supabase project countersign-dbms (AWS ap-south-1, Mumbai)"; style=rounded; color="#1f4e79"; penwidth=1.6;
+        rest   [label="PostgREST + Auth (JWT)\ntables, views, RPCs"];
+        edge_fn [label="Edge Function\ngithub-webhook\n(HMAC verify)"];
+        rt     [label="Realtime broadcast\n(metadata only)"];
+        db     [label="PostgreSQL 17.11: migrations 0001-0006\n30 tables, RLS on every table, 6 security_invoker views\nRPCs, integrity triggers, pgmq queue github_ingest\nartifact_chunk: tsvector (GIN) + vector(1024) (HNSW)", fillcolor="#eef4fa"];
+        { rank=same; rest; edge_fn; rt; }
+    }
+
+    subgraph cluster_api {
+        label="FastAPI service (Python 3.12; runs locally)"; style=rounded; color="#666666";
+        api    [label="/notes  /consistency  /ask\n/ingest/drain  /ingest/trace"];
+        worker [label="Ingestion worker\n(log, then projection)"];
+    }
+
+    subgraph cluster_atlas {
+        label="MongoDB Atlas, database elp"; style=rounded; color="#666666";
+        mdb [label="github_events (raw log)\nnotes + note_versions\nportfolios; $jsonSchema validators", fillcolor="#fdf6e3"];
+    }
+
+    ai [label="Voyage AI, Claude API\n(code built;\nno keys yet)", style="rounded,dashed"];
+
+    { rank=same; browser; github; }
+    { rank=same; api; worker; ai; }
+
+    browser -> rest   [label=" user JWT;\n RLS decides rows"];
+    browser -> rt     [label=" toast", dir=back];
+    github -> edge_fn [label=" signed push\n (16 replayed)"];
+    edge_fn -> db     [label=" ingest_receive():\n inbox + queue in\n one transaction"];
+    rest -> db;
+    rt -> db          [label=" trigger", dir=back];
+    db -> api         [style=invis];
+    rest -> api       [style=invis, weight=8];
+    api -> rest       [label=" as the caller", constraint=false];
+    browser -> api    [label=" user JWT", constraint=false];
+    db -> worker      [label=" project_push()", dir=back];
+    worker -> mdb     [label=" upsert, _id =\n delivery id"];
+    api -> mdb;
+    api -> ai         [style=dashed];
+}

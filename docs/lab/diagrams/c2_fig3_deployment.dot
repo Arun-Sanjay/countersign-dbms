@@ -1,57 +1,57 @@
-// C2 SRS, Figure 3 (revision 1.1): Operating environment (deployment), top to bottom.
-// Solid = running and exercised by a test run on 4 Nov 2026; dashed = planned, not set up.
-// The cloud project countersign-dbms was checked on 4 Nov 2026 through the Supabase
-// Management API: migrations 0001-0004 applied, status ACTIVE_HEALTHY (C2_SRS.md §4, G7).
+// C2 SRS, Figure 3 (revision 1.2): Operating environment (deployment), top to bottom.
+// Solid = running and exercised by a recorded test run; dashed = planned, not set up.
+// The local verification environment (Docker) is listed in the table under the figure,
+// not drawn, so that the figure stays legible in print.
+// The cloud project countersign-dbms was checked on 5 Nov 2026 through the Supabase
+// Management API: migrations 0001-0006 applied, status ACTIVE_HEALTHY, Edge Function
+// github-webhook ACTIVE (C2_SRS.md §4, G7).
 digraph deployment {
-    graph [rankdir=TB, fontname="DejaVu Sans", fontsize=13, nodesep=0.25, ranksep=0.45, pad=0.15,
+    graph [rankdir=TB, fontname="DejaVu Sans", fontsize=13, nodesep=0.22, ranksep=0.45, pad=0.15,
            compound=true, newrank=true];
     node  [fontname="DejaVu Sans", fontsize=13, shape=box, style="rounded,filled", fillcolor="#ffffff", color="#333333"];
     edge  [fontname="DejaVu Sans", fontsize=13, color="#333333", arrowsize=0.8];
 
     subgraph cluster_client {
-        label="Client device\n(Windows, Linux, macOS, Android, iOS)"; style=rounded; color="#666666";
+        label="Client device (Windows, Linux,\nmacOS, Android, iOS)"; style=rounded; color="#666666";
         browser [label="Evergreen browser\n(Chrome, Edge,\nFirefox, Safari)"];
     }
+    gh [label="GitHub\n(repository webhook)", fillcolor="#eef3fb"];
+    { rank=same; browser; gh; }
 
     subgraph cluster_host {
         label="Application hosting"; style=rounded; color="#666666";
-        devsrv [label="Vite server\nserving the SPA\n(running locally)"];
-        fapi   [label="FastAPI,\nPython 3.12, uvicorn\n(running locally)"];
-        vercel [label="Vercel: static SPA,\nPython functions\n(planned, not set up)", style="rounded,dashed"];
+        devsrv [label="Vite server:\nthe SPA (local)"];
+        fapi   [label="FastAPI + ingest\nworker, Python 3.12\n(running locally)"];
+        vercel [label="Vercel: SPA and\nPython functions\n(planned)", style="rounded,dashed"];
     }
 
     subgraph cluster_supa {
-        label="Supabase project countersign-dbms\n(AWS ap-south-1, Mumbai)"; style=rounded; color="#1f4e79"; penwidth=1.5;
+        label="Supabase project\ncountersign-dbms\n(AWS ap-south-1, Mumbai)"; labelloc=b; style=rounded; color="#1f4e79"; penwidth=1.5;
         kong   [label="API gateway (TLS)"];
-        rest   [label="PostgREST\n(tables, views, RPC)"];
-        gotrue [label="Auth (GoTrue)\nJWT issuer"];
-        db     [label="PostgreSQL 17.11\nschemas public, app, private\nextension vector (pgvector)", fillcolor="#fdf6e3"];
-        { rank=same; rest; gotrue; }
+        efn    [label="Edge Function\ngithub-webhook"];
+        rest   [label="PostgREST\n(Data API)"];
+        gotrue [label="Auth\n(JWT issuer)"];
+        rt     [label="Realtime\n(broadcast)"];
+        db     [label="PostgreSQL 17.11\nschemas public, app,\nprivate, pgmq; pgvector", fillcolor="#fdf6e3"];
+        { rank=same; efn; rest; gotrue; rt; }
     }
 
     subgraph cluster_atlas {
         label="MongoDB Atlas\n(shared tier)"; labelloc=b; style=rounded; color="#666666";
         mdb [label="MongoDB 8.0\ndatabase elp", fillcolor="#fdf6e3"];
     }
-
-    subgraph cluster_local {
-        label="Local verification environment (Docker Desktop)"; style="rounded"; color="#666666";
-        lsupa  [label="Supabase stack /\nsupabase/postgres 17.11\n(pgTAP, 522 assertions)"];
-        lpg    [label="postgres:17 containers\n(fixture Q1-Q37,\nrace harness)"];
-        lmongo [label="mongo:8 containers\n(M1-M25, validators,\nAPI tests)"];
-        { rank=same; lsupa; lpg; }
-        lpg -> lmongo [style=invis];
-    }
+    { rank=same; db; mdb; }
 
     browser -> devsrv [label="HTTPS"];
-    browser -> kong   [label="HTTPS + JWT\n(supabase-js)"];
     browser -> fapi   [label="HTTPS + JWT"];
     browser -> vercel [style=dashed];
-    kong -> rest; kong -> gotrue;
-    rest -> db [label="role\nauthenticated"];
+    browser -> kong   [label="HTTPS + JWT\n(supabase-js)"];
+    gh -> kong [label="HTTPS, HMAC"];
+    kong -> efn; kong -> rest; kong -> gotrue; kong -> rt;
+    efn -> db [label="ingest_\nreceive()"];
+    rest -> db [label="caller's\nrole"];
     gotrue -> db;
-    fapi -> kong [label="caller's JWT"];
+    rt -> db [label="RLS on\nrealtime.\nmessages"];
+    fapi -> kong [label="caller's JWT;\nworker:\nservice role"];
     fapi -> mdb  [label="TLS, app user"];
-    db -> lsupa [style=invis];
-    mdb -> lmongo [style=invis];
 }

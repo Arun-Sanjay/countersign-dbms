@@ -1,0 +1,49 @@
+% LaTeX header for C7_Midterm_Report.pdf (xelatex; used by build_c7.sh).
+% Body conventions as in Component 2 (c2_pdf_header.tex); page-size switching as in Component 3
+% (c3_header.tex): \setfigpaper{w}{h}{margin} starts a figure page of another size (used by
+% c7_layout.lua for A3 and landscape figures), \setbasepaper returns to A4 portrait, 20 mm.
+\usepackage{float}
+\let\origfigure\figure
+\let\endorigfigure\endfigure
+\renewenvironment{figure}[1][2] {\expandafter\origfigure\expandafter[H]} {\endorigfigure}
+% figure and table numbers are written in the captions themselves
+\usepackage{caption}
+\captionsetup{labelformat=empty,font=small}
+\usepackage{etoolbox}
+\AtBeginEnvironment{longtable}{\footnotesize}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+% allow line breaks after underscores in long SQL identifiers
+\makeatletter
+\DeclareRobustCommand{\_}{\ifmmode\nfss@text{\textunderscore}\else\textunderscore\allowbreak\fi}
+\makeatother
+\usepackage{xurl}
+\setlength{\emergencystretch}{3em}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize RV College of Engineering, Bengaluru \textbullet{} Dept.\ of CSE \textbullet{} CD252IA}
+\fancyhead[R]{\footnotesize Lab Component 7: Midterm Report}
+\fancyfoot[C]{\footnotesize \thepage}
+\setlength{\headheight}{14pt}
+% figure pages: page number only. Defined as a plain page style, not with \fancypagestyle,
+% so that switching to it does not clear the running header of the `fancy` style.
+\makeatletter
+\def\ps@figpage{\let\@mkboth\@gobbletwo\def\@oddhead{}\def\@evenhead{}%
+  \def\@oddfoot{\hfil\footnotesize\thepage\hfil}\let\@evenfoot\@oddfoot}
+\makeatother
+\makeatletter
+\newcommand{\c@setpaper}[4]{% width, height, margin, extra height taken off the text block
+  \pdfpagewidth=#1\relax \pdfpageheight=#2\relax
+  \paperwidth=#1\relax \paperheight=#2\relax
+  \textwidth=\dimexpr\paperwidth-2\dimexpr#3\relax\relax
+  \textheight=\dimexpr\paperheight-2\dimexpr#3\relax-#4\relax
+  \oddsidemargin=\dimexpr#3-1in\relax \evensidemargin=\oddsidemargin
+  \topmargin=\dimexpr#3-1in-\headheight-\headsep\relax
+  \hsize=\textwidth \columnwidth=\textwidth \linewidth=\textwidth
+  \headwidth=\textwidth
+  \global\@colht=\textheight \global\@colroom=\textheight \global\vsize=\textheight
+}
+\newcommand{\setfigpaper}[3]{\clearpage\pagestyle{figpage}\c@setpaper{#1}{#2}{#3}{\footskip}}
+\newcommand{\setbasepaper}{\clearpage\pagestyle{fancy}\c@setpaper{210mm}{297mm}{20mm}{0pt}}
+\makeatother

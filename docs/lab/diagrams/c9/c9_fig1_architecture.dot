@@ -1,0 +1,63 @@
+// C9/C11 Figure 1: system architecture of Countersign as built (5 Nov 2026).
+// Solid = running and exercised; dashed = built but not configured (no API key).
+// Edge labels name the identity each call runs as: the user's JWT (RLS applies) or service_role.
+// Kept narrow (natural width <= 25 cm) so that 12 pt labels still print at >= 8 pt on A4.
+digraph architecture {
+    graph [rankdir=TB, fontname="DejaVu Sans", fontsize=13, nodesep=0.25, ranksep=0.42, pad=0.1,
+           compound=true, newrank=true];
+    node  [fontname="DejaVu Sans", fontsize=13, shape=box, style="rounded,filled", fillcolor="#ffffff", color="#333333", margin="0.08,0.05"];
+    edge  [fontname="DejaVu Sans", fontsize=12, color="#333333", arrowsize=0.8];
+
+    users  [label="Students, faculty, admin\n(browser, 7 personas)"];
+    github [label="GitHub repository\n(signed push webhook)", fillcolor="#eeeeee"];
+    { rank=same; users; github; }
+
+    subgraph cluster_app {
+        label="Application tier"; style=rounded; color="#666666";
+        web    [label="Web SPA\nReact + TypeScript\nsupabase-js\n(publishable key)"];
+        api    [label="FastAPI\n/notes /consistency\n/ask /ingest/*"];
+        worker [label="Ingestion\nworker\n(pgmq consumer)"];
+        { rank=same; web; api; worker; }
+    }
+
+    subgraph cluster_supa {
+        label="Supabase countersign-dbms (ap-south-1)"; labelloc=b; style=rounded; color="#1f4e79"; penwidth=1.6;
+        edge_fn [label="Edge Function\ngithub-webhook"];
+        gw      [label="Auth, PostgREST,\nRealtime"];
+        { rank=same; edge_fn; gw; }
+        pg [label=<<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="2">
+            <TR><TD><B>PostgreSQL 17</B></TD></TR>
+            <TR><TD ALIGN="LEFT">public: 29 tables, 6 views, 22 RPCs</TD></TR>
+            <TR><TD ALIGN="LEFT">private.note; app helpers</TD></TR>
+            <TR><TD ALIGN="LEFT">RLS: 102 policies, 28 triggers</TD></TR>
+            <TR><TD ALIGN="LEFT">pgmq queue github_ingest</TD></TR>
+            <TR><TD ALIGN="LEFT">chunks: tsvector + vector(1024)</TD></TR>
+            </TABLE>>, fillcolor="#fdf6e3"];
+    }
+
+    subgraph cluster_atlas {
+        label="MongoDB Atlas (elp)"; labelloc=b; style=rounded; color="#666666";
+        mongo [label=<<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="2">
+            <TR><TD><B>MongoDB 8</B></TD></TR>
+            <TR><TD ALIGN="LEFT">github_events (raw log)</TD></TR>
+            <TR><TD ALIGN="LEFT">notes, note_versions</TD></TR>
+            <TR><TD ALIGN="LEFT">portfolios</TD></TR>
+            </TABLE>>, fillcolor="#fdf6e3"];
+    }
+    ai [label="Claude, Voyage AI\n(built; keys not\nconfigured)", style="rounded,dashed"];
+
+    users -> web;
+    users -> api [style=invis];
+    github -> edge_fn [label="POST push\n(HMAC)"];
+    web -> gw   [label="user JWT\n(RLS)"];
+    web -> api  [label="JWT"];
+    api -> gw   [label="caller's\nJWT"];
+    api -> mongo;
+    edge_fn -> pg [label="ingest_receive\nservice_role"];
+    gw -> pg [label="authenticated"];
+    worker -> pg [label="project_push\nservice_role"];
+    worker -> mongo;
+    pg -> gw [label="broadcast\n(ids only)", style=dashed, constraint=false];
+    worker -> ai [style=dashed];
+    mongo -> ai [style=invis];
+}

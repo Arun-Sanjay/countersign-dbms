@@ -1,0 +1,25 @@
+// C9 Figure 2: the live push moment, step by step, with the identity each step runs as
+// and the measured latency budget (docs/INGESTION.md section 6).
+digraph live_push {
+    graph [rankdir=TB, fontname="DejaVu Sans", fontsize=13, nodesep=0.3, ranksep=0.32, pad=0.1, newrank=true];
+    node  [fontname="DejaVu Sans", fontsize=13, shape=box, style="rounded,filled", fillcolor="#ffffff", color="#333333", width=3.6, margin="0.1,0.05"];
+    edge  [fontname="DejaVu Sans", fontsize=12, color="#333333", arrowsize=0.8];
+
+    s0 [label="0  Terminal: replay_webhooks.py signs a fresh push\n(HMAC-SHA256 with the webhook secret)", fillcolor="#eeeeee"];
+    s1 [label="1  Edge Function github-webhook\nverifies the signature over the raw body"];
+    s2 [label="2  INBOX: ingest_receive() in ONE transaction\nINSERT ingest_event + pgmq.send  (HTTP 202)", fillcolor="#fdf6e3"];
+    s3 [label="3  Worker (polls every 1 s): ingest_read()\nupsert Mongo github_events {_id: delivery id}", fillcolor="#fdf6e3"];
+    s4 [label="4  PROJECTION: project_push()\nartifact, artifact_version, contribution, chunks\n(every INSERT ... ON CONFLICT DO NOTHING)", fillcolor="#fdf6e3"];
+    s5 [label="5  AFTER INSERT trigger on contribution\nrealtime.send to team:T00 and project:P06\n(ids and a time only, never text)"];
+    f  [label="Faculty screen (ramesh, /sheet/P06)\ntoast + feed row; trace sheet:\nMongo raw event beside Postgres rows"];
+    st [label="Student screen (arun, Activity tab)\ntoast + commit row; /search finds\nthe unique word; Ask cites it"];
+
+    s0 -> s1 [label="  HTTPS POST"];
+    s1 -> s2 [label="  service_role, about 150 ms"];
+    s2 -> s3 [label="  queue (pgmq)"];
+    s3 -> s4 [label="  service_role"];
+    s4 -> s5 [label="  same transaction"];
+    s5 -> f  [label=" RLS on realtime.messages:\n staff of P06 only"];
+    s5 -> st [label=" members of\n T00 only"];
+    { rank=same; f; st; }
+}

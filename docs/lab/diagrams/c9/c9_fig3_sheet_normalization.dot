@@ -1,0 +1,40 @@
+// Copy of diagrams/c6/c6_pipeline_a.dot (C6 Figure 2a) for C9 Figure 6, with pad=0.05 instead of 0.2
+// so that its 13 pt labels print at >= 8 pt at the DOCX text width. Do not edit; edit the C6 source.
+// C6 Normalization - Figure 2a: UNF -> 1NF -> 2NF for the RVCE lab marks sheet.
+// Render: docs/lab/build_c6.sh. Caption is in C6_Normalization.md.
+// Colours: green = BCNF; purple = 3NF, not BCNF; red = below 3NF.
+digraph PipelineA {
+  graph [rankdir=LR, nodesep=0.18, ranksep=0.45, fontname="DejaVu Sans", pad=0.05, bgcolor="white", newrank=true];
+  node  [fontname="DejaVu Sans", fontsize=13, shape=plain];
+  edge  [color="#444444", arrowsize=0.8, fontname="DejaVu Sans", fontsize=13];
+
+  unf [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#1f3b5c"><FONT COLOR="white"><B>UNF</B></FONT></TD></TR>
+    <TR><TD BGCOLOR="#e8eef5"><B>MARKS_SHEET</B><BR/>one sheet per student</TD></TR>
+    <TR><TD ALIGN="LEFT">USN, Name, Sec,<BR ALIGN="LEFT"/>Proj, Course, Title,<BR ALIGN="LEFT"/><FONT COLOR="#c0392b"><B>{</B> No,<BR ALIGN="LEFT"/>   "Submission (Max)",<BR ALIGN="LEFT"/>   Marks, Signature <B>}</B></FONT>,<BR ALIGN="LEFT"/><FONT COLOR="#7f8c8d"><I>Total 120&#8594;30,<BR ALIGN="LEFT"/>Lab CIE /50</I></FONT><BR ALIGN="LEFT"/></TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT COLOR="#c0392b">{ } repeating group;<BR ALIGN="LEFT"/>"Submission (Max)" and<BR ALIGN="LEFT"/>Signature are composite</FONT><BR ALIGN="LEFT"/><FONT COLOR="#7f8c8d">grey: derived totals</FONT><BR ALIGN="LEFT"/></TD></TR>
+   </TABLE>>];
+
+  nf1 [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#1f3b5c"><FONT COLOR="white"><B>1NF</B></FONT></TD></TR>
+    <TR><TD BGCOLOR="#fdecea"><B>SHEET_1NF</B><BR/>one row per assessed line</TD></TR>
+    <TR><TD ALIGN="LEFT"><U>USN</U>, <U>Proj</U>, <U>No</U>,<BR ALIGN="LEFT"/>Name, Sec, Course,<BR ALIGN="LEFT"/>Team, Title,<BR ALIGN="LEFT"/>Comp, Max, Part,<BR ALIGN="LEFT"/>Marks, Fac, FName<BR ALIGN="LEFT"/></TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT COLOR="#c0392b">partial dependencies:<BR ALIGN="LEFT"/>USN &#8594; Name, Sec<BR ALIGN="LEFT"/>Proj &#8594; Course<BR ALIGN="LEFT"/>Proj, No &#8594; Comp, Max, Part<BR ALIGN="LEFT"/>Team &#8594; Title</FONT><BR ALIGN="LEFT"/></TD></TR>
+   </TABLE>>];
+
+  s2 [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4"><TR><TD BGCOLOR="#1f3b5c"><FONT COLOR="white"><B>2NF</B></FONT></TD></TR></TABLE>>];
+  t2a [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#e8f5e9"><B>STUDENT</B></TD></TR><TR><TD><U>USN</U>, Name, Sec</TD></TR></TABLE>>];
+  t2b [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#e8f5e9"><B>PROJECT</B></TD></TR><TR><TD><U>Proj</U>, Course</TD></TR></TABLE>>];
+  t2c [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#e8f5e9"><B>COMPONENT</B></TD></TR><TR><TD><U>Proj</U>, <U>No</U>, Comp, Max, Part</TD></TR></TABLE>>];
+  t2d [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#e8f5e9"><B>TEAM</B></TD></TR><TR><TD><U>Team</U>, Title</TD></TR></TABLE>>];
+  t2e [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#f4ecf7"><B>MEMBERSHIP</B></TD></TR><TR><TD><U>USN</U>, <U>Proj</U>, Team</TD></TR><TR><TD><FONT COLOR="#7d3c98">Team &#8594; Proj: 3NF, not BCNF<BR/>(split early; not needed for 2NF)</FONT></TD></TR></TABLE>>];
+  t2f [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#fdecea"><B>MARK</B></TD></TR><TR><TD><U>USN</U>, <U>Proj</U>, <U>No</U>, Marks, Fac, FName</TD></TR><TR><TD><FONT COLOR="#d68910">transitive: Fac &#8594; FName</FONT></TD></TR></TABLE>>];
+
+  {rank=same; s2; t2a; t2b; t2c; t2d; t2e; t2f;}
+  s2 -> t2a -> t2b -> t2c -> t2d -> t2e -> t2f [style=invis];
+
+  unf -> nf1 [label=<flatten,<BR/>split,<BR/>drop totals>];
+  nf1 -> t2a; nf1 -> t2b; nf1 -> t2c; nf1 -> t2d; nf1 -> t2e; nf1 -> t2f;
+}

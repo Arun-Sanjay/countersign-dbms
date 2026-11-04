@@ -1,0 +1,32 @@
+// C10 Innovative Experiment - Figure 6: precedence graphs, (a) cyclic, (b) cycle broken by an
+// SSI abort, (c) acyclic with its serial order. Edges and reasons are those printed by
+// analysis.sql (b3, b4) and analysis_selftest.sql (case A). Render: docs/lab/build_c10.sh.
+digraph Prec {
+  graph [rankdir=LR, nodesep=0.5, ranksep=1.1, fontname="DejaVu Sans", pad=0.2, bgcolor="white", newrank=true];
+  node  [fontname="DejaVu Sans", fontsize=13, shape=circle, width=0.6, fixedsize=true, style=filled, fillcolor="#e8eef5", color="#1f3b5c", penwidth=1.4];
+  edge  [fontname="DejaVu Sans", fontsize=10.5, color="#1f3b5c", arrowsize=0.8, penwidth=1.4];
+
+  subgraph cluster_a {
+    label=<<B>(a) S2, REPEATABLE READ, run 88721</B><BR/>both committed, final size 5/4<BR/><FONT COLOR="#c0392b"><B>cycle: NOT conflict-serializable</B></FONT>>;
+    fontsize=11.5; style="rounded"; color="#c0392b";
+    a1 [label="T1"]; a2 [label="T2"];
+    a1 -> a2 [label="r1(M) < w2(M)", color="#c0392b", fontcolor="#c0392b"];
+    a2 -> a1 [label="r2(M) < w1(M)\nw2(M) < w1(M)", color="#c0392b", fontcolor="#c0392b"];
+  }
+  subgraph cluster_b {
+    label=<<B>(b) S1, SERIALIZABLE, run 80723</B><BR/>graph incl. the aborted T1; final size 4/4<BR/><FONT COLOR="#1e8449"><B>SSI aborted T1 (40001): cycle broken</B></FONT>>;
+    fontsize=11.5; style="rounded"; color="#1e8449";
+    b1 [label="T1", style="filled,dashed", fillcolor="#f2f3f4", color="#7f8c8d", fontcolor="#7f8c8d"]; b2 [label="T2"];
+    b1 -> b2 [label="r1(M) < w2(M)\nw1(M) < w2(M)", style=dashed, color="#7f8c8d", fontcolor="#566573"];
+    b2 -> b1 [label="r2(M) < w1(M)", style=dashed, color="#7f8c8d", fontcolor="#566573"];
+  }
+  subgraph cluster_c {
+    label=<<B>(c) self-test case A</B> (hand-solved, 3 committed)<BR/>w4(x) r3(x) r1(y) w3(x) r1(x) w1(y) r2(y) w2(z) a4 c3 c1 c2<BR/><FONT COLOR="#1e8449"><B>acyclic: serial order T3, T1, T2</B></FONT>>;
+    fontsize=11.5; style="rounded"; color="#1e8449";
+    c3 [label="T3"]; c1 [label="T1"]; c2 [label="T2"];
+    c3 -> c1 [label="w3(x) < r1(x)"];
+    c1 -> c2 [label="w1(y) < r2(y)"];
+  }
+  {rank=same; a1; b1; c3;}
+  a2 -> b1 [style=invis]; b2 -> c3 [style=invis];
+}

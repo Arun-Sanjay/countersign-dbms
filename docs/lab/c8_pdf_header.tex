@@ -1,0 +1,33 @@
+% LaTeX header for C8_Forms_Security_Validation.pdf (used by build_c8.sh).
+\usepackage{float}
+\let\origfigure\figure
+\let\endorigfigure\endfigure
+\renewenvironment{figure}[1][2] {\expandafter\origfigure\expandafter[H]} {\endorigfigure}
+% Figure numbers (1, 2a, 2b, ...) are written in the caption text, so LaTeX adds none.
+\usepackage{caption}
+\captionsetup[figure]{labelformat=empty,font=small}
+% Tables: footnotesize by default; \smalltablestrue ... \smalltablesfalse for the wide generated tables.
+\usepackage{etoolbox}
+\newif\ifsmalltables
+\AtBeginEnvironment{longtable}{\ifsmalltables\scriptsize\else\footnotesize\fi}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+% allow line breaks after underscores in long SQL identifiers
+\renewcommand{\_}{\textunderscore\allowbreak}
+% Long inline code in table cells breaks at spaces and after underscores.
+% let TeX stretch a line rather than push a long identifier into the margin
+\setlength{\emergencystretch}{3em}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize RVCE, CD252IA: Component 8 Forms, Security and Validation}
+\fancyhead[R]{\footnotesize Countersign}
+\fancyfoot[C]{\footnotesize \thepage}
+\setlength{\headheight}{14pt}
+% Inline code (\texttt) in narrow table cells: allow breaks after / . - = , ( and spaces.
+\usepackage{xurl}
+\let\oldtexttt\texttt
+\renewcommand{\texttt}[1]{\oldtexttt{\hspace{0pt}#1}}
+\sloppy
+% contents to level 2 (\tableofcontents is placed by c2_rvce.lua)
+\setcounter{tocdepth}{2}

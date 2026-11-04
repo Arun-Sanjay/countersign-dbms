@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Rebuild Component 2 (SRS), revision 1.1:
+# Rebuild Component 2 (SRS), revision 1.2:
 #   1. diagrams (Graphviz, docker image nshine/dot): diagrams/c2_fig*.dot -> .svg and 200-dpi .png
 #   2. pre-flight: figure legibility (>= 8 pt printed on A4) and body-font glyph coverage
 #   3. Word style sheet c2_reference.docx (Times New Roman 12 pt, RVCE header, page numbers)

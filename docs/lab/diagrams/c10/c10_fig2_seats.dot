@@ -1,0 +1,24 @@
+// C10 Innovative Experiment - Figure 2: S6 declarative seats (experiments/race/schema.sql).
+// Render: docs/lab/build_c10.sh. Caption is in C10_Innovative_Experiment.md.
+digraph Seats {
+  graph [rankdir=LR, nodesep=0.35, ranksep=0.45, fontname="DejaVu Sans", pad=0.2, bgcolor="white"];
+  node  [fontname="DejaVu Sans", fontsize=12, shape=plain];
+  edge  [fontname="DejaVu Sans", fontsize=10.5, arrowsize=0.8, color="#1f3b5c", penwidth=1.5];
+
+  member [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#e8eef5"><B>team_member</B> (fixture)</TD></TR>
+    <TR><TD ALIGN="LEFT">PK (<U>team_id</U>, <U>usn</U>)</TD></TR>
+    <TR><TD PORT="fk" ALIGN="LEFT" BGCOLOR="#fdedec">FK team_member_needs_seat<BR ALIGN="LEFT"/>(team_id, usn) DEFERRABLE<BR ALIGN="LEFT"/>INITIALLY DEFERRED<BR ALIGN="LEFT"/><I>only while S6 is active</I><BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  seat [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#d6e4f0"><B>exp.team_seat</B></TD></TR>
+    <TR><TD ALIGN="LEFT" BGCOLOR="#fef9e7"><B>PK (team_id, seat_no)</B><BR ALIGN="LEFT"/><I>one holder per seat: the rule</I><BR ALIGN="LEFT"/></TD></TR>
+    <TR><TD PORT="uq" ALIGN="LEFT">UNIQUE (team_id, usn)</TD></TR>
+    <TR><TD PORT="fk" ALIGN="LEFT">FK (team_id, seat_no)</TD></TR></TABLE>>];
+  slot [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD BGCOLOR="#d6e4f0"><B>exp.team_seat_slot</B></TD></TR>
+    <TR><TD PORT="pk" ALIGN="LEFT">PK (team_id, seat_no)</TD></TR>
+    <TR><TD ALIGN="LEFT">T02: seat_no 1, 2, 3, 4<BR ALIGN="LEFT"/><I>(generated from max_size = 4)</I><BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+
+  member:fk:e -> seat:uq:w  [label="holds\na seat"];
+  seat:fk:e   -> slot:pk:w  [label="seat is\none of 1..4"];
+}
