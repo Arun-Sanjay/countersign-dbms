@@ -11,6 +11,7 @@ import {
   LogOut,
   NotebookPen,
   ScrollText,
+  Search,
   TriangleAlert,
   Users,
   type LucideIcon,
@@ -171,6 +172,7 @@ export function AppSidebar() {
                   items={[
                     { to: '/hub', label: 'Semester hub', icon: LayoutGrid },
                     { to: '/team', label: 'Team & skills', icon: Users },
+                    { to: '/search', label: 'Search & ask', icon: Search },
                   ]}
                 />
               </SidebarGroupContent>
@@ -212,6 +214,7 @@ export function AppSidebar() {
                   items={[
                     ...(profile.role === 'faculty' ? [{ to: '/teaching', label: 'My projects', icon: LayoutGrid }] : []),
                     { to: '/contested', label: 'Contested claims', icon: TriangleAlert },
+                    { to: '/search', label: 'Search & ask', icon: Search },
                   ]}
                 />
               </SidebarGroupContent>

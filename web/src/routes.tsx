@@ -21,6 +21,7 @@ function page(load: () => Promise<{ default: ComponentType }>): Pick<RouteObject
  *   student  /hub  /team  /projects/:projectId  /notes  /faculty-view
  *   faculty  /teaching  /sheet/:projectId  /contested  /marks/:projectId     (admins may open these too)
  *   admin    /admin
+ *   all      /search
  *   shared   /login  /about
  */
 export const routes: RouteObject[] = [
@@ -63,6 +64,10 @@ export const routes: RouteObject[] = [
                   { path: '/marks', element: <FirstProjectRedirect base="/marks" /> },
                   { path: '/marks/:projectId', ...page(() => import('@/pages/faculty/MarksPage')) },
                 ],
+              },
+              {
+                element: <RequireRole roles={['student', 'faculty', 'admin']} />,
+                children: [{ path: '/search', ...page(() => import('@/pages/shared/SearchPage')) }],
               },
               {
                 element: <RequireRole roles={['admin']} />,

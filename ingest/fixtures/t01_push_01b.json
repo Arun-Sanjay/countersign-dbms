@@ -1,0 +1,94 @@
+{
+  "ref": "refs/heads/main",
+  "before": "0c5afa1d98728ec43228957beec172d9a20d06dd",
+  "after": "5a8fb54688d256bccef3c4ecd063d974ddbbe00f",
+  "repository": {
+    "id": 880101,
+    "node_id": "R_fixture_team_alpha",
+    "name": "team-alpha",
+    "full_name": "rvce-el/team-alpha",
+    "private": true,
+    "owner": {
+      "name": "rvce-el",
+      "login": "rvce-el",
+      "id": 990001,
+      "type": "Organization",
+      "html_url": "https://github.com/rvce-el",
+      "site_admin": false
+    },
+    "html_url": "https://github.com/rvce-el/team-alpha",
+    "url": "https://github.com/rvce-el/team-alpha",
+    "created_at": 1758000000,
+    "default_branch": "main",
+    "master_branch": "main",
+    "visibility": "private",
+    "organization": "rvce-el",
+    "pushed_at": 1793711460
+  },
+  "pusher": {
+    "name": "aditi-rao",
+    "email": "aditi.cy24@rvce.edu.in"
+  },
+  "sender": {
+    "login": "aditi-rao",
+    "id": 770011,
+    "node_id": "U_fixture_770011",
+    "type": "User",
+    "site_admin": false
+  },
+  "created": false,
+  "deleted": false,
+  "forced": false,
+  "base_ref": null,
+  "compare": "https://github.com/rvce-el/team-alpha/compare/0c5afa1d9872...5a8fb54688d2",
+  "commits": [
+    {
+      "id": "5a8fb54688d256bccef3c4ecd063d974ddbbe00f",
+      "tree_id": "b52605b1c49c5b930ff944479085ab92b436090a",
+      "distinct": true,
+      "message": "Vault: literature survey on provenance and peer assessment",
+      "timestamp": "2026-11-03T18:40:00+05:30",
+      "url": "https://github.com/rvce-el/team-alpha/commit/5a8fb54688d256bccef3c4ecd063d974ddbbe00f",
+      "author": {
+        "name": "Aditi Rao",
+        "email": "aditi.cy24@rvce.edu.in"
+      },
+      "committer": {
+        "name": "Aditi Rao",
+        "email": "aditi.cy24@rvce.edu.in"
+      },
+      "added": [],
+      "removed": [],
+      "modified": [
+        "shared/Literature survey.md"
+      ],
+      "x_contents": {
+        "shared/Literature survey.md": "---\ntags: [research, provenance, peer-assessment]\n---\n# Literature survey\n\n## Data provenance\nData provenance research tracks who changed each record and when. W7-style provenance models\nrecord the *agent*, the *activity* and the *entity*; for our platform the agent is a student,\nthe activity is a commit or a note save, and the entity is an artifact version. Storing the\ncontent hash of every version lets anyone check later that a submitted version was not edited.\n\n## Peer assessment tools\nCATME and WebPA ask teammates to rate each other at the end of a project. Both rely on ratings,\nnot on traceable evidence, so a confident student can inflate a weak contribution and a quiet\nstudent who did the schema work can be under-rated. GitHub Classroom shows commits but cannot\nsee design work done on paper or in a shared document.\n\n## What we take from this\n1. Every contribution row should point at evidence (a commit SHA or a note version).\n2. Teammates should confirm or dispute a claim, not score each other.\n3. AI assistance should be declared per contribution, never guessed by a detector.\n\nLinks: [[ER diagram decisions]], [[Synopsis outline]]\n"
+      }
+    }
+  ],
+  "head_commit": {
+    "id": "5a8fb54688d256bccef3c4ecd063d974ddbbe00f",
+    "tree_id": "b52605b1c49c5b930ff944479085ab92b436090a",
+    "distinct": true,
+    "message": "Vault: literature survey on provenance and peer assessment",
+    "timestamp": "2026-11-03T18:40:00+05:30",
+    "url": "https://github.com/rvce-el/team-alpha/commit/5a8fb54688d256bccef3c4ecd063d974ddbbe00f",
+    "author": {
+      "name": "Aditi Rao",
+      "email": "aditi.cy24@rvce.edu.in"
+    },
+    "committer": {
+      "name": "Aditi Rao",
+      "email": "aditi.cy24@rvce.edu.in"
+    },
+    "added": [],
+    "removed": [],
+    "modified": [
+      "shared/Literature survey.md"
+    ],
+    "x_contents": {
+      "shared/Literature survey.md": "---\ntags: [research, provenance, peer-assessment]\n---\n# Literature survey\n\n## Data provenance\nData provenance research tracks who changed each record and when. W7-style provenance models\nrecord the *agent*, the *activity* and the *entity*; for our platform the agent is a student,\nthe activity is a commit or a note save, and the entity is an artifact version. Storing the\ncontent hash of every version lets anyone check later that a submitted version was not edited.\n\n## Peer assessment tools\nCATME and WebPA ask teammates to rate each other at the end of a project. Both rely on ratings,\nnot on traceable evidence, so a confident student can inflate a weak contribution and a quiet\nstudent who did the schema work can be under-rated. GitHub Classroom shows commits but cannot\nsee design work done on paper or in a shared document.\n\n## What we take from this\n1. Every contribution row should point at evidence (a commit SHA or a note version).\n2. Teammates should confirm or dispute a claim, not score each other.\n3. AI assistance should be declared per contribution, never guessed by a detector.\n\nLinks: [[ER diagram decisions]], [[Synopsis outline]]\n"
+    }
+  }
+}

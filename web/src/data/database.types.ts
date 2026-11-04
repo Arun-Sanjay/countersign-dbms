@@ -184,6 +184,7 @@ export type Database = {
           artifact_id: string;
           author_usn: string;
           chunk_id: number;
+          chunk_no: number | null;
           content: string;
           content_hash: string | null;
           created_at: string;
@@ -198,6 +199,7 @@ export type Database = {
           artifact_id: string;
           author_usn: string;
           chunk_id?: number;
+          chunk_no?: number | null;
           content: string;
           content_hash?: string | null;
           created_at?: string;
@@ -211,6 +213,7 @@ export type Database = {
           artifact_id?: string;
           author_usn?: string;
           chunk_id?: number;
+          chunk_no?: number | null;
           content?: string;
           content_hash?: string | null;
           created_at?: string;
@@ -245,6 +248,7 @@ export type Database = {
           created_at: string;
           created_by: string;
           mongo_ref: string | null;
+          source_ref: string | null;
           version_no: number;
         };
         ComputedFields: never;
@@ -255,6 +259,7 @@ export type Database = {
           created_at?: string;
           created_by: string;
           mongo_ref?: string | null;
+          source_ref?: string | null;
           version_no: number;
         };
         Update: {
@@ -264,6 +269,7 @@ export type Database = {
           created_at?: string;
           created_by?: string;
           mongo_ref?: string | null;
+          source_ref?: string | null;
           version_no?: number;
         };
         Relationships: [
@@ -763,6 +769,106 @@ export type Database = {
         };
         Relationships: [];
       };
+      ingest_event: {
+        Row: {
+          attempts: number;
+          commit_count: number | null;
+          contribution_count: number | null;
+          delivery_id: string;
+          error: string | null;
+          event_type: string;
+          followups_at: string | null;
+          mongo_id: string | null;
+          msg_id: number | null;
+          projected_at: string | null;
+          push_after: string | null;
+          push_ref: string | null;
+          received_at: string;
+          repo_full_name: string | null;
+          sender_login: string | null;
+          source: string;
+          status: string;
+          team_id: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          attempts?: number;
+          commit_count?: number | null;
+          contribution_count?: number | null;
+          delivery_id: string;
+          error?: string | null;
+          event_type: string;
+          followups_at?: string | null;
+          mongo_id?: string | null;
+          msg_id?: number | null;
+          projected_at?: string | null;
+          push_after?: string | null;
+          push_ref?: string | null;
+          received_at?: string;
+          repo_full_name?: string | null;
+          sender_login?: string | null;
+          source?: string;
+          status?: string;
+          team_id?: string | null;
+        };
+        Update: {
+          attempts?: number;
+          commit_count?: number | null;
+          contribution_count?: number | null;
+          delivery_id?: string;
+          error?: string | null;
+          event_type?: string;
+          followups_at?: string | null;
+          mongo_id?: string | null;
+          msg_id?: number | null;
+          projected_at?: string | null;
+          push_after?: string | null;
+          push_ref?: string | null;
+          received_at?: string;
+          repo_full_name?: string | null;
+          sender_login?: string | null;
+          source?: string;
+          status?: string;
+          team_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ingest_event_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "team";
+            referencedColumns: ["team_id"];
+          },
+          {
+            foreignKeyName: "ingest_event_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "v_faculty_team_progress";
+            referencedColumns: ["team_id"];
+          },
+          {
+            foreignKeyName: "ingest_event_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "v_lab_cie_marks";
+            referencedColumns: ["team_id"];
+          },
+          {
+            foreignKeyName: "ingest_event_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "v_rubric_sheet";
+            referencedColumns: ["team_id"];
+          },
+          {
+            foreignKeyName: "ingest_event_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "v_semester_hub";
+            referencedColumns: ["team_id"];
+          },
+        ];
+      };
       milestone: {
         Row: {
           cie_part: string;
@@ -1051,6 +1157,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      student_identity: {
+        Row: {
+          created_at: string;
+          provider: string;
+          provider_login: string;
+          provider_user_id: number | null;
+          usn: string;
+          verified_at: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          provider: string;
+          provider_login: string;
+          provider_user_id?: number | null;
+          usn: string;
+          verified_at?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          provider?: string;
+          provider_login?: string;
+          provider_user_id?: number | null;
+          usn?: string;
+          verified_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "student_identity_usn_fkey";
+            columns: ["usn"];
+            isOneToOne: false;
+            referencedRelation: "student";
+            referencedColumns: ["usn"];
+          },
+        ];
+      };
       student_skill: {
         Row: {
           level: number;
@@ -1301,6 +1443,66 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "student";
             referencedColumns: ["usn"];
+          },
+        ];
+      };
+      team_repo: {
+        Row: {
+          added_at: string;
+          default_milestone_no: number | null;
+          project_id: string;
+          purpose: string | null;
+          repo_full_name: string;
+          team_id: string;
+          track_paths: string[] | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          added_at?: string;
+          default_milestone_no?: number | null;
+          project_id: string;
+          purpose?: string | null;
+          repo_full_name: string;
+          team_id: string;
+          track_paths?: string[] | null;
+        };
+        Update: {
+          added_at?: string;
+          default_milestone_no?: number | null;
+          project_id?: string;
+          purpose?: string | null;
+          repo_full_name?: string;
+          team_id?: string;
+          track_paths?: string[] | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "team_repo_milestone_fkey";
+            columns: ["project_id", "default_milestone_no"];
+            isOneToOne: false;
+            referencedRelation: "milestone";
+            referencedColumns: ["project_id", "milestone_no"];
+          },
+          {
+            foreignKeyName: "team_repo_team_fkey";
+            columns: ["team_id", "project_id"];
+            isOneToOne: false;
+            referencedRelation: "team";
+            referencedColumns: ["team_id", "project_id"];
+          },
+          {
+            foreignKeyName: "team_repo_team_fkey";
+            columns: ["team_id", "project_id"];
+            isOneToOne: false;
+            referencedRelation: "v_lab_cie_marks";
+            referencedColumns: ["team_id", "project_id"];
+          },
+          {
+            foreignKeyName: "team_repo_team_fkey";
+            columns: ["team_id", "project_id"];
+            isOneToOne: false;
+            referencedRelation: "v_rubric_sheet";
+            referencedColumns: ["team_id", "project_id"];
           },
         ];
       };
@@ -1577,10 +1779,35 @@ export type Database = {
       };
       find_full_cover: { Args: { p_project_id: string }; Returns: Json };
       find_teammates: { Args: { p_project_id: string }; Returns: Json };
+      ingest_fail: {
+        Args: { p_delivery_id: string; p_error: string; p_max_attempts?: number };
+        Returns: Json;
+      };
+      ingest_mark_raw: { Args: { p_delivery_id: string; p_mongo_id: string }; Returns: Json };
+      ingest_read: {
+        Args: { p_qty?: number; p_vt?: number };
+        Returns: {
+          commit_authors: Json;
+          delivery_id: string;
+          event_type: string;
+          msg_id: number;
+          payload: Json;
+          read_ct: number;
+          team_id: string;
+        }[];
+      };
+      ingest_receive: {
+        Args: { p_delivery_id: string; p_event_type: string; p_payload: Json };
+        Returns: Json;
+      };
       join_team: { Args: { p_team_id: string }; Returns: Json };
       leave_team: { Args: { p_team_id: string }; Returns: Json };
       lock_milestone: { Args: { p_milestone_no: number; p_project_id: string }; Returns: Json };
       my_private_notes: { Args: Record<PropertyKey, never>; Returns: Json };
+      project_push: {
+        Args: { p_delivery_id: string; p_mongo_id?: string; p_payload: Json };
+        Returns: Json;
+      };
       record_assessment: {
         Args: {
           p_marks: number;
@@ -1594,6 +1821,34 @@ export type Database = {
       save_private_note: {
         Args: { p_body: string; p_note_id?: number; p_team_id?: string; p_title: string };
         Returns: Json;
+      };
+      search_chunks: {
+        Args: {
+          p_author_usn?: string;
+          p_limit?: number;
+          p_query: string;
+          p_query_embedding?: string;
+          p_since?: string;
+          p_team_id?: string;
+        };
+        Returns: {
+          artifact_id: string;
+          artifact_title: string;
+          artifact_type: string;
+          author_name: string;
+          author_usn: string;
+          chunk_id: number;
+          chunk_no: number;
+          created_at: string;
+          project_id: string;
+          rank_fts: number;
+          rank_vec: number;
+          score: number;
+          snippet: string;
+          team_id: string;
+          version_no: number;
+          visibility: string;
+        }[];
       };
       semester_hub: { Args: Record<PropertyKey, never>; Returns: Json };
       skill_gap: { Args: { p_project_id: string; p_usn?: string }; Returns: Json };

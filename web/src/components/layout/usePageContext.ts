@@ -22,6 +22,7 @@ const PAGES: [pattern: string, page: string][] = [
   ['/marks/:projectId', 'Lab CIE marks'],
   ['/contested', 'Contested claims'],
   ['/admin', 'Directory'],
+  ['/search', 'Search & ask'],
   ['/about', 'How it works'],
 ]
 

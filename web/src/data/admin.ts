@@ -2,10 +2,11 @@
  * Admin directory data: per-table counts (count: 'exact', head: true), app_user personas.
  * Owned by the admin page.
  */
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/auth/AuthProvider'
 import { keys } from '@/data/keys'
 import type { AppRole, TableRow } from '@/data/types'
+import { apiGet, apiPost } from '@/lib/api'
 import { throwIfError } from '@/lib/errors'
 import { supabase } from '@/lib/supabase'
 
@@ -57,6 +58,14 @@ export const TABLE_GROUPS: TableGroup[] = [
       { name: 'claim_evidence' },
       { name: 'countersign' },
       { name: 'assessment' },
+    ],
+  },
+  {
+    label: 'Ingestion',
+    tables: [
+      { name: 'ingest_event', note: 'webhook inbox' },
+      { name: 'team_repo', note: 'repo → team' },
+      { name: 'student_identity', note: 'GitHub login / e-mail → USN' },
     ],
   },
   {
@@ -118,5 +127,114 @@ export function useAppUsers() {
       throwIfError(error)
       return (data ?? []) as unknown as PersonaRow[]
     },
+  })
+}
+
+// ---- ingestion (inbox, worker drain, Mongo <-> Postgres consistency) ---------------------------
+export type IngestEvent = TableRow<'ingest_event'>
+
+/** The latest webhook deliveries (ingest_event_select: admins see all, faculty their projects'). */
+export function useIngestEvents(limit = 50) {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: [...keys.admin.all, 'ingest_event', profile?.userId, limit],
+    enabled: Boolean(profile),
+    queryFn: async (): Promise<IngestEvent[]> => {
+      const { data, error } = await supabase
+        .from('ingest_event')
+        .select('*')
+        .order('received_at', { ascending: false })
+        .limit(limit)
+      throwIfError(error)
+      return data ?? []
+    },
+  })
+}
+
+/** Whatever counters POST /ingest/drain answers with, read leniently. */
+export interface DrainSummary {
+  read: number | null
+  projected: number | null
+  failed: number | null
+  contributions: number | null
+  raw: Record<string, unknown>
+}
+
+function pickCount(r: Record<string, unknown>, ...names: string[]): number | null {
+  for (const n of names) {
+    const v = r[n]
+    if (typeof v === 'number') return v
+    if (Array.isArray(v)) return v.length
+  }
+  return null
+}
+
+export function summarizeDrain(raw: unknown): DrainSummary {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+  return {
+    read: pickCount(r, 'read', 'processed', 'messages', 'count', 'drained'),
+    projected: pickCount(r, 'projected', 'ok'),
+    failed: pickCount(r, 'failed', 'errors'),
+    contributions: pickCount(r, 'contributions'),
+    raw: r,
+  }
+}
+
+/** "Sync now": the API runs the worker loop once (ingest_read → Mongo → ingest_mark_raw → project_push). */
+export function useDrainIngest() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (): Promise<DrainSummary> => summarizeDrain(await apiPost<unknown>('/ingest/drain', {}, 60_000)),
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: keys.admin.all })
+      void qc.invalidateQueries({ queryKey: ['consistency'] })
+      void qc.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export interface ConsistencyAuthor {
+  usn: string
+  mongo_commits: number
+  postgres_github_contributions: number
+  /** distinct commit SHAs in Postgres: the unit to compare with mongo_commits */
+  postgres_commits?: number
+  only_in_mongo: string[]
+  only_in_postgres: string[]
+  /** SHAs in both stores (newer API builds) */
+  matched?: number
+  /** pipeline commits that touched no tracked path: nothing to project, by design */
+  not_projected?: string[]
+  /** evidence that never went through the pipeline (seeded / fixture rows) */
+  outside_pipeline?: { mongo_commits: number; postgres_contributions: number }
+  status: 'consistent' | 'only_in_mongo' | 'only_in_postgres' | 'mismatch' | 'outside_pipeline' | (string & {})
+}
+export interface ConsistencyTeam {
+  team_id: string
+  team_name: string
+  project_id: string
+  access: string
+  mongo_commits: number
+  postgres_github_contributions: number
+  consistent: boolean
+  matched_commits?: number
+  status?: string
+  pipeline_events?: Record<string, number>
+  note: string | null
+  authors: ConsistencyAuthor[]
+}
+export interface ConsistencyReport {
+  role: string
+  teams: ConsistencyTeam[]
+  all_consistent: boolean
+}
+
+export function useConsistency() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['consistency', profile?.userId],
+    enabled: Boolean(profile),
+    retry: false,
+    queryFn: () => apiGet<ConsistencyReport>('/consistency', 15_000),
   })
 }

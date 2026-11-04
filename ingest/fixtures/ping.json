@@ -1,0 +1,48 @@
+{
+  "zen": "Design for failure.",
+  "hook_id": 512000001,
+  "hook": {
+    "type": "Repository",
+    "id": 512000001,
+    "name": "web",
+    "active": true,
+    "events": [
+      "push"
+    ],
+    "config": {
+      "content_type": "json",
+      "insecure_ssl": "0",
+      "url": "https://<project-ref>.supabase.co/functions/v1/github-webhook"
+    }
+  },
+  "repository": {
+    "id": 1445781068,
+    "node_id": "R_kgDOVizeTA",
+    "name": "countersign-dbms",
+    "full_name": "Arun-Sanjay/countersign-dbms",
+    "private": true,
+    "owner": {
+      "name": "Arun-Sanjay",
+      "email": "228202223+Arun-Sanjay@users.noreply.github.com",
+      "login": "Arun-Sanjay",
+      "id": 228202223,
+      "node_id": "U_kgDODZoW7w",
+      "type": "User",
+      "html_url": "https://github.com/Arun-Sanjay",
+      "site_admin": false
+    },
+    "html_url": "https://github.com/Arun-Sanjay/countersign-dbms",
+    "url": "https://github.com/Arun-Sanjay/countersign-dbms",
+    "created_at": 1762267061,
+    "default_branch": "main",
+    "master_branch": "main",
+    "visibility": "private"
+  },
+  "sender": {
+    "login": "Arun-Sanjay",
+    "id": 228202223,
+    "node_id": "U_kgDODZoW7w",
+    "type": "User",
+    "site_admin": false
+  }
+}

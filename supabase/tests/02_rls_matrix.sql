@@ -109,12 +109,34 @@ GRANT SELECT ON rls_expect TO authenticated, anon;
 GRANT INSERT ON rls_actual TO authenticated, anon;
 
 -- Count every relation as the CURRENT role (invoker), recording 'denied' on 42501.
+-- The expected numbers are the SEED's. Rows the GitHub ingestion pipeline adds (a webhook
+-- replay, the e2e ingestion spec) are left out, so the matrix holds on a database that has
+-- seen pipeline traffic: G-prefixed artifacts, versions with a source_ref (commit SHA),
+-- github contributions with a full 40-hex SHA, and numbered chunks (chunk_no).
+CREATE FUNCTION pg_temp.seed_only(p_rel TEXT) RETURNS TEXT LANGUAGE sql IMMUTABLE AS $$
+    SELECT CASE p_rel
+        WHEN 'artifact'         THEN $w$WHERE artifact_id !~ '^G'$w$
+        WHEN 'artifact_version' THEN $w$WHERE source_ref IS NULL$w$
+        WHEN 'contribution'     THEN $w$WHERE NOT (source = 'github' AND coalesce(source_ref, '') ~ '^[0-9a-f]{40}$')$w$
+        WHEN 'artifact_chunk'   THEN $w$WHERE chunk_no IS NULL$w$
+        WHEN 'v_what_faculty_sees' THEN $w$WHERE NOT (
+                (item_kind = 'artifact' AND item_ref ~ '^G')
+             OR (item_kind = 'artifact_version' AND EXISTS (
+                    SELECT 1 FROM public.artifact_version v
+                    WHERE v.artifact_id || '@v' || v.version_no = item_ref AND v.source_ref IS NOT NULL))
+             OR (item_kind = 'contribution' AND EXISTS (
+                    SELECT 1 FROM public.contribution k
+                    WHERE k.contribution_id::text = item_ref AND k.source = 'github'
+                      AND coalesce(k.source_ref, '') ~ '^[0-9a-f]{40}$')))$w$
+        ELSE '' END;
+$$;
+
 CREATE FUNCTION pg_temp.snapshot(p_persona TEXT) RETURNS void LANGUAGE plpgsql AS $$
 DECLARE r TEXT; n BIGINT;
 BEGIN
     FOR r IN SELECT rel FROM rls_expect LOOP
         BEGIN
-            EXECUTE format('SELECT count(*) FROM public.%I', r) INTO n;
+            EXECUTE format('SELECT count(*) FROM public.%I %s', r, pg_temp.seed_only(r)) INTO n;
             INSERT INTO rls_actual VALUES (p_persona, r, n::text);
         EXCEPTION WHEN insufficient_privilege THEN
             INSERT INTO rls_actual VALUES (p_persona, r, 'denied');

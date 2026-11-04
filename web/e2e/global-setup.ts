@@ -66,6 +66,9 @@ export default async function globalSetup() {
       ['run', '--python', '3.12', '--with', 'httpx', '--with', 'python-dotenv', 'python', 'scripts/create_personas.py', '--target', 'local'],
       'create personas (local)',
     )
+    // Postgres was reset, so the worker's raw log in the LOCAL Mongo container must go too,
+    // or the admin consistency panel reports pushes that only Mongo remembers.
+    run('scripts/clear_local_pipeline.sh', [], 'clear local Mongo pipeline documents')
   }
   await waitForAuth(url, anonKey)
 }

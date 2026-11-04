@@ -62,26 +62,34 @@ END $$;
 -- ---------------------------------------------------------------------
 -- A. Catalog: who may call what
 -- ---------------------------------------------------------------------
-CREATE TEMP TABLE rpc (name TEXT PRIMARY KEY, definer BOOLEAN);
+-- caller: who may EXECUTE it. 'authenticated' = signed-in users (runs under their RLS);
+-- 'service_role' = the ingestion pipeline only (0005/0006: Edge Function and worker).
+CREATE TEMP TABLE rpc (name TEXT PRIMARY KEY, definer BOOLEAN, caller TEXT NOT NULL DEFAULT 'authenticated');
 INSERT INTO rpc VALUES
     ('join_team', false), ('leave_team', false), ('submit_milestone', false), ('file_claim', false),
     ('add_claim_evidence', false), ('countersign_claim', false), ('record_assessment', false),
     ('lock_milestone', false), ('find_teammates', false), ('find_full_cover', false),
     ('skill_gap', false), ('skill_subtree', false), ('semester_hub', false),
-    ('my_private_notes', true), ('save_private_note', true), ('delete_private_note', true);
+    ('my_private_notes', true), ('save_private_note', true), ('delete_private_note', true),
+    ('search_chunks', false);
+INSERT INTO rpc VALUES
+    ('ingest_receive', true, 'service_role'), ('ingest_read', true, 'service_role'),
+    ('ingest_mark_raw', true, 'service_role'), ('project_push', true, 'service_role'),
+    ('ingest_fail', true, 'service_role');                       -- 0006: worker failure outside project_push
 
 SELECT set_eq($$SELECT proname::text FROM pg_proc WHERE pronamespace = 'public'::regnamespace$$,
-              $$SELECT name FROM rpc$$, 'public schema holds exactly the 16 RPCs');
+              $$SELECT name FROM rpc$$, 'public schema holds exactly the 22 RPCs');
 SELECT is((SELECT count(*)::int FROM pg_proc p WHERE p.pronamespace = 'public'::regnamespace
              AND (has_function_privilege('anon', p.oid, 'EXECUTE')
                   OR has_function_privilege('public', p.oid, 'EXECUTE'))),
           0, 'anon / PUBLIC cannot EXECUTE any RPC');
-SELECT is((SELECT count(*)::int FROM pg_proc p WHERE p.pronamespace = 'public'::regnamespace
-             AND has_function_privilege('authenticated', p.oid, 'EXECUTE')),
-          16, 'authenticated can EXECUTE all 16 RPCs');
+SELECT set_eq($$SELECT proname::text FROM pg_proc p WHERE p.pronamespace = 'public'::regnamespace
+                 AND has_function_privilege('authenticated', p.oid, 'EXECUTE')$$,
+              $$SELECT name FROM rpc WHERE caller = 'authenticated'$$,
+              'authenticated can EXECUTE exactly the 17 user RPCs (not the 5 pipeline RPCs)');
 SELECT set_eq($$SELECT proname::text FROM pg_proc WHERE pronamespace = 'public'::regnamespace AND prosecdef$$,
               $$SELECT name FROM rpc WHERE definer$$,
-              'only the private-note RPCs are SECURITY DEFINER (everything else runs under RLS)');
+              'only the private-note and service-only pipeline RPCs are SECURITY DEFINER (everything else runs under RLS)');
 SELECT is((SELECT count(*)::int FROM pg_proc p WHERE p.pronamespace = 'public'::regnamespace
              AND NOT ('search_path=""' = ANY (coalesce(p.proconfig, '{}')))),
           0, 'every RPC pins search_path to empty');

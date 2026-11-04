@@ -1,0 +1,96 @@
+{
+  "ref": "refs/heads/main",
+  "before": "c08fdf0a08cea03b575482b99483cc6a5a03b2a6",
+  "after": "0c5afa1d98728ec43228957beec172d9a20d06dd",
+  "repository": {
+    "id": 880101,
+    "node_id": "R_fixture_team_alpha",
+    "name": "team-alpha",
+    "full_name": "rvce-el/team-alpha",
+    "private": true,
+    "owner": {
+      "name": "rvce-el",
+      "login": "rvce-el",
+      "id": 990001,
+      "type": "Organization",
+      "html_url": "https://github.com/rvce-el",
+      "site_admin": false
+    },
+    "html_url": "https://github.com/rvce-el/team-alpha",
+    "url": "https://github.com/rvce-el/team-alpha",
+    "created_at": 1758000000,
+    "default_branch": "main",
+    "master_branch": "main",
+    "visibility": "private",
+    "organization": "rvce-el",
+    "pushed_at": 1793709780
+  },
+  "pusher": {
+    "name": "karthik-m",
+    "email": "karthik.cy24@rvce.edu.in"
+  },
+  "sender": {
+    "login": "karthik-m",
+    "id": 770024,
+    "node_id": "U_fixture_770024",
+    "type": "User",
+    "site_admin": false
+  },
+  "created": false,
+  "deleted": false,
+  "forced": false,
+  "base_ref": null,
+  "compare": "https://github.com/rvce-el/team-alpha/compare/c08fdf0a08ce...0c5afa1d9872",
+  "commits": [
+    {
+      "id": "0c5afa1d98728ec43228957beec172d9a20d06dd",
+      "tree_id": "3bb74d4817251e5d0baab2cf483c79ff04f35e7b",
+      "distinct": true,
+      "message": "Add foreign keys and CHECK constraints to the schema\n\nComposite FK artifact(project_id, milestone_no) -> milestone.\n\nAI-Assisted: yes",
+      "timestamp": "2026-11-03T18:12:00+05:30",
+      "url": "https://github.com/rvce-el/team-alpha/commit/0c5afa1d98728ec43228957beec172d9a20d06dd",
+      "author": {
+        "name": "Karthik M",
+        "email": "karthik.cy24@rvce.edu.in",
+        "username": "karthik-m"
+      },
+      "committer": {
+        "name": "Karthik M",
+        "email": "karthik.cy24@rvce.edu.in",
+        "username": "karthik-m"
+      },
+      "added": [
+        "db/constraints.sql"
+      ],
+      "removed": [],
+      "modified": [
+        "db/schema.sql"
+      ]
+    }
+  ],
+  "head_commit": {
+    "id": "0c5afa1d98728ec43228957beec172d9a20d06dd",
+    "tree_id": "3bb74d4817251e5d0baab2cf483c79ff04f35e7b",
+    "distinct": true,
+    "message": "Add foreign keys and CHECK constraints to the schema\n\nComposite FK artifact(project_id, milestone_no) -> milestone.\n\nAI-Assisted: yes",
+    "timestamp": "2026-11-03T18:12:00+05:30",
+    "url": "https://github.com/rvce-el/team-alpha/commit/0c5afa1d98728ec43228957beec172d9a20d06dd",
+    "author": {
+      "name": "Karthik M",
+      "email": "karthik.cy24@rvce.edu.in",
+      "username": "karthik-m"
+    },
+    "committer": {
+      "name": "Karthik M",
+      "email": "karthik.cy24@rvce.edu.in",
+      "username": "karthik-m"
+    },
+    "added": [
+      "db/constraints.sql"
+    ],
+    "removed": [],
+    "modified": [
+      "db/schema.sql"
+    ]
+  }
+}

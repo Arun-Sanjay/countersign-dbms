@@ -1,0 +1,206 @@
+{
+  "description": "Replay order for scripts/replay_webhooks.py. sign: valid | wrong_secret | tampered.",
+  "deliveries": [
+    {
+      "name": "ping",
+      "file": "ping.json",
+      "event": "ping",
+      "delivery": "ea4b65f2-35df-5aca-b622-2de3e6fa464b",
+      "sign": "valid",
+      "description": "webhook created: GitHub sends a ping first",
+      "expect": {
+        "http": 200
+      }
+    },
+    {
+      "name": "t00-push-01",
+      "file": "t00_push_01.json",
+      "event": "push",
+      "delivery": "09014f05-52ed-5c7b-b3df-21d4b87c7e58",
+      "sign": "valid",
+      "description": "real history: 3fcacc3",
+      "expect": {
+        "http": 202,
+        "status": "queued",
+        "duplicate": false
+      }
+    },
+    {
+      "name": "t00-push-02",
+      "file": "t00_push_02.json",
+      "event": "push",
+      "delivery": "a7181799-87be-54c8-8653-875050acc595",
+      "sign": "valid",
+      "description": "real history: d0ba69d, ec4e61a",
+      "expect": {
+        "http": 202,
+        "status": "queued",
+        "duplicate": false
+      }
+    },
+    {
+      "name": "t00-push-03",
+      "file": "t00_push_03.json",
+      "event": "push",
+      "delivery": "c1b0b403-9a4c-56bf-a8c2-eb78ef4f9c77",
+      "sign": "valid",
+      "description": "real history: 4c045b5",
+      "expect": {
+        "http": 202,
+        "status": "queued",
+        "duplicate": false
+      }
+    },
+    {
+      "name": "t00-push-04",
+      "file": "t00_push_04.json",
+      "event": "push",
+      "delivery": "403a2793-13e0-5d5c-9ef8-734e7a1fc485",
+      "sign": "valid",
+      "description": "real history: 13a1b9c",
+      "expect": {
+        "http": 202,
+        "status": "queued",
+        "duplicate": false
+      }
+    },
+    {
+      "name": "t00-push-05",
+      "file": "t00_push_05.json",
+      "event": "push",
+      "delivery": "e46239a5-ce1d-59cd-adea-20e03c02ba9c",
+      "sign": "valid",
+      "description": "real history: c6e8064",
+      "expect": {
+        "http": 202,
+        "status": "queued",
+        "duplicate": false
+      }
+    },
+    {
+      "name": "t01-push-01",
+      "file": "t01_push_01.json",
+      "event": "push",
+      "delivery": "0be07b9c-b9ae-55d2-a93d-4a69605e50c6",
+      "sign": "valid",
+      "description": "T01: Karthik's FK/CHECK schema work (AI-Assisted: yes)",
+      "expect": {
+        "http": 202,
+        "status": "queued",
+        "duplicate": false
+      }
+    },
+    {
+      "name": "t01-push-01-redelivery",
+      "file": "t01_push_01.json",
+      "event": "push",
+      "delivery": "0be07b9c-b9ae-55d2-a93d-4a69605e50c6",
+      "sign": "valid",
+      "description": "GitHub 'Redeliver': same X-GitHub-Delivery -> no new row, no new message",
+      "expect": {
+        "http": 202,
+        "status": "queued",
+        "duplicate": true
+      }
+    },
+    {
+      "name": "t01-push-01-replayed",
+      "file": "t01_push_01.json",
+      "event": "push",
+      "delivery": "cb46e4e7-d63b-51e8-ad8e-b3497277b7a0",
+      "sign": "valid",
+      "description": "the same signed body re-sent under a NEW delivery id: same (repo, ref, after) -> duplicate",
+      "expect": {
+        "http": 202,
+        "status": "queued",
+        "duplicate": true
+      }
+    },
+    {
+      "name": "t01-push-01b",
+      "file": "t01_push_01b.json",
+      "event": "push",
+      "delivery": "0fc1d28b-3aaf-5ccd-9f5c-27fe91f5971e",
+      "sign": "valid",
+      "description": "T01: Aditi pushes her vault note; author matched by e-mail, pusher by GitHub id",
+      "expect": {
+        "http": 202,
+        "status": "queued",
+        "duplicate": false
+      }
+    },
+    {
+      "name": "t01-push-02-wrong-secret",
+      "file": "t01_push_02.json",
+      "event": "push",
+      "delivery": "f40527e1-4e1e-51bc-a85e-49a732f22acf",
+      "sign": "wrong_secret",
+      "description": "signed with the wrong secret -> 401, nothing stored",
+      "expect": {
+        "http": 401
+      }
+    },
+    {
+      "name": "t01-push-02-tampered",
+      "file": "t01_push_02.json",
+      "event": "push",
+      "delivery": "90083726-cfd2-594a-8ac5-d5cf958052f8",
+      "sign": "tampered",
+      "description": "valid signature of the original body, but the body was changed in transit -> 401",
+      "expect": {
+        "http": 401
+      }
+    },
+    {
+      "name": "t01-push-02",
+      "file": "t01_push_02.json",
+      "event": "push",
+      "delivery": "50235787-a792-589a-8473-64025b70c77a",
+      "sign": "valid",
+      "description": "T01: Meera's ER note + drawio, an unknown author (skipped, warning), Co-Authored-By without the trailer",
+      "expect": {
+        "http": 202,
+        "status": "queued",
+        "duplicate": false
+      }
+    },
+    {
+      "name": "t01-feature-branch",
+      "file": "t01_push_feature_branch.json",
+      "event": "push",
+      "delivery": "18b73702-504d-5799-a317-cfbcbb3b9017",
+      "sign": "valid",
+      "description": "push to a feature branch: logged as ignored, never queued",
+      "expect": {
+        "http": 202,
+        "status": "ignored",
+        "duplicate": false
+      }
+    },
+    {
+      "name": "t03-push-01",
+      "file": "t03_push_01.json",
+      "event": "push",
+      "delivery": "d98975b8-7cef-577d-a0ef-4e4ccba32b90",
+      "sign": "valid",
+      "description": "T03: Priya's loader; Rohan's commit pushed by Priya is logged but not credited (unverified)",
+      "expect": {
+        "http": 202,
+        "status": "queued",
+        "duplicate": false
+      }
+    },
+    {
+      "name": "issues-event",
+      "file": "issues.json",
+      "event": "issues",
+      "delivery": "239b83dc-c5f0-51f0-970a-2f3d2cb4461b",
+      "sign": "valid",
+      "description": "not a push: acknowledged, not stored",
+      "expect": {
+        "http": 202,
+        "status": "ignored"
+      }
+    }
+  ]
+}

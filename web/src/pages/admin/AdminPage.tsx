@@ -13,6 +13,7 @@ import { TABLE_GROUPS, useAppUsers, useTableCounts, type PersonaRow } from '@/da
 import { useSemesterHub } from '@/data/hub'
 import { formatDateTime } from '@/lib/format'
 import { ProjectCards } from '@/pages/faculty/components/ProjectCards'
+import { IngestionPanel } from './IngestionPanel'
 
 function personaEmail(r: PersonaRow): string | null {
   const p = PERSONAS.find((x) =>
@@ -78,7 +79,7 @@ const PERSONA_COLUMNS: Column<PersonaRow>[] = [
   },
 ]
 
-/** /admin — directory overview: counts per table, personas. */
+/** /admin — directory overview: ingestion, counts per table, personas. */
 export default function AdminPage() {
   const hub = useSemesterHub()
   const counts = useTableCounts()
@@ -112,6 +113,8 @@ export default function AdminPage() {
           From one <span className="font-mono">semester_hub()</span> call, which answers per role.
           <SqlButton panelId="hub.overview" />
         </p>
+
+        <IngestionPanel />
 
         <Panel
           title="Rows per table"

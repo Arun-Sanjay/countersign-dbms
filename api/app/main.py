@@ -2,8 +2,11 @@
 
 Thin by design (docs/PLAN.md §5, fat DB / thin API): CRUD on relational data goes through
 supabase-js under RLS. This service only does what Postgres cannot: MongoDB notes with
-immutable versions, and a cross-database consistency check. Authorisation is always asked
-of Postgres AS THE CALLER (PostgREST + the caller's JWT), never with a service key.
+immutable versions, the ingestion worker (pgmq -> Mongo raw log -> Postgres projection), a
+cross-database consistency check, and the permission-aware /ask. Authorisation is always
+asked of Postgres AS THE CALLER (PostgREST + the caller's JWT). The one exception is
+POST /ingest/drain: after checking that the caller is an admin, it runs the worker, whose
+pipeline RPCs are service_role-only (app/worker.py).
 
 Run:  cd api && uv run uvicorn app.main:app --reload --port 8000
 """
@@ -20,9 +23,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pymongo import MongoClient
 
+from pydantic import BaseModel, Field
+
+from . import ask as ask_mod
 from . import notes as notes_mod
+from . import trace as trace_mod
+from . import worker as worker_mod
 from .auth import Authenticator, Caller, Postgrest, problem, require_team, visible_teams
-from .config import get_settings
+from .config import ConfigError, get_settings
 from .consistency import consistency as consistency_report
 
 
@@ -144,3 +152,68 @@ def get_consistency(request: Request, who: CallerDep, pg: PgDep,
     return {"role": who.role, "teams": report,
             "all_consistent": all(t["consistent"] for t in report)}
 
+
+
+# ---------------------------------------------------------------- ingestion ("sync now")
+
+class DrainIn(BaseModel):
+    max_messages: int = Field(default=100, ge=1, le=500)
+    vt: int = Field(default=worker_mod.DEFAULT_VT, ge=5, le=3600,
+                    description="visibility timeout (s): how long a failed message stays hidden before a retry")
+
+
+@app.post("/ingest/drain")
+def ingest_drain(request: Request, who: CallerDep, body: DrainIn | None = None) -> dict[str, Any]:
+    """Admin only: drain the github_ingest queue now (the demo's "sync now" button).
+    The role comes from app_user, read as the caller under RLS (see auth.py)."""
+    if who.role != "admin":
+        raise problem(403, "admin_required", "Only an admin can run the ingestion worker")
+    body = body or DrainIn()
+    s = request.app.state.settings
+    try:
+        store = worker_mod.make_store(s, request.app.state.http)
+    except ConfigError as exc:
+        raise problem(503, "worker_unconfigured", str(exc))
+    except worker_mod.StoreError as exc:
+        raise problem(502, "postgres_unavailable", str(exc))
+    try:
+        w = worker_mod.Worker(store, request.app.state.mongo, request.app.state.db, s, request.app.state.http)
+        summary = w.drain(max_messages=body.max_messages, vt=body.vt)
+    except worker_mod.StoreError as exc:
+        raise problem(502, "postgres_error", str(exc))
+    finally:
+        if isinstance(store, worker_mod.SqlStore):
+            store.close()
+    return jsonable_encoder(summary)
+
+
+@app.get("/ingest/trace")
+def ingest_trace(request: Request, who: CallerDep, pg: PgDep,
+                 delivery_id: Annotated[str | None, Query(max_length=100)] = None,
+                 contribution_id: Annotated[int | None, Query(ge=1)] = None) -> dict[str, Any]:
+    """Admins / teaching faculty: one push in the Mongo raw log next to its Postgres rows
+    (metadata only; RLS on ingest_event decides, see app/trace.py)."""
+    return jsonable_encoder(trace_mod.trace(request.app.state.db, pg, who, delivery_id, contribution_id))
+
+
+@app.get("/ingest/status")
+def ingest_status(who: CallerDep, pg: PgDep) -> dict[str, Any]:
+    """Pipeline health for staff: deliveries by status (as the caller: RLS shows admins every
+    team, faculty the teams they teach), and how many are still waiting for the worker. A
+    non-zero `waiting` with nothing moving means no worker is running (see docs/INGESTION.md)."""
+    if who.role not in ("admin", "faculty"):
+        raise problem(403, "staff_only", "Only admins and teaching faculty can see pipeline health")
+    rows = pg.get_all("ingest_event", {"select": "status,received_at", "order": "delivery_id"})
+    by: dict[str, int] = {}
+    for r in rows:
+        by[r["status"]] = by.get(r["status"], 0) + 1
+    waiting = [r["received_at"] for r in rows if r["status"] in ("queued", "raw_stored", "failed")]
+    return {"by_status": by, "waiting": len(waiting), "oldest_waiting": min(waiting) if waiting else None}
+
+
+# ---------------------------------------------------------------- permission-aware answers
+
+@app.post("/ask")
+def post_ask(request: Request, body: ask_mod.AskIn, who: CallerDep, pg: PgDep) -> dict[str, Any]:
+    st = request.app.state
+    return jsonable_encoder(ask_mod.ask(st.settings, st.http, pg, who, body, st))

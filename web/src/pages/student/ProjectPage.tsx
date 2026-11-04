@@ -1,4 +1,4 @@
-import { FileText, FolderKanban, Inbox, PenLine, ReceiptText, Send, Signature, Users } from 'lucide-react'
+import { Activity, FileText, FolderKanban, Inbox, PenLine, ReceiptText, Send, Signature, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { useProfile } from '@/auth/AuthProvider'
@@ -25,19 +25,21 @@ import {
   type ContributionRow,
   type SubmissionRow,
 } from '@/data/projects'
+import { useProjectLive } from '@/data/activity'
 import { componentLabel, formatDate, formatDateTime, formatMarks, todayIso } from '@/lib/format'
 import { CONTRIBUTION_LABEL } from './parts/labels'
 import { AiBadge, ClaimCounts, CountdownChip, type EvidenceLookups } from './parts/ui'
+import { ActivityTab } from './project/activity'
 import { MyClaimCard, QueueCard, SignedRow } from './project/claims'
 import { FileClaimDialog } from './project/FileClaimDialog'
 import { SubmitDialog } from './project/SubmitDialog'
 
-const TABS = ['components', 'claims', 'queue', 'artifacts'] as const
+const TABS = ['components', 'claims', 'queue', 'artifacts', 'activity'] as const
 type Tab = (typeof TABS)[number]
 
 /**
  * /projects/:projectId — milestones, artifacts, my claims, file a claim, add evidence,
- * countersign queue, submit a component.
+ * countersign queue, submit a component, and the team's GitHub activity (live).
  */
 export default function ProjectPage() {
   const { projectId = '' } = useParams()
@@ -64,6 +66,9 @@ export default function ProjectPage() {
   const artifacts = useArtifacts(projectId, teamId)
   const claims = useTeamClaims(projectId, teamId)
   const contributions = useTeamContributions(projectId, teamId)
+  // one subscription per page: toasts on every tab, the feed on the Activity tab
+  // students listen on team:<id> (RLS on realtime.messages); nothing until the team is known
+  const live = useProjectLive(projectId, { teamId, toasts: Boolean(teamId), enabled: Boolean(teamId) })
 
   const [claimDialog, setClaimDialog] = useState<{ open: boolean; milestone?: number }>({ open: false })
   const [submitFor, setSubmitFor] = useState<{ no: number; nonce: number } | null>(null)
@@ -184,6 +189,14 @@ export default function ProjectPage() {
           <TabsTrigger value="artifacts">
             <FileText /> Artifacts
             <span className="tabular text-xs text-muted-foreground">{artifactRows.length}</span>
+          </TabsTrigger>
+          <TabsTrigger value="activity">
+            <Activity /> Activity
+            {live.items.length ? (
+              <span className="tabular rounded-full bg-brand-soft px-1.5 text-xs text-brand" data-testid="activity-new-count">
+                {live.items.length} new
+              </span>
+            ) : null}
           </TabsTrigger>
         </TabsList>
 
@@ -360,6 +373,10 @@ export default function ProjectPage() {
               />
             )}
           </Panel>
+        </TabsContent>
+        {/* ---------------- activity ---------------- */}
+        <TabsContent value="activity">
+          <ActivityTab projectId={projectId} teamId={teamId} live={live} />
         </TabsContent>
       </Tabs>
 

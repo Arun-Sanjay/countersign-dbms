@@ -656,6 +656,188 @@ SELECT user_id, role, usn, faculty_id, created_at FROM app_user;`),
       { unit: 'I', topic: 'Specialization: app_user → student | faculty | admin' },
     ],
   },
+
+  // ======================= search, live activity, ingestion =======================
+  'search.chunks': {
+    title: 'Search: search_chunks()',
+    summary:
+      'One SECURITY INVOKER SQL function over the latest version of each document: a keyword list ranked by term rarity (BM25 idf² over the GIN index) and, when a query embedding is given, a cosine list (HNSW), fused by reciprocal rank in one statement. It runs as you, so RLS on artifact_chunk decides what can be found.',
+    ...fn('public.search_chunks'),
+    related: [helper('private.chunk_markdown'), helper('app.is_team_member'), helper('app.oversees_project')],
+    algebra:
+      'LATEST = per artifact, the chunk-bearing version with the newest commit time (δ ON artifact ORDER BY created_at DESC)\n' +
+      'CAND = σ tsv @@ (t₁ ∨ … ∨ tₙ) ∧ filters ∧ (chunk_no IS NULL ∨ version ∈ LATEST) (Chunk ⋈ Artifact)\n' +
+      'FTS = π chunk, row_number() OVER (ORDER BY Σ_{t ∈ chunk} idf(t)² DESC, ts_rank_cd DESC) (CAND),  idf = ln(1 + (N − df + ½)/(df + ½))\n' +
+      'VEC = π chunk, row_number() OVER (ORDER BY embedding <=> q⃗) (σ q⃗ ≠ NULL ∧ filters (Chunk ⋈ Artifact))\n' +
+      'RRF = γ chunk; Σ 1/(60 + rank) (FTS ⊎ VEC)   ⋈ Chunk ⋈ Artifact ⋈ Student   — RLS: σ artifact_chunk_select, artifact_select',
+    rls: ['artifact_chunk_select', 'artifact_select', 'student_select'],
+    note: 'Without VOYAGE_API_KEY no query embedding is sent: the vector list is empty and the score is 1/(60 + FTS rank) alone. A natural question matches chunks holding ANY of its words, and a rare word ("provenance") outweighs several common ones ("team", "project"). Pipeline chunks are whole-file snapshots, so only the newest commit’s text is searched; hand-entered chunks are all searched. hnsw.iterative_scan keeps the vector list full even though RLS filters after the index. Faculty only ever match submitted chunks of projects they teach; a student never matches a teammate’s private chunk.',
+    concepts: [
+      { unit: 'III', topic: 'CTEs, window functions (row_number), UNION ALL + GROUP BY (an outer union of two ranked lists)' },
+      { unit: 'III', topic: 'DISTINCT ON: one row (the latest version) per group' },
+      { unit: 'III', topic: 'Indexes: GIN for full-text, HNSW for vectors' },
+      { unit: 'V', topic: 'Retrieval over semi-structured text kept inside the relational store' },
+    ],
+  },
+  'search.ask': {
+    title: 'Ask: an answer only from what you may read',
+    summary:
+      'POST /ask (FastAPI) calls search_chunks() through PostgREST with YOUR token, fetches those chunks’ text with your token too, and answers only from them with numbered citations. The server checks every citation and keeps only cited sentences.',
+    ...client(`
+-- api: POST /ask {question, team_id?, author_usn?, since?, limit = 5 (max 10)}
+-- 1. retrieval, as the caller (never the service key):
+SELECT * FROM search_chunks(:question, p_team_id => :team, p_author_usn => :author,
+                            p_since => :since, p_limit => :limit);
+-- 2. the text of exactly those chunks, still as the caller (RLS again):
+--    GET /rest/v1/artifact_chunk?select=chunk_id,content&chunk_id=in.(:retrieved_ids)
+SELECT chunk_id, content FROM artifact_chunk WHERE chunk_id = ANY (:retrieved_ids);
+-- 3. answer:
+--    ANTHROPIC_API_KEY set: Claude with one citable document per chunk. A citation survives
+--      only if it points at a retrieved chunk AND its quoted text is in that chunk; a sentence
+--      with no surviving citation is dropped (citation_check.uncited_dropped).
+--    otherwise, or if no citation survives: an EXTRACTIVE answer, the best-matching sentence
+--      of each of the top 3 chunks, each cited. (No answer is ever refused for lack of a key.)
+-- 4. guard: cited chunk_ids ⊆ retrieved chunk_ids; "[n]" written inside a note becomes "［n］",
+--    so only the server's own markers link to a source.`),
+    related: [helper('public.search_chunks')],
+    rls: ['artifact_chunk_select', 'artifact_select'],
+    concepts: [
+      { unit: 'III', topic: 'The query runs under the caller’s RLS: same question, different row sets' },
+      { unit: 'V', topic: 'Retrieval-augmented answers with provenance' },
+    ],
+  },
+  'activity.live': {
+    title: 'Live activity (Realtime broadcast)',
+    summary:
+      'An AFTER INSERT trigger on contribution calls realtime.send() with ids and a timestamp only (no text) on two private topics: team:<id> for the team’s members and project:<id> for the project’s staff. Joining a channel is an RLS check on realtime.messages.',
+    ...client(`
+-- the browser (staff on the rubric sheet / students on their project page):
+--   supabase.channel('project:' || :project, { config: { private: true } })   -- staff
+--   supabase.channel('team:' || :team,       { config: { private: true } })   -- students
+--     .on('broadcast', { event: 'contribution' }, …).subscribe()
+-- Realtime authorises the join by reading realtime.messages AS YOU:
+SELECT 1 FROM realtime.messages
+WHERE extension = 'broadcast' AND topic = :topic;    -- + countersign_broadcast_select
+--   team:<id>     app.is_team_member(id) OR staff of its project
+--   project:<id>  app.oversees_project(id)  (teaching faculty, admins; never students)
+-- the feed below the live items (history):
+SELECT k.contribution_id, k.usn, k.source, k.occurred_at, a.artifact_id, a.title, a.team_id
+FROM contribution k JOIN artifact a ON a.artifact_id = k.artifact_id
+WHERE a.project_id = :project            -- (students: AND a.team_id = :my_team)
+ORDER BY k.contribution_id DESC LIMIT 10;`),
+    related: [helper('private.broadcast_contribution'), helper('app.can_watch_topic')],
+    rls: ['countersign_broadcast_select', 'contribution_select', 'artifact_select'],
+    triggers: ['trg_contribution_broadcast'],
+    note: 'postgres_changes is not used: it would ship whole rows (including descriptions) to every subscriber. Broadcast from the database sends only the metadata the trigger chooses, never for a private artifact, and a student’s channel carries only their own team, the same rows RLS shows them.',
+    concepts: [
+      { unit: 'III', topic: 'Triggers: AFTER INSERT FOR EACH ROW' },
+      { unit: 'III', topic: 'Row-level security on a system table (realtime.messages)' },
+    ],
+  },
+  'project.activity': {
+    title: 'GitHub activity',
+    summary:
+      'The team’s GitHub contributions grouped by commit: source_ref is the commit SHA, description the first line of its message, and each artifact’s external_ref the file path.',
+    ...client(`
+-- supabase.from('contribution')
+--   .select('contribution_id, usn, description, source_ref, occurred_at, ai_assisted, student(name), artifact!inner(artifact_id, title, type, external_ref, team_id)')
+--   .eq('source', 'github').eq('artifact.team_id', :team).order('occurred_at', { ascending: false })
+SELECT k.source_ref AS sha, k.usn, s.name, k.description AS message, k.occurred_at,
+       k.ai_assisted, a.artifact_id, a.title, a.external_ref AS path
+FROM contribution k
+JOIN student  s ON s.usn = k.usn
+JOIN artifact a ON a.artifact_id = k.artifact_id
+WHERE k.source = 'github' AND a.team_id = :team
+ORDER BY k.occurred_at DESC;
+-- grouped in the browser by (sha, usn): one card per commit, its files listed under it`),
+    related: [helper('public.project_push')],
+    algebra: 'γ sha, usn; list(path) (σ source=github ∧ team=T (Contribution ⋈ Student ⋈ Artifact))',
+    rls: ['contribution_select', 'artifact_select', 'student_select'],
+    triggers: ['trg_contribution_member_required', 'trg_contribution_broadcast'],
+    concepts: [
+      { unit: 'III', topic: 'Idempotent projection: UNIQUE (source, source_ref, usn, artifact_id) + ON CONFLICT DO NOTHING' },
+      { unit: 'V', topic: 'Raw event in MongoDB (_id = delivery id), projection in Postgres' },
+    ],
+  },
+  'admin.ingest': {
+    title: 'Ingestion inbox (ingest_event)',
+    summary:
+      'One row per webhook delivery, written only by the service-role pipeline RPCs. The Edge Function calls ingest_receive(), which inserts the row and sends the pgmq message in one transaction.',
+    ...client(`
+-- supabase.from('ingest_event').select('*').order('received_at', { ascending: false }).limit(50)
+SELECT delivery_id, event_type, repo_full_name, team_id, status, attempts,
+       commit_count, contribution_count, received_at, projected_at, error
+FROM ingest_event
+ORDER BY received_at DESC
+LIMIT 50;
+-- "Sync now" = POST /ingest/drain on the API: the worker loop
+--   ingest_read() -> upsert Mongo github_events {_id: delivery_id} -> ingest_mark_raw() -> project_push()`),
+    related: [helper('public.ingest_receive'), helper('public.ingest_read'), helper('public.ingest_mark_raw'), helper('public.project_push')],
+    algebra: 'σ is_admin() ∨ teaches(team.project) (IngestEvent)',
+    rls: ['ingest_event_select'],
+    note: 'The pipeline RPCs are EXECUTE-granted to service_role only: a signed-in user calling ingest_receive gets 42501. Statuses: queued → raw_stored → projected; failed (retried after the visibility timeout, dead-lettered after 5 attempts); ignored (never queued).',
+    concepts: [
+      { unit: 'IV', topic: 'One transaction: INSERT + queue send commit or roll back together' },
+      { unit: 'IV', topic: 'Idempotency keys make at-least-once delivery safe' },
+      { unit: 'V', topic: 'Inbox → log (MongoDB) → projection (Postgres)' },
+    ],
+  },
+  'admin.consistency': {
+    title: 'Mongo ↔ Postgres consistency',
+    summary:
+      'GET /consistency (FastAPI): per team and author, the commits the Mongo raw log credits vs the distinct commit SHAs of github contribution rows in Postgres (read as you). Units: commits on both sides.',
+    ...client(`
+-- Mongo (api/app/consistency.py): a find, the grouping is done in Python
+db.github_events.find(
+  { team_id: { $in: teams } },
+  { delivery_id: 1, 'commits.sha': 1, 'commits.author_usn': 1,
+    'commits.added': 1, 'commits.modified': 1, 'commits.removed': 1 })
+-- Postgres, as the caller, page by page (max_rows = 1000):
+SELECT a.team_id, k.usn, k.source_ref AS sha
+FROM contribution k JOIN artifact a ON a.artifact_id = k.artifact_id
+WHERE k.source = 'github' AND a.team_id = ANY (:teams)
+ORDER BY k.contribution_id LIMIT 1000 OFFSET :page;
+SELECT team_id, track_paths FROM team_repo WHERE team_id = ANY (:teams);   -- path allow-lists
+-- rules, per (team, author):
+--   pipeline event   = a Mongo document WITH a delivery_id (fixture pushes without one, and
+--                      Postgres rows whose source_ref is not a 40-hex SHA: outside_pipeline)
+--   credited commit  = in commits[] (the verified pusher's own); unattributed_commits never count
+--   expected         = credited commits that touched a tracked path (artifact type + track_paths)
+--   not_projected    = credited commits that touched only untracked files (no row by design)
+--   only_in_mongo    = expected − Postgres SHAs        only_in_postgres = Postgres SHAs − logged`),
+    rls: ['contribution_select', 'artifact_select', 'team_repo_select'],
+    concepts: [
+      { unit: 'V', topic: 'Polyglot persistence: reconciling two stores by a shared key (the commit SHA)' },
+      { unit: 'III', topic: 'Set difference on keys: A − B and B − A' },
+    ],
+  },
+  'ingest.trace': {
+    title: 'Trace one push: Mongo raw event ⇄ Postgres rows',
+    summary:
+      'GET /ingest/trace (FastAPI, admins and teaching faculty): the delivery’s Mongo document (_id = delivery id) next to the contribution and artifact_version rows it produced, matched by commit SHA. Metadata only; Postgres is read as you.',
+    ...client(`
+-- who may look: RLS on ingest_event (admin, or teaches the team's project); else 404
+SELECT * FROM ingest_event WHERE delivery_id = :delivery;
+-- from a live-feed item: its commit SHA -> the version's mongo_ref = the delivery id
+SELECT source_ref FROM contribution WHERE contribution_id = :contribution;
+SELECT mongo_ref  FROM artifact_version WHERE artifact_id = :artifact AND source_ref = :sha;
+-- Mongo: the raw log, without messages, file bodies or e-mail addresses
+db.github_events.findOne({ _id: delivery },
+  { ref: 1, before: 1, after: 1, sender: 1, logged_at: 1,
+    'commits.sha': 1, 'commits.author_usn': 1, 'commits.added': 1, 'commits.modified': 1 })
+-- Postgres: what the projection wrote for those SHAs
+SELECT contribution_id, usn, artifact_id, source_ref, occurred_at, ai_assisted
+FROM contribution k JOIN artifact a USING (artifact_id)
+WHERE k.source = 'github' AND k.source_ref = ANY (:shas) AND a.team_id = :team;
+SELECT artifact_id, version_no, source_ref, content_hash FROM artifact_version
+WHERE mongo_ref = :delivery;`),
+    related: [helper('public.project_push'), helper('private.ingest_credit')],
+    rls: ['ingest_event_select', 'contribution_select', 'artifact_version_select'],
+    concepts: [
+      { unit: 'V', topic: 'One business key (delivery id, commit SHA) across two stores' },
+      { unit: 'III', topic: 'Joins on a natural key: contribution.source_ref = commit SHA' },
+    ],
+  },
 } satisfies Record<string, SqlPanel>
 
 export type SqlPanelId = keyof typeof panels

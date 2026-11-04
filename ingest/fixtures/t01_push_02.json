@@ -1,0 +1,142 @@
+{
+  "ref": "refs/heads/main",
+  "before": "5a8fb54688d256bccef3c4ecd063d974ddbbe00f",
+  "after": "b734c9fc01ae8ca30ce74ec27a811e1535155f41",
+  "repository": {
+    "id": 880101,
+    "node_id": "R_fixture_team_alpha",
+    "name": "team-alpha",
+    "full_name": "rvce-el/team-alpha",
+    "private": true,
+    "owner": {
+      "name": "rvce-el",
+      "login": "rvce-el",
+      "id": 990001,
+      "type": "Organization",
+      "html_url": "https://github.com/rvce-el",
+      "site_admin": false
+    },
+    "html_url": "https://github.com/rvce-el/team-alpha",
+    "url": "https://github.com/rvce-el/team-alpha",
+    "created_at": 1758000000,
+    "default_branch": "main",
+    "master_branch": "main",
+    "visibility": "private",
+    "organization": "rvce-el",
+    "pushed_at": 1793770380
+  },
+  "pusher": {
+    "name": "meera-iyer",
+    "email": "meera.cy24@rvce.edu.in"
+  },
+  "sender": {
+    "login": "meera-iyer",
+    "id": 770033,
+    "node_id": "U_fixture_770033",
+    "type": "User",
+    "site_admin": false
+  },
+  "created": false,
+  "deleted": false,
+  "forced": false,
+  "base_ref": null,
+  "compare": "https://github.com/rvce-el/team-alpha/compare/5a8fb54688d2...b734c9fc01ae",
+  "commits": [
+    {
+      "id": "0b6e9e0bbdb5ecd797b63a52c84119ce640a4280",
+      "tree_id": "7abae397f42df625c083df7a2b7957dfbdca62ff",
+      "distinct": true,
+      "message": "Vault: ER diagram decisions (weak entities, M:N)",
+      "timestamp": "2026-11-04T10:05:00+05:30",
+      "url": "https://github.com/rvce-el/team-alpha/commit/0b6e9e0bbdb5ecd797b63a52c84119ce640a4280",
+      "author": {
+        "name": "Meera Iyer",
+        "email": "meera.cy24@rvce.edu.in",
+        "username": "meera-iyer"
+      },
+      "committer": {
+        "name": "Meera Iyer",
+        "email": "meera.cy24@rvce.edu.in",
+        "username": "meera-iyer"
+      },
+      "added": [
+        "shared/ER diagram decisions.md",
+        "docs/er-diagram.drawio"
+      ],
+      "removed": [],
+      "modified": [],
+      "x_contents": {
+        "shared/ER diagram decisions.md": "---\ntags: [er-diagram, design]\n---\n# ER diagram decisions\n\n## Weak entities\nMILESTONE is a weak entity of PROJECT: a milestone number only means something inside its\nproject, so the primary key is (project_id, milestone_no) and milestone_no is the partial key.\nDeleting a project would delete its milestones (existence dependency), which is why the\nrelationship is drawn with a double diamond.\n\n## Many-to-many relationships\nTEAM_MEMBER resolves the M:N between STUDENT and TEAM. It carries its own attributes (role,\njoined_at), so it becomes a table with the composite key (team_id, usn). CONTRIBUTION links\nSTUDENT and ARTIFACT and is also M:N: one artifact has many contributors and one student\ncontributes to many artifacts.\n\n## Open questions for the review\n- Should ARTIFACT reference MILESTONE with a composite foreign key (project_id, milestone_no)?\n  Yes: it stops an artifact of one project being filed under another project's milestone.\n- Team capacity (max_size) cannot be a CHECK constraint because it counts rows of another\n  table; it needs a trigger.\n\nNext: [[Normalization plan]]\n"
+      }
+    },
+    {
+      "id": "a4c0452b38b7fc687ef2cbdfbda61bd35d697ce2",
+      "tree_id": "2f446de9fa7d11c90a7a60d29c3d64139083c2cf",
+      "distinct": true,
+      "message": "Fix typo in README",
+      "timestamp": "2026-11-04T10:20:00+05:30",
+      "url": "https://github.com/rvce-el/team-alpha/commit/a4c0452b38b7fc687ef2cbdfbda61bd35d697ce2",
+      "author": {
+        "name": "Ext Contributor",
+        "email": "ext.contributor@example.com",
+        "username": "ext-contributor"
+      },
+      "committer": {
+        "name": "Ext Contributor",
+        "email": "ext.contributor@example.com",
+        "username": "ext-contributor"
+      },
+      "added": [],
+      "removed": [],
+      "modified": [
+        "README.md"
+      ]
+    },
+    {
+      "id": "b734c9fc01ae8ca30ce74ec27a811e1535155f41",
+      "tree_id": "fab8c2d747601825ca09a6f37880f7947d2715c0",
+      "distinct": true,
+      "message": "Seed sample data for the schema\n\nCo-Authored-By: Claude <noreply@anthropic.com>",
+      "timestamp": "2026-11-04T11:02:00+05:30",
+      "url": "https://github.com/rvce-el/team-alpha/commit/b734c9fc01ae8ca30ce74ec27a811e1535155f41",
+      "author": {
+        "name": "Meera Iyer",
+        "email": "meera.cy24@rvce.edu.in",
+        "username": "meera-iyer"
+      },
+      "committer": {
+        "name": "Meera Iyer",
+        "email": "meera.cy24@rvce.edu.in",
+        "username": "meera-iyer"
+      },
+      "added": [
+        "db/seed.sql"
+      ],
+      "removed": [],
+      "modified": []
+    }
+  ],
+  "head_commit": {
+    "id": "b734c9fc01ae8ca30ce74ec27a811e1535155f41",
+    "tree_id": "fab8c2d747601825ca09a6f37880f7947d2715c0",
+    "distinct": true,
+    "message": "Seed sample data for the schema\n\nCo-Authored-By: Claude <noreply@anthropic.com>",
+    "timestamp": "2026-11-04T11:02:00+05:30",
+    "url": "https://github.com/rvce-el/team-alpha/commit/b734c9fc01ae8ca30ce74ec27a811e1535155f41",
+    "author": {
+      "name": "Meera Iyer",
+      "email": "meera.cy24@rvce.edu.in",
+      "username": "meera-iyer"
+    },
+    "committer": {
+      "name": "Meera Iyer",
+      "email": "meera.cy24@rvce.edu.in",
+      "username": "meera-iyer"
+    },
+    "added": [
+      "db/seed.sql"
+    ],
+    "removed": [],
+    "modified": []
+  }
+}

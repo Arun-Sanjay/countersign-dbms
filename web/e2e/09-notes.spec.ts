@@ -24,7 +24,8 @@ test.describe('9 · /notes: team notes from the API, or the offline state', () =
     test.info().annotations.push({ type: 'notes', description: 'team notes from the API' })
     await picker.click()
     await page.getByRole('option', { name: /T01/ }).click()
-    await expect(page.getByText('Synopsis outline')).toBeVisible()
+    // the note's title line (vault notes synced by the worker may quote the title in their text)
+    await expect(page.getByText('N01 Synopsis outline')).toBeVisible()
     await expect(page.getByText(/you read them as a team member/)).toBeVisible()
     // a teammate's draft is never shown, only final notes plus my own drafts
     await page.getByRole('button', { name: /version receipt/ }).first().click()

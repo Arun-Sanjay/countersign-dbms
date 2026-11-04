@@ -212,21 +212,28 @@ def _team(body, team_id):
 
 
 def test_consistency_for_a_student(client, auth):
+    """The scratch Mongo db holds only the fixture's M2 pushes (no delivery id: they never went
+    through the pipeline) and Postgres holds the demo's hand-entered github rows (short SHAs).
+    Both are reported as outside_pipeline evidence, never as a discrepancy. The pipeline half
+    (delivery ids, full SHAs) is covered in test_worker.py."""
     r = client.get("/consistency", headers=auth("arun"))
     assert r.status_code == 200, r.text
     body = r.json()
     assert {t["team_id"] for t in body["teams"]} == {"T00", "T01", "T03", "T05"}
-    t01 = _team(body, "T01")       # pushes exist in Mongo, no github contribution rows in Postgres
-    assert t01["mongo_commits"] == 5 and t01["postgres_github_contributions"] == 0
-    assert {a["usn"]: a["mongo_commits"] for a in t01["authors"]} == {
-        "1RV24CY011": 1, "1RV24CY024": 2, "1RV24CY047": 2}
-    assert all(a["status"] == "only_in_mongo" for a in t01["authors"])
-    t00 = _team(body, "T00")       # github contributions in Postgres, no push events in Mongo
-    assert t00["postgres_github_contributions"] == 2 and t00["mongo_commits"] == 0
-    assert {a["status"] for a in t00["authors"]} == {"only_in_postgres"}
-    assert body["all_consistent"] is False
+    t01 = _team(body, "T01")       # M2 pushes E01, E02
+    assert {a["usn"]: a["outside_pipeline"]["mongo_commits"] for a in t01["authors"]
+            if a["outside_pipeline"]["mongo_commits"]} == {"1RV24CY011": 1, "1RV24CY024": 2, "1RV24CY047": 2}
+    t00 = _team(body, "T00")       # demo rows 3f9c2ab (arun) and 8d41e07 (sanvid)
+    sanvid = next(a for a in t00["authors"] if a["usn"] == "1RV24CY051")
+    assert sanvid["outside_pipeline"] == {"mongo_commits": 0, "postgres_contributions": 1}
+    assert sanvid["status"] == "outside_pipeline" and sanvid["only_in_postgres"] == []
+    for team in body["teams"]:
+        for a in team["authors"]:
+            if not (a["matched"] or a["only_in_mongo"] or a["only_in_postgres"] or a["not_projected"]):
+                assert a["status"] == "outside_pipeline", a
     t05 = _team(body, "T05")
-    assert t05["authors"] == [] and t05["note"] == "no recorded evidence yet"
+    assert t05["authors"] == [] and t05["note"] == "no recorded evidence yet" and t05["status"] == "no_evidence"
+    assert t05["pipeline_events"] == {}         # ingest_event is staff-only metadata
 
 
 def test_consistency_for_faculty_and_teamless(client, auth, teamless):

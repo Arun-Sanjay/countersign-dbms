@@ -1,0 +1,119 @@
+{
+  "ref": "refs/heads/main",
+  "before": "c857ce9148ebf4ae1ab47c80a9eb34e40c87fd46",
+  "after": "346c73dac01c5919fc4f2e70de534b25ddb70669",
+  "repository": {
+    "id": 880103,
+    "node_id": "R_fixture_team_gamma",
+    "name": "team-gamma",
+    "full_name": "rvce-el/team-gamma",
+    "private": true,
+    "owner": {
+      "name": "rvce-el",
+      "login": "rvce-el",
+      "id": 990001,
+      "type": "Organization",
+      "html_url": "https://github.com/rvce-el",
+      "site_admin": false
+    },
+    "html_url": "https://github.com/rvce-el/team-gamma",
+    "url": "https://github.com/rvce-el/team-gamma",
+    "created_at": 1758000000,
+    "default_branch": "main",
+    "master_branch": "main",
+    "visibility": "private",
+    "organization": "rvce-el",
+    "pushed_at": 1793621760
+  },
+  "pusher": {
+    "name": "priya-menon",
+    "email": "priya.cy24@rvce.edu.in"
+  },
+  "sender": {
+    "login": "priya-menon",
+    "id": 770063,
+    "node_id": "U_fixture_770063",
+    "type": "User",
+    "site_admin": false
+  },
+  "created": false,
+  "deleted": false,
+  "forced": false,
+  "base_ref": null,
+  "compare": "https://github.com/rvce-el/team-gamma/compare/c857ce9148eb...346c73dac01c",
+  "commits": [
+    {
+      "id": "e18d08a9d3c78ac1f98ef0cb353bc55410b67efd",
+      "tree_id": "a9351b13fcee574ce6830a22d4168203ad0f7b82",
+      "distinct": true,
+      "message": "Data loader for the image dataset",
+      "timestamp": "2026-11-02T16:00:00+05:30",
+      "url": "https://github.com/rvce-el/team-gamma/commit/e18d08a9d3c78ac1f98ef0cb353bc55410b67efd",
+      "author": {
+        "name": "Priya Menon",
+        "email": "priya.cy24@rvce.edu.in",
+        "username": "priya-menon"
+      },
+      "committer": {
+        "name": "Priya Menon",
+        "email": "priya.cy24@rvce.edu.in",
+        "username": "priya-menon"
+      },
+      "added": [
+        "src/data_loader.py"
+      ],
+      "removed": [],
+      "modified": []
+    },
+    {
+      "id": "346c73dac01c5919fc4f2e70de534b25ddb70669",
+      "tree_id": "8248fbd0ed85199af2d78bfb33d63020ccb45c5d",
+      "distinct": true,
+      "message": "Training loop with early stopping\n\nAI-Assisted: yes",
+      "timestamp": "2026-11-02T17:45:00+05:30",
+      "url": "https://github.com/rvce-el/team-gamma/commit/346c73dac01c5919fc4f2e70de534b25ddb70669",
+      "author": {
+        "name": "Rohan Kulkarni",
+        "email": "rohan.cy24@rvce.edu.in",
+        "username": "rohan-kulkarni"
+      },
+      "committer": {
+        "name": "Rohan Kulkarni",
+        "email": "rohan.cy24@rvce.edu.in",
+        "username": "rohan-kulkarni"
+      },
+      "added": [
+        "src/train.py"
+      ],
+      "removed": [],
+      "modified": [
+        "src/data_loader.py"
+      ]
+    }
+  ],
+  "head_commit": {
+    "id": "346c73dac01c5919fc4f2e70de534b25ddb70669",
+    "tree_id": "8248fbd0ed85199af2d78bfb33d63020ccb45c5d",
+    "distinct": true,
+    "message": "Training loop with early stopping\n\nAI-Assisted: yes",
+    "timestamp": "2026-11-02T17:45:00+05:30",
+    "url": "https://github.com/rvce-el/team-gamma/commit/346c73dac01c5919fc4f2e70de534b25ddb70669",
+    "author": {
+      "name": "Rohan Kulkarni",
+      "email": "rohan.cy24@rvce.edu.in",
+      "username": "rohan-kulkarni"
+    },
+    "committer": {
+      "name": "Rohan Kulkarni",
+      "email": "rohan.cy24@rvce.edu.in",
+      "username": "rohan-kulkarni"
+    },
+    "added": [
+      "src/train.py"
+    ],
+    "removed": [],
+    "modified": [
+      "src/data_loader.py"
+    ]
+  }
+}

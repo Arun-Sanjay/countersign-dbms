@@ -1,0 +1,98 @@
+{
+  "ref": "refs/heads/feature/normalization",
+  "before": "0000000000000000000000000000000000000000",
+  "after": "09e775782e57296e66f0459f55aeb1e64a4e23f9",
+  "repository": {
+    "id": 880101,
+    "node_id": "R_fixture_team_alpha",
+    "name": "team-alpha",
+    "full_name": "rvce-el/team-alpha",
+    "private": true,
+    "owner": {
+      "name": "rvce-el",
+      "login": "rvce-el",
+      "id": 990001,
+      "type": "Organization",
+      "html_url": "https://github.com/rvce-el",
+      "site_admin": false
+    },
+    "html_url": "https://github.com/rvce-el/team-alpha",
+    "url": "https://github.com/rvce-el/team-alpha",
+    "created_at": 1758000000,
+    "default_branch": "main",
+    "master_branch": "main",
+    "visibility": "private",
+    "organization": "rvce-el",
+    "pushed_at": 1793775660
+  },
+  "pusher": {
+    "name": "karthik-m",
+    "email": "karthik.cy24@rvce.edu.in"
+  },
+  "sender": {
+    "login": "karthik-m",
+    "id": 770024,
+    "node_id": "U_fixture_770024",
+    "type": "User",
+    "site_admin": false
+  },
+  "created": true,
+  "deleted": false,
+  "forced": false,
+  "base_ref": null,
+  "compare": "https://github.com/rvce-el/team-alpha/commit/09e775782e57",
+  "commits": [
+    {
+      "id": "09e775782e57296e66f0459f55aeb1e64a4e23f9",
+      "tree_id": "5f9b6bbf0b00d4aafc85d256ccd03f2b05834b81",
+      "distinct": true,
+      "message": "Draft normalization plan",
+      "timestamp": "2026-11-04T12:30:00+05:30",
+      "url": "https://github.com/rvce-el/team-alpha/commit/09e775782e57296e66f0459f55aeb1e64a4e23f9",
+      "author": {
+        "name": "Karthik M",
+        "email": "karthik.cy24@rvce.edu.in",
+        "username": "karthik-m"
+      },
+      "committer": {
+        "name": "Karthik M",
+        "email": "karthik.cy24@rvce.edu.in",
+        "username": "karthik-m"
+      },
+      "added": [
+        "shared/Normalization plan.md"
+      ],
+      "removed": [],
+      "modified": [],
+      "x_contents": {
+        "shared/Normalization plan.md": "# Normalization plan\n\nStart from the paper marks sheet (one row per student, one column per component) and normalize\nit step by step to BCNF. The repeating component columns violate 1NF; the student name depends\nonly on the USN, a partial dependency on the composite key (usn, component), which violates 2NF.\n"
+      }
+    }
+  ],
+  "head_commit": {
+    "id": "09e775782e57296e66f0459f55aeb1e64a4e23f9",
+    "tree_id": "5f9b6bbf0b00d4aafc85d256ccd03f2b05834b81",
+    "distinct": true,
+    "message": "Draft normalization plan",
+    "timestamp": "2026-11-04T12:30:00+05:30",
+    "url": "https://github.com/rvce-el/team-alpha/commit/09e775782e57296e66f0459f55aeb1e64a4e23f9",
+    "author": {
+      "name": "Karthik M",
+      "email": "karthik.cy24@rvce.edu.in",
+      "username": "karthik-m"
+    },
+    "committer": {
+      "name": "Karthik M",
+      "email": "karthik.cy24@rvce.edu.in",
+      "username": "karthik-m"
+    },
+    "added": [
+      "shared/Normalization plan.md"
+    ],
+    "removed": [],
+    "modified": [],
+    "x_contents": {
+      "shared/Normalization plan.md": "# Normalization plan\n\nStart from the paper marks sheet (one row per student, one column per component) and normalize\nit step by step to BCNF. The repeating component columns violate 1NF; the student name depends\nonly on the USN, a partial dependency on the composite key (usn, component), which violates 2NF.\n"
+    }
+  }
+}

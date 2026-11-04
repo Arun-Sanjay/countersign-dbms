@@ -1,0 +1,133 @@
+{
+  "ref": "refs/heads/main",
+  "before": "ec4e61ae40ecde2c701627a696e332933f7a8d11",
+  "after": "4c045b5c3de262817cf4d5577ad31490f2917527",
+  "repository": {
+    "id": 1445781068,
+    "node_id": "R_kgDOVizeTA",
+    "name": "countersign-dbms",
+    "full_name": "Arun-Sanjay/countersign-dbms",
+    "private": true,
+    "owner": {
+      "name": "Arun-Sanjay",
+      "email": "228202223+Arun-Sanjay@users.noreply.github.com",
+      "login": "Arun-Sanjay",
+      "id": 228202223,
+      "node_id": "U_kgDODZoW7w",
+      "type": "User",
+      "html_url": "https://github.com/Arun-Sanjay",
+      "site_admin": false
+    },
+    "html_url": "https://github.com/Arun-Sanjay/countersign-dbms",
+    "url": "https://github.com/Arun-Sanjay/countersign-dbms",
+    "created_at": 1762267061,
+    "default_branch": "main",
+    "master_branch": "main",
+    "visibility": "private",
+    "pushed_at": 1793812503
+  },
+  "pusher": {
+    "name": "Arun-Sanjay",
+    "email": "228202223+Arun-Sanjay@users.noreply.github.com"
+  },
+  "sender": {
+    "login": "Arun-Sanjay",
+    "id": 228202223,
+    "node_id": "U_kgDODZoW7w",
+    "type": "User",
+    "site_admin": false
+  },
+  "created": false,
+  "deleted": false,
+  "forced": false,
+  "base_ref": null,
+  "compare": "https://github.com/Arun-Sanjay/countersign-dbms/compare/ec4e61ae40ec...4c045b5c3de2",
+  "commits": [
+    {
+      "id": "4c045b5c3de262817cf4d5577ad31490f2917527",
+      "tree_id": "fe354281645cb18be3639083db28e8e54a058f0c",
+      "distinct": true,
+      "message": "Database layer: app schema, row-level security, RPCs, demo seed, tests (live on Supabase)\n\nMigrations (append-only; the graded fixture schema is untouched):\n- 0002 app_core: identity (app_user), terms/offerings/enrollment, assessment + submissions,\n  claims / claim_evidence / countersign, artifact versions, skill evidence, private notes,\n  pgvector + full-text columns on artifact_chunk, history-preserving FK actions, and integrity\n  triggers incl. team capacity v2 ('serialize by writing the parent row', correct under RR)\n- 0003 security: default-deny RLS policies on every table, helper functions in schema app,\n  security_invoker views (rubric sheet, lab CIE marks /50, contested claims, semester hub,\n  what-faculty-sees), anon has no privileges, column-level write grants\n- 0004 rpc: join/leave team, submit milestone, file/countersign claims, record/lock marks,\n  complementary teammate finder (set difference + ranking), division finder, skill gap,\n  recursive skill subtree, semester hub, private-note functions\n\nDemo seed: P06 'CD252IA Lab 2026-27' (11 components), teams T00 Countersign + T06, claims,\nevidence, countersigns (incl. a contested claim), sample marks, private notes.\n\nTests: pgTAP constraint gallery, RLS matrix and RPC suites; fixture regression\n(Q1-Q37 and M1-M25 match Appendix H); capacity and membership race checks.\n42 adversarial review findings triaged (40 fixed in the database). Pushed to the live\nproject; personas created; sign-ups disabled; advisors show no errors.",
+      "timestamp": "2026-11-04T22:45:03+05:30",
+      "url": "https://github.com/Arun-Sanjay/countersign-dbms/commit/4c045b5c3de262817cf4d5577ad31490f2917527",
+      "author": {
+        "name": "Arun Sanjay",
+        "email": "228202223+Arun-Sanjay@users.noreply.github.com",
+        "username": "Arun-Sanjay"
+      },
+      "committer": {
+        "name": "Arun Sanjay",
+        "email": "228202223+Arun-Sanjay@users.noreply.github.com",
+        "username": "Arun-Sanjay"
+      },
+      "added": [
+        "docs/FIXTURE_ON_SUPABASE.md",
+        "experiments/race/capacity_v2_check.sh",
+        "experiments/race/membership_skew_check.sh",
+        "scripts/check_mongo_output.py",
+        "scripts/create_personas.py",
+        "scripts/extract_expected.py",
+        "scripts/test_fixture.sh",
+        "scripts/test_mongo_fixture.sh",
+        "supabase/migrations/20261104000002_app_core.sql",
+        "supabase/migrations/20261104000003_security.sql",
+        "supabase/migrations/20261104000004_rpc.sql",
+        "supabase/seed/demo.sql",
+        "supabase/tests/01_constraints.sql",
+        "supabase/tests/02_rls_matrix.sql",
+        "supabase/tests/03_rpc.sql",
+        "supabase/tests/04_abuse_cases.sql"
+      ],
+      "removed": [],
+      "modified": [
+        "supabase/config.toml"
+      ],
+      "x_contents": {
+        "docs/FIXTURE_ON_SUPABASE.md": "# Running the graded fixture (Q1–Q37) against the Supabase schema\n\nThe graded comparison against Appendix H is made on **plain PostgreSQL 17 with C collation**:\n`scripts/test_fixture.sh` gives 37/37 there. Run the fixture on Supabase only to show that it\nstill runs on the migrated schema.\n\n## Never run `03_queries.sql` against the cloud project\n- Q30–Q37 write data:\n  - Q30 adds `team.github_repo`, a column that no migration knows about;\n  - Q31 inserts a student, Q32 updates a project and Q33 deletes P05;\n  - Q35 adds a second capacity trigger;\n  - Q37 puts Nikhil into T02, so the \"nikhil has no team\" persona stops working.\n- Q37 has its own `BEGIN … COMMIT`, so wrapping the file in `BEGIN; … ROLLBACK;` does\n  **not** undo it. The inner COMMIT ends the outer transaction.\n- Q27/Q28 create ordinary (non `security_invoker`) views. Such views run as their owner and\n  bypass RLS. Since 0003, `authenticated` receives no default privileges on new\n  relations, so these views stay unreadable until they are granted. Still, do not create\n  them on the cloud project. If they were created, either run\n  `ALTER VIEW faculty_team_progress, student_portfolio SET (security_invoker = on)` or drop them.\n\nTo demo the fixture on Supabase, use the local stack: run `npx -y supabase@latest db reset`,\nthen the queries. Afterwards, run `db reset` again and then `scripts/create_personas.py --target local`.\nQ1–Q29 are read-only and are safe anywhere.\n\n## Expected differences from Appendix H on the migrated and seeded local DB\n| Query | Difference | Why |\n|---|---|---|\n| Q1, 3, 5, 6, 9, 10, 12–18, 24, 27, 28, 32 | different rows or counts | the demo seed adds P06, T00/T06, Sanvid, … |\n| Q8, Q29 | 'NoSQL' and 'Normalization' swap places | database collation is en_US.UTF-8; Appendix H used byte order (C) |\n| Q21 | same rows in a different order | the query has no ORDER BY |\n| Q34 | the DETAIL row shows two extra `null`s | team gained `topic_title` and `abstract` (0002) |\n| Q36 run alone | CONTEXT names `private.enforce_team_capacity_v2()` | Q35's trigger is only added when Q35 runs first |\n\n## Remote settings that live outside the migrations\n- Auth: sign-ups must be off (Dashboard → Authentication → Providers / Sign-ups), the same as\n  `enable_signup = false` in `supabase/config.toml`. Personas are created by\n  `scripts/create_personas.py` through the Admin API.\n"
+      }
+    }
+  ],
+  "head_commit": {
+    "id": "4c045b5c3de262817cf4d5577ad31490f2917527",
+    "tree_id": "fe354281645cb18be3639083db28e8e54a058f0c",
+    "distinct": true,
+    "message": "Database layer: app schema, row-level security, RPCs, demo seed, tests (live on Supabase)\n\nMigrations (append-only; the graded fixture schema is untouched):\n- 0002 app_core: identity (app_user), terms/offerings/enrollment, assessment + submissions,\n  claims / claim_evidence / countersign, artifact versions, skill evidence, private notes,\n  pgvector + full-text columns on artifact_chunk, history-preserving FK actions, and integrity\n  triggers incl. team capacity v2 ('serialize by writing the parent row', correct under RR)\n- 0003 security: default-deny RLS policies on every table, helper functions in schema app,\n  security_invoker views (rubric sheet, lab CIE marks /50, contested claims, semester hub,\n  what-faculty-sees), anon has no privileges, column-level write grants\n- 0004 rpc: join/leave team, submit milestone, file/countersign claims, record/lock marks,\n  complementary teammate finder (set difference + ranking), division finder, skill gap,\n  recursive skill subtree, semester hub, private-note functions\n\nDemo seed: P06 'CD252IA Lab 2026-27' (11 components), teams T00 Countersign + T06, claims,\nevidence, countersigns (incl. a contested claim), sample marks, private notes.\n\nTests: pgTAP constraint gallery, RLS matrix and RPC suites; fixture regression\n(Q1-Q37 and M1-M25 match Appendix H); capacity and membership race checks.\n42 adversarial review findings triaged (40 fixed in the database). Pushed to the live\nproject; personas created; sign-ups disabled; advisors show no errors.",
+    "timestamp": "2026-11-04T22:45:03+05:30",
+    "url": "https://github.com/Arun-Sanjay/countersign-dbms/commit/4c045b5c3de262817cf4d5577ad31490f2917527",
+    "author": {
+      "name": "Arun Sanjay",
+      "email": "228202223+Arun-Sanjay@users.noreply.github.com",
+      "username": "Arun-Sanjay"
+    },
+    "committer": {
+      "name": "Arun Sanjay",
+      "email": "228202223+Arun-Sanjay@users.noreply.github.com",
+      "username": "Arun-Sanjay"
+    },
+    "added": [
+      "docs/FIXTURE_ON_SUPABASE.md",
+      "experiments/race/capacity_v2_check.sh",
+      "experiments/race/membership_skew_check.sh",
+      "scripts/check_mongo_output.py",
+      "scripts/create_personas.py",
+      "scripts/extract_expected.py",
+      "scripts/test_fixture.sh",
+      "scripts/test_mongo_fixture.sh",
+      "supabase/migrations/20261104000002_app_core.sql",
+      "supabase/migrations/20261104000003_security.sql",
+      "supabase/migrations/20261104000004_rpc.sql",
+      "supabase/seed/demo.sql",
+      "supabase/tests/01_constraints.sql",
+      "supabase/tests/02_rls_matrix.sql",
+      "supabase/tests/03_rpc.sql",
+      "supabase/tests/04_abuse_cases.sql"
+    ],
+    "removed": [],
+    "modified": [
+      "supabase/config.toml"
+    ],
+    "x_contents": {
+      "docs/FIXTURE_ON_SUPABASE.md": "# Running the graded fixture (Q1–Q37) against the Supabase schema\n\nThe graded comparison against Appendix H is made on **plain PostgreSQL 17 with C collation**:\n`scripts/test_fixture.sh` gives 37/37 there. Run the fixture on Supabase only to show that it\nstill runs on the migrated schema.\n\n## Never run `03_queries.sql` against the cloud project\n- Q30–Q37 write data:\n  - Q30 adds `team.github_repo`, a column that no migration knows about;\n  - Q31 inserts a student, Q32 updates a project and Q33 deletes P05;\n  - Q35 adds a second capacity trigger;\n  - Q37 puts Nikhil into T02, so the \"nikhil has no team\" persona stops working.\n- Q37 has its own `BEGIN … COMMIT`, so wrapping the file in `BEGIN; … ROLLBACK;` does\n  **not** undo it. The inner COMMIT ends the outer transaction.\n- Q27/Q28 create ordinary (non `security_invoker`) views. Such views run as their owner and\n  bypass RLS. Since 0003, `authenticated` receives no default privileges on new\n  relations, so these views stay unreadable until they are granted. Still, do not create\n  them on the cloud project. If they were created, either run\n  `ALTER VIEW faculty_team_progress, student_portfolio SET (security_invoker = on)` or drop them.\n\nTo demo the fixture on Supabase, use the local stack: run `npx -y supabase@latest db reset`,\nthen the queries. Afterwards, run `db reset` again and then `scripts/create_personas.py --target local`.\nQ1–Q29 are read-only and are safe anywhere.\n\n## Expected differences from Appendix H on the migrated and seeded local DB\n| Query | Difference | Why |\n|---|---|---|\n| Q1, 3, 5, 6, 9, 10, 12–18, 24, 27, 28, 32 | different rows or counts | the demo seed adds P06, T00/T06, Sanvid, … |\n| Q8, Q29 | 'NoSQL' and 'Normalization' swap places | database collation is en_US.UTF-8; Appendix H used byte order (C) |\n| Q21 | same rows in a different order | the query has no ORDER BY |\n| Q34 | the DETAIL row shows two extra `null`s | team gained `topic_title` and `abstract` (0002) |\n| Q36 run alone | CONTEXT names `private.enforce_team_capacity_v2()` | Q35's trigger is only added when Q35 runs first |\n\n## Remote settings that live outside the migrations\n- Auth: sign-ups must be off (Dashboard → Authentication → Providers / Sign-ups), the same as\n  `enable_signup = false` in `supabase/config.toml`. Personas are created by\n  `scripts/create_personas.py` through the Admin API.\n"
+    }
+  }
+}

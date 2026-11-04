@@ -9,7 +9,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { keys } from '@/data/keys'
 import { rpc } from '@/data/rpc'
 import type { DeleteNoteResult, PrivateNote } from '@/data/types'
-import { supabase } from '@/lib/supabase'
+import { apiGet } from '@/lib/api'
 
 export const notesKeys = {
   mine: () => [...keys.notes.all, 'private'] as const,
@@ -49,8 +49,7 @@ export function useDeleteNote() {
 }
 
 // ---- team notes (FastAPI over MongoDB) ---------------------------------------------------------
-/** Base URL of the notes API. Override with VITE_API_URL; defaults to the local dev server. */
-export const API_URL: string = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8000'
+export { API_URL, ApiError } from '@/lib/api'
 
 export interface TeamNote {
   note_id: string
@@ -91,50 +90,6 @@ export interface NoteVersionsResponse {
   current_version: number
   count: number
   versions: NoteVersion[]
-}
-
-/** An API failure: `offline` when the service did not answer at all. */
-export class ApiError extends Error {
-  readonly status: number
-  readonly code: string
-  readonly offline: boolean
-  constructor(status: number, code: string, message: string, offline = false) {
-    super(message)
-    this.name = 'ApiError'
-    this.status = status
-    this.code = code
-    this.offline = offline
-  }
-}
-
-async function apiGet<T>(path: string): Promise<T> {
-  const { data } = await supabase.auth.getSession()
-  const token = data.session?.access_token
-  let res: Response
-  try {
-    res = await fetch(`${API_URL}${path}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      signal: AbortSignal.timeout(6000),
-    })
-  } catch {
-    throw new ApiError(0, 'api_offline', `The notes API at ${API_URL} did not answer.`, true)
-  }
-  if (!res.ok) {
-    let code = `http_${res.status}`
-    let message = res.statusText || 'Request failed'
-    try {
-      const body = (await res.json()) as { detail?: { code?: string; message?: string } | string }
-      if (typeof body.detail === 'string') message = body.detail
-      else if (body.detail) {
-        code = body.detail.code ?? code
-        message = body.detail.message ?? message
-      }
-    } catch {
-      /* not JSON */
-    }
-    throw new ApiError(res.status, code, message)
-  }
-  return (await res.json()) as T
 }
 
 export function useTeamNotes(teamId: string | undefined) {

@@ -69,7 +69,7 @@ schema_paths = []
 enabled = true
 # Specifies an ordered list of seed files to load during db reset.
 # Supports glob patterns relative to supabase directory: "./seeds/*.sql"
-sql_paths = ["./fixture/02_seed.sql", "./seed/demo.sql"]
+sql_paths = ["./fixture/02_seed.sql", "./seed/demo.sql", "./seed/ingest.sql"]
 
 [db.network_restrictions]
 # Enable management of network restrictions.
@@ -394,6 +394,11 @@ deno_version = 2
 
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
+
+# GitHub cannot send a Supabase JWT: the webhook authenticates every request itself with the
+# X-Hub-Signature-256 HMAC (secret GITHUB_WEBHOOK_SECRET; locally from supabase/functions/.env).
+[functions.github-webhook]
+verify_jwt = false
 
 [analytics]
 enabled = true

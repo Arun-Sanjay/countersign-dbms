@@ -71,6 +71,34 @@ class Postgrest:
             raise problem(502, "postgres_error", f"PostgREST {r.status_code}: {body.get('message', '')}")
         return r.json()
 
+    def get_all(self, path: str, params: dict[str, str], page: int = 1000) -> list[dict[str, Any]]:
+        """Every row, page by page (PostgREST caps a response at max_rows = 1000). `params`
+        must carry a deterministic `order`; pages are fetched with limit/offset until one
+        comes back short."""
+        assert "order" in params, "get_all needs a deterministic order"
+        out: list[dict[str, Any]] = []
+        while True:
+            rows = self.get(path, {**params, "limit": str(page), "offset": str(len(out))})
+            out.extend(rows)
+            if len(rows) < page:
+                return out
+
+    def rpc(self, name: str, body: dict[str, Any]) -> Any:
+        """Call a database function AS THE CALLER (its EXECUTE grant and RLS apply)."""
+        try:
+            r = self.http.post(f"{self.base}/rpc/{name}", json=body,
+                               headers={**self.headers, "Content-Type": "application/json"})
+        except httpx.HTTPError as exc:
+            raise problem(502, "postgres_unavailable", f"PostgREST unreachable ({type(exc).__name__})")
+        if r.status_code == 401:
+            raise problem(401, "invalid_token", "Postgres rejected the token")
+        if r.status_code >= 400:
+            body_ = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+            if body_.get("code") == "42501":
+                raise problem(403, "permission_denied", f"Not allowed to call {name}")
+            raise problem(502, "postgres_error", f"PostgREST {r.status_code}: {body_.get('message', '')}")
+        return r.json()
+
 
 class Authenticator:
     def __init__(self, settings: Settings, http: httpx.Client):

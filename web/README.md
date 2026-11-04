@@ -51,14 +51,14 @@ If the local DB was reset, re-create the personas:
 
 ```bash
 npm run e2e              # resets the local DB (supabase db reset) + personas, starts Vite on :5173
-                         # and the FastAPI on :8000 when the elp-mongo-local container is up, runs e2e/01..09
+                         # and the FastAPI on :8000 when the elp-mongo-local container is up, runs e2e/01..10
 E2E_API=0 npm run e2e    # without the API (the /notes spec then checks the offline state)
 E2E_SKIP_RESET=1 npm run e2e   # skip the reset (specs assume the seed state)
 npm run e2e:typecheck    # tsc for the e2e code
 npm run e2e:report       # open the HTML report (playwright-report/)
 ```
 
-The specs run in file order with one worker because they share the database: 02 files arun's C3 claim, 03 has sanvid confirm it, 05 records a mark on C2 and locks C2. globalSetup refuses to run unless `.env.local` points at 127.0.0.1/localhost.
+The specs run in file order with one worker because they share the database: 02 files arun's C3 claim, 03 has sanvid confirm it, 05 records a mark on C2 and locks C2. 10 builds a fresh push (random SHAs, a unique word in a new vault note), signs and POSTs it with `scripts/replay_webhooks.py` to the local `github-webhook` function (started with `supabase functions serve` if it is not running), drains the queue with `uv run python -m app.worker --once`, requires BOTH halves (ingest_event projected with a mongo_id, and the raw event in the local Mongo `elp.github_events`), and checks the live toast and feed on ramesh's `/sheet/P01`, the trace sheet behind the feed item, that meera's search and Activity tab find the note, and that lakshmi finds nothing in P06. A broken Edge Function or worker FAILS the spec; only with `E2E_ALLOW_FALLBACK=1` may it call `ingest_receive` / `project_push` over PostgREST with the local service key instead (`e2e/ingest.ts`; the key is never printed). `E2E_INGEST_WORKER=0` skips the worker (it drains the whole queue) and also needs `E2E_ALLOW_FALLBACK=1`. globalSetup refuses to run unless `.env.local` points at 127.0.0.1/localhost; after the reset it also clears the worker's documents in the LOCAL Mongo container (`scripts/clear_local_pipeline.sh`), so the admin consistency panel compares like with like.
 
 ## Layout
 
@@ -83,8 +83,17 @@ src/
                             NotesPage /notes, FacultyViewPage /faculty-view
   pages/faculty/            RubricSheetPage /sheet/:projectId, ContestedPage /contested,
                             MarksPage /marks/:projectId   (admins can open these too)
-  pages/admin/              AdminPage /admin
+  pages/admin/              AdminPage /admin (+ IngestionPanel: ingest_event, Sync now, consistency)
+  pages/shared/             SearchPage /search (search_chunks + POST /ask; students, faculty, admins)
+  components/activity/      LiveActivityPanel: Realtime broadcast (team:<id> students, project:<id> staff) + recent feed;
+                            TraceSheet: one push, Mongo raw event next to its Postgres rows (GET /ingest/trace)
 ```
+
+## Search, live activity, ingestion
+
+- **`/search`** calls `search_chunks()` as the signed-in user. Filters are team, author and since. Each result card shows the artifact, version, author, time and a highlighted snippet, plus the score breakdown: FTS rank, vector rank and RRF = Σ 1/(60 + rank). **Ask** posts to the API's `POST /ask` (`VITE_API_URL`, default `http://localhost:8000`). The answer's `[n]` markers link to the cited result cards. When the API is down or has no `/ask`, the page says so and search keeps working.
+- **Live activity.** On `/sheet/:projectId`, staff subscribe to the private Realtime channel `project:<id>` (teaching faculty and admins only); RLS on `realtime.messages` decides who may join. Each new contribution shows a toast `New evidence: <usn> · <artifact> · <source>` and a feed entry, and the page refreshes its sheet, progress and evidence queries. Clicking a GitHub feed item opens the **trace sheet**: the Mongo raw event and the Postgres rows of that push side by side, with the queries that ran. The student project page subscribes to `team:<id>` for the student's own team only (another team's activity never reaches a student, the same rows RLS hides): toasts appear on every tab, and the feed and GitHub commit timeline are on the **Activity** tab. Admin inbox rows open the same trace sheet.
+- **Admin → Ingestion.** The `ingest_event` table with status chips. **Sync now** calls `POST /ingest/drain`. The consistency table comes from `GET /consistency`.
 
 ## Conventions for page owners
 

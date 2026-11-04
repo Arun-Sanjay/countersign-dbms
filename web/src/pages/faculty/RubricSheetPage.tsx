@@ -3,6 +3,7 @@ import { Fragment, useMemo, useRef, useState, type KeyboardEvent, type ReactNode
 import { Link, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { useProfile } from '@/auth/AuthProvider'
+import { LiveActivityPanel } from '@/components/activity/LiveActivityPanel'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { DataTable, type Column } from '@/components/DataTable'
 import { EmptyState } from '@/components/EmptyState'
@@ -306,14 +307,21 @@ export default function RubricSheetPage() {
             ) : null}
           </Panel>
 
-          <ProgressPanel
-            rows={progress.data}
-            loading={progress.isPending}
-            error={progress.isError ? progress.error : null}
-            onRetry={() => void progress.refetch()}
-            projectId={projectId}
-            hiddenByRls={hiddenByRls}
-          />
+          <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
+            <ProgressPanel
+              rows={progress.data}
+              loading={progress.isPending}
+              error={progress.isError ? progress.error : null}
+              onRetry={() => void progress.refetch()}
+              projectId={projectId}
+              hiddenByRls={hiddenByRls}
+            />
+            <LiveActivityPanel
+              key={projectId}
+              projectId={projectId}
+              description="New evidence for this project, live over a private Realtime channel: who, which artifact, when. Never the text. The sheet and progress refresh themselves."
+            />
+          </div>
         </div>
       )}
 
