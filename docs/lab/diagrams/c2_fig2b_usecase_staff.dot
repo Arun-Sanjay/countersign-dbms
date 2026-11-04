@@ -1,0 +1,37 @@
+// C2 SRS, Figure 2b (revision 1.1): UML use-case diagram, primary actors Faculty and
+// Administrator, secondary actors GitHub, Obsidian, Voyage AI and Anthropic Claude API.
+// The Administrator is NOT associated with "Record marks": an admin has no faculty_id and
+// record_assessment() raises 42501 faculty_required (supabase/tests/03_rpc.sql §H).
+// Solid ellipse = built; dashed ellipse = specified, not built (status as of 4 Nov 2026).
+digraph usecase_staff {
+    graph [rankdir=LR, fontname="DejaVu Sans", fontsize=13, nodesep=0.14, ranksep=0.7, pad=0.15, newrank=true];
+    node  [fontname="DejaVu Sans", fontsize=13];
+    edge  [arrowhead=none, color="#555555", penwidth=1.0];
+    faculty [shape=none, margin=0, label=<<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="1"><TR><TD FIXEDSIZE="TRUE" WIDTH="30" HEIGHT="55"><IMG SRC="c2_actor.png" SCALE="TRUE"/></TD></TR><TR><TD>Faculty</TD></TR></TABLE>>];
+    admin [shape=none, margin=0, label=<<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="1"><TR><TD FIXEDSIZE="TRUE" WIDTH="30" HEIGHT="55"><IMG SRC="c2_actor.png" SCALE="TRUE"/></TD></TR><TR><TD>Administrator</TD></TR></TABLE>>];
+    github [shape=none, margin=0, label=<<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="1"><TR><TD FIXEDSIZE="TRUE" WIDTH="30" HEIGHT="55"><IMG SRC="c2_actor.png" SCALE="TRUE"/></TD></TR><TR><TD><FONT POINT-SIZE="12">«secondary»</FONT></TD></TR><TR><TD>GitHub</TD></TR></TABLE>>];
+    obsidian [shape=none, margin=0, label=<<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="1"><TR><TD FIXEDSIZE="TRUE" WIDTH="30" HEIGHT="55"><IMG SRC="c2_actor.png" SCALE="TRUE"/></TD></TR><TR><TD><FONT POINT-SIZE="12">«secondary»</FONT></TD></TR><TR><TD>Obsidian</TD></TR></TABLE>>];
+    voyage [shape=none, margin=0, label=<<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="1"><TR><TD FIXEDSIZE="TRUE" WIDTH="30" HEIGHT="55"><IMG SRC="c2_actor.png" SCALE="TRUE"/></TD></TR><TR><TD><FONT POINT-SIZE="12">«secondary»</FONT></TD></TR><TR><TD>Voyage AI</TD></TR></TABLE>>];
+    claude [shape=none, margin=0, label=<<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="1"><TR><TD FIXEDSIZE="TRUE" WIDTH="30" HEIGHT="55"><IMG SRC="c2_actor.png" SCALE="TRUE"/></TD></TR><TR><TD><FONT POINT-SIZE="12">«secondary»</FONT></TD></TR><TR><TD>Anthropic</TD></TR><TR><TD>Claude API</TD></TR></TABLE>>];
+
+    subgraph cluster_uc {
+        label="Countersign"; style=rounded; color="#1f4e79"; penwidth=1.5; fontsize=14;
+        node [shape=ellipse, style=filled, fillcolor="#ffffff", color="#333333", margin="0.04,0.02"];
+        hub    [label="View semester hub [FR3]"];
+        cie    [label="View lab CIE marks [FR7]"];
+        sheet  [label="View rubric sheet, team progress,\ncontested queue [FR7]"];
+        cons   [label="View cross-store\nconsistency [FR11]"];
+        mark   [label="Record marks [FR7]"];
+        lock   [label="Lock component [FR2, FR7]"];
+        fix    [label="Correct records: unlock, delete\nmarks, verified skills, team\nplacement [FR4, FR7, FR8]"];
+        rec    [label="Maintain students, faculty, terms,\nofferings, enrolment [FR1]"];
+        proj   [label="Define project, components,\nrequired skills [FR2]"];
+        ask    [label="Ask the cited assistant [FR9]", style="dashed,filled"];
+        ingest [label="Ingest GitHub / Obsidian\nwork [FR5]", style="dashed,filled"];
+    }
+    { rank=same; admin; github; obsidian; voyage; claude; }
+    faculty -> {cons mark ask hub cie sheet lock};
+    {hub cie sheet lock fix rec proj} -> admin;
+    ingest -> {github obsidian};
+    ask -> {voyage claude};
+}

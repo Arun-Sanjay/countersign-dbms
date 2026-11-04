@@ -1,0 +1,20 @@
+% Header for C3_ER.pdf (xelatex). \setpaper{width}{height}{margin} starts a new page with a
+% different paper size and text block; used by c3_layout.lua for A3 / landscape figure pages.
+\usepackage{caption}
+\captionsetup[figure]{labelformat=empty}
+\makeatletter
+\newcommand{\setpaper}[3]{%
+  \clearpage
+  \pdfpagewidth=#1\relax \pdfpageheight=#2\relax
+  \paperwidth=#1\relax \paperheight=#2\relax
+  \textwidth=\dimexpr\paperwidth-2\dimexpr#3\relax\relax
+  \textheight=\dimexpr\paperheight-2\dimexpr#3\relax-\footskip\relax
+  \oddsidemargin=\dimexpr#3-1in\relax \evensidemargin=\oddsidemargin
+  \topmargin=\dimexpr#3-1in-\headheight-\headsep\relax
+  \hsize=\textwidth \columnwidth=\textwidth \linewidth=\textwidth
+  \global\@colht=\textheight \global\@colroom=\textheight \global\vsize=\textheight
+}
+\makeatother
+\AtBeginDocument{\renewcommand{\ul}[1]{\underline{\smash[b]{#1}}}}
+\usepackage{xurl}
+\setlength{\emergencystretch}{3em}

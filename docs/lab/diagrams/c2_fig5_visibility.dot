@@ -1,0 +1,33 @@
+// C2 SRS, Figure 5 (revision 1.1): UML state machine of artifact.visibility, top to bottom.
+// Only transitions that CAN happen are drawn as arrows, each with its trigger [guard] and the
+// guarding database object. Refused attempts are NOT transitions: they are listed in notes
+// (UML comment symbol, attached by a dashed line), with the SQLSTATE of each path.
+// No final state is drawn: an artifact is never deleted through the API (no DELETE policy),
+// and 'submitted' simply has no outgoing transition.
+digraph visibility {
+    graph [rankdir=TB, fontname="DejaVu Sans", fontsize=13, nodesep=0.45, ranksep=0.6, pad=0.15];
+    node  [fontname="DejaVu Sans", fontsize=13, shape=box, style="rounded,filled",
+           color="#333333", margin="0.15,0.07"];
+    edge  [fontname="DejaVu Sans", fontsize=12, color="#333333", arrowsize=0.8];
+
+    init [shape=point, width=0.16, label="", fillcolor="#222222"];
+
+    private [fillcolor="#fbeaea", label=<<b>private</b><br/><font point-size="12">row: owner only<br/>(owner_usn NOT NULL, CHECK)<br/>chunk text: its author only</font>>];
+    team    [fillcolor="#eef3fb", label=<<b>team</b>  (default)<br/><font point-size="12">row: team members,<br/>teaching faculty, admin<br/>chunk text: team members only</font>>];
+    submitted [fillcolor="#eaf6ea", label=<<b>submitted</b><br/><font point-size="12">row and chunk text:<br/>team members,<br/>teaching faculty, admin</font>>];
+
+    init -> private [label="p1 INSERT\l[owner_usn = caller]\l"];
+    init -> team    [label="p2 INSERT\l(default 'team')\l"];
+    private -> team [label="p3 owner shares\l[caller = owner_usn]\lRLS artifact_update\l"];
+    team -> private [label="p4 owner makes private\r[caller = owner_usn ∧\rno other student's version,\rcontribution or chunk]\rtrg_artifact_guard\r"];
+    team -> submitted [label="   p5 UPDATE to 'submitted'\l   [a submission_artifact row\l   exists for the artifact]\l   trg_artifact_guard;\l   chunks follow (trigger\l   trg_artifact_chunk_\l   visibility_sync);\l   normal path:\l   submit_milestone()\l"];
+
+    n_private [shape=note, style=filled, fillcolor="#fffbe6", color="#b59f3b", fontsize=12,
+               label="Refused (not a transition):\lsubmitting a private artifact\l• submit_milestone()\l   → 55000 artifact_private\l• INSERT submission_artifact\l   → 23514 submission_\l      artifact_not_private\l• UPDATE to 'submitted'\l   → 55000 artifact_not_submitted\l"];
+    n_submitted [shape=note, style=filled, fillcolor="#fffbe6", color="#b59f3b", fontsize=12,
+               label="Refused (not a transition):\lno transition leaves 'submitted'\l• UPDATE visibility, milestone_no\l   or owner_usn\l   → 55000 artifact_submitted_final\l• end-user INSERT as 'submitted'\l   → 55000 artifact_not_submitted\l"];
+
+    private -> n_private [style=dashed, arrowhead=none, color="#b59f3b"];
+    submitted -> n_submitted [style=dashed, arrowhead=none, color="#b59f3b", minlen=1];
+    { rank=same; n_private; submitted; }
+}

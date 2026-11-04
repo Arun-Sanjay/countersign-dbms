@@ -1,0 +1,52 @@
+// C6 Normalization - Figure 2b: 2NF -> 3NF -> BCNF (= the implemented tables).
+// Render: docs/lab/build_c6.sh. Caption is in C6_Normalization.md.
+// Colours: green = BCNF; purple = 3NF, not BCNF; red = below 3NF; blue = implemented table.
+digraph PipelineB {
+  graph [rankdir=LR, nodesep=0.16, ranksep=0.45, fontname="DejaVu Sans", pad=0.2, bgcolor="white", newrank=true];
+  node  [fontname="DejaVu Sans", fontsize=13, shape=plain];
+  edge  [color="#444444", arrowsize=0.8, fontname="DejaVu Sans", fontsize=13];
+
+  s2 [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4"><TR><TD BGCOLOR="#1f3b5c"><FONT COLOR="white"><B>2NF</B></FONT></TD></TR></TABLE>>];
+  s3 [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4"><TR><TD BGCOLOR="#1f3b5c"><FONT COLOR="white"><B>3NF</B></FONT></TD></TR></TABLE>>];
+  sB [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4"><TR><TD BGCOLOR="#1f3b5c"><FONT COLOR="white"><B>BCNF = implemented</B></FONT></TD></TR></TABLE>>];
+
+  // 2NF (only the two relations that change; the other four are already BCNF)
+  t2e [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#f4ecf7"><B>MEMBERSHIP</B></TD></TR><TR><TD><U>USN</U>, <U>Proj</U>, Team</TD></TR><TR><TD><FONT COLOR="#7d3c98">Team &#8594; Proj</FONT></TD></TR></TABLE>>];
+  t2f [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#fdecea"><B>MARK</B></TD></TR><TR><TD><U>USN</U>, <U>Proj</U>, <U>No</U>,<BR/>Marks, Fac, FName</TD></TR><TR><TD><FONT COLOR="#d68910">Fac &#8594; FName</FONT></TD></TR></TABLE>>];
+  t2x [label=<<TABLE BORDER="1" STYLE="dashed" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#7f8c8d"><TR><TD>STUDENT, PROJECT,<BR/>COMPONENT, TEAM<BR/><I>(already BCNF)</I></TD></TR></TABLE>>];
+
+  // 3NF
+  t3a [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#e8f5e9"><B>STUDENT</B></TD></TR><TR><TD><U>USN</U>, Name, Sec</TD></TR></TABLE>>];
+  t3b [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#e8f5e9"><B>PROJECT</B></TD></TR><TR><TD><U>Proj</U>, Course</TD></TR></TABLE>>];
+  t3c [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#e8f5e9"><B>COMPONENT</B></TD></TR><TR><TD><U>Proj</U>, <U>No</U>, Comp, Max, Part</TD></TR></TABLE>>];
+  t3d [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#e8f5e9"><B>TEAM</B></TD></TR><TR><TD><U>Team</U>, Title</TD></TR></TABLE>>];
+  t3e [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#f4ecf7"><B>MEMBERSHIP</B></TD></TR><TR><TD><U>USN</U>, <U>Proj</U>, Team</TD></TR><TR><TD><FONT COLOR="#7d3c98">Team &#8594; Proj:<BR/>3NF, not BCNF</FONT></TD></TR></TABLE>>];
+  t3f [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#e8f5e9"><B>ASSESSMENT</B></TD></TR><TR><TD><U>USN</U>, <U>Proj</U>, <U>No</U>,<BR/>Marks, Fac</TD></TR></TABLE>>];
+  t3g [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#e8f5e9"><B>FACULTY</B></TD></TR><TR><TD><U>Fac</U>, FName</TD></TR></TABLE>>];
+
+  // BCNF = implemented tables (sheet columns only)
+  tBa [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#d6e4f0"><B>student</B></TD></TR><TR><TD><U>usn</U>, name, section</TD></TR></TABLE>>];
+  tBb [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#d6e4f0"><B>project</B></TD></TR><TR><TD><U>project_id</U>, course_code</TD></TR></TABLE>>];
+  tBc [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#d6e4f0"><B>milestone</B></TD></TR><TR><TD><U>project_id</U>, <U>milestone_no</U>,<BR/>title, max_marks, cie_part</TD></TR></TABLE>>];
+  tBd [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#d6e4f0"><B>team</B></TD></TR><TR><TD><U>team_id</U>, project_id,<BR/>topic_title</TD></TR></TABLE>>];
+  tBe [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#d6e4f0"><B>team_member</B></TD></TR><TR><TD><U>team_id</U>, <U>usn</U></TD></TR></TABLE>>];
+  tBf [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#d6e4f0"><B>assessment</B></TD></TR><TR><TD><U>usn</U>, <U>project_id</U>, <U>milestone_no</U>,<BR/>marks, assessed_by</TD></TR></TABLE>>];
+  tBg [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#d6e4f0"><B>faculty</B></TD></TR><TR><TD><U>faculty_id</U>, name</TD></TR></TABLE>>];
+  view [label=<<TABLE BORDER="1" STYLE="dashed" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" COLOR="#7f8c8d"><TR><TD><I>VIEW v_lab_cie_marks</I></TD></TR><TR><TD><FONT COLOR="#555555">reduced_30, total_50<BR/>computed from assessment,<BR/>milestone, team, team_member<BR/>(derived, not stored)</FONT></TD></TR></TABLE>>];
+
+  {rank=same; s2; t2x; t2e; t2f;}
+  {rank=same; s3; t3a; t3b; t3c; t3d; t3e; t3f; t3g;}
+  {rank=same; sB; tBa; tBb; tBc; tBd; tBe; tBf; tBg; view;}
+  s2 -> t2x -> t2e -> t2f [style=invis];
+  s3 -> t3a -> t3b -> t3c -> t3d -> t3e -> t3f -> t3g [style=invis];
+  sB -> tBa -> tBb -> tBc -> tBd -> tBe -> tBf -> tBg -> view [style=invis];
+
+  t2x -> t3a; t2x -> t3b; t2x -> t3c; t2x -> t3d;
+  t2e -> t3e;
+  t2f -> t3f [label="Fac &#8594; FName", fontcolor="#d68910", color="#d68910"];
+  t2f -> t3g [color="#d68910"];
+  t3a -> tBa; t3b -> tBb; t3c -> tBc; t3d -> tBd;
+  t3e -> tBd [color="#7d3c98", label="Team, Proj", fontcolor="#7d3c98"];
+  t3e -> tBe [color="#7d3c98", label="USN, Team", fontcolor="#7d3c98"];
+  t3f -> tBf; t3g -> tBg;
+}

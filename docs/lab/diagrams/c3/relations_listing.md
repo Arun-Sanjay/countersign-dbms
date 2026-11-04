@@ -1,0 +1,81 @@
+- **ACADEMIC_TERM** ([term_id]{.underline}, name, start_date, end_date)
+- **COURSE** ([course_code]{.underline}, title, semester, credits, *faculty_id*)
+    - FK (faculty_id) → public.faculty(faculty_id) ON DELETE SET NULL
+- **FACULTY** ([faculty_id]{.underline}, name, email, department, designation)
+- **COURSE_OFFERING** ([offering_id]{.underline}, *course_code*, *term_id*, section, *faculty_id*)
+    - FK (course_code) → public.course(course_code) ON DELETE RESTRICT
+    - FK (faculty_id) → public.faculty(faculty_id) ON DELETE RESTRICT
+    - FK (term_id) → public.academic_term(term_id) ON DELETE RESTRICT
+- **STUDENT** ([usn]{.underline}, name, email, department, section, semester, joined_at)
+- **ENROLLMENT** (*[usn]{.underline}*, *[offering_id]{.underline}*, enrolled_on)
+    - FK (offering_id) → public.course_offering(offering_id) ON DELETE RESTRICT
+    - FK (usn) → public.student(usn) ON DELETE RESTRICT
+- **PROJECT** ([project_id]{.underline}, *course_code*, title, description, start_date, end_date, status, *offering_id*)
+    - FK (course_code) → public.course(course_code) ON DELETE RESTRICT
+    - FK (offering_id, course_code) → public.course_offering(offering_id, course_code) ON DELETE RESTRICT
+- **MILESTONE** (*[project_id]{.underline}*, [milestone_no]{.underline}, title, max_marks, deadline, cie_part, counts_in_reduced, locked_at)
+    - FK (project_id) → public.project(project_id) ON DELETE CASCADE
+- **TEAM** ([team_id]{.underline}, *project_id*, team_name, max_size, created_at, topic_title, abstract)
+    - FK (project_id) → public.project(project_id) ON DELETE RESTRICT
+- **TEAM_MEMBER** (*[team_id]{.underline}*, *[usn]{.underline}*, role, joined_at)
+    - FK (team_id) → public.team(team_id) ON DELETE CASCADE
+    - FK (usn) → public.student(usn) ON DELETE CASCADE
+- **SKILL** ([skill_id]{.underline}, name, category, *parent_skill_id*)
+    - FK (parent_skill_id) → public.skill(skill_id) ON DELETE NO ACTION
+- **STUDENT_SKILL** (*[usn]{.underline}*, *[skill_id]{.underline}*, level)
+    - FK (skill_id) → public.skill(skill_id) ON DELETE NO ACTION
+    - FK (usn) → public.student(usn) ON DELETE CASCADE
+- **PROJECT_SKILL** (*[project_id]{.underline}*, *[skill_id]{.underline}*, min_level)
+    - FK (project_id) → public.project(project_id) ON DELETE CASCADE
+    - FK (skill_id) → public.skill(skill_id) ON DELETE NO ACTION
+- **ARTIFACT** ([artifact_id]{.underline}, *team_id*, *project_id*, *milestone_no*, title, type, source, created_at, visibility, *owner_usn*, external_ref)
+    - FK (owner_usn) → public.student(usn) ON DELETE RESTRICT
+    - FK (project_id, milestone_no) → public.milestone(project_id, milestone_no) ON DELETE NO ACTION
+    - FK (team_id) → public.team(team_id) ON DELETE RESTRICT
+    - FK (team_id, project_id) → public.team(team_id, project_id) ON DELETE RESTRICT
+- **ARTIFACT_VERSION** (*[artifact_id]{.underline}*, [version_no]{.underline}, *created_by*, created_at, content_hash, mongo_ref, ai_assistance)
+    - FK (artifact_id) → public.artifact(artifact_id) ON DELETE CASCADE
+    - FK (created_by) → public.student(usn) ON DELETE RESTRICT
+- **CONTRIBUTION** ([contribution_id]{.underline}, *usn*, *artifact_id*, contribution_type, description, created_at, source, source_ref, occurred_at, ai_assisted)
+    - FK (artifact_id) → public.artifact(artifact_id) ON DELETE RESTRICT
+    - FK (usn) → public.student(usn) ON DELETE RESTRICT
+- **ARTIFACT_CHUNK** ([chunk_id]{.underline}, *artifact_id*, version_no, *author_usn*, content, created_at, embedding, embedding_model, content_hash, visibility, tsv)
+    - FK (artifact_id) → public.artifact(artifact_id) ON DELETE CASCADE
+    - FK (author_usn) → public.student(usn) ON DELETE RESTRICT
+- **SUBMISSION** ([submission_id]{.underline}, *team_id*, *project_id*, *milestone_no*, *submitted_by*, submitted_at, attempt_no)
+    - FK (project_id, milestone_no) → public.milestone(project_id, milestone_no) ON DELETE RESTRICT
+    - FK (submitted_by) → public.student(usn) ON DELETE RESTRICT
+    - FK (team_id, project_id) → public.team(team_id, project_id) ON DELETE RESTRICT
+- **SUBMISSION_ARTIFACT** (*[submission_id]{.underline}*, *[artifact_id]{.underline}*, *version_no*)
+    - FK (artifact_id, version_no) → public.artifact_version(artifact_id, version_no) ON DELETE RESTRICT
+    - FK (submission_id) → public.submission(submission_id) ON DELETE CASCADE
+- **ASSESSMENT** (*[usn]{.underline}*, *[project_id]{.underline}*, *[milestone_no]{.underline}*, marks, *assessed_by*, assessed_at, remarks)
+    - FK (assessed_by) → public.faculty(faculty_id) ON DELETE RESTRICT
+    - FK (project_id, milestone_no) → public.milestone(project_id, milestone_no) ON DELETE RESTRICT
+    - FK (usn) → public.student(usn) ON DELETE RESTRICT
+- **CLAIM** ([claim_id]{.underline}, *usn*, *team_id*, *project_id*, *milestone_no*, statement, contribution_type, ai_assistance, status, revision, created_at)
+    - FK (project_id, milestone_no) → public.milestone(project_id, milestone_no) ON DELETE RESTRICT
+    - FK (team_id, project_id) → public.team(team_id, project_id) ON DELETE RESTRICT
+    - FK (usn) → public.student(usn) ON DELETE RESTRICT
+- **CLAIM_EVIDENCE** (*[claim_id]{.underline}*, [evidence_no]{.underline}, kind, *contribution_id*, *artifact_id*, *version_no*, ref, note, added_at)
+    - FK (artifact_id, version_no) → public.artifact_version(artifact_id, version_no) ON DELETE RESTRICT
+    - FK (claim_id) → public.claim(claim_id) ON DELETE CASCADE
+    - FK (contribution_id) → public.contribution(contribution_id) ON DELETE RESTRICT
+- **COUNTERSIGN** (*[claim_id]{.underline}*, *[endorser_usn]{.underline}*, verdict, comment, claim_revision, signed_at)
+    - FK (claim_id) → public.claim(claim_id) ON DELETE CASCADE
+    - FK (endorser_usn) → public.student(usn) ON DELETE RESTRICT
+- **APP_USER** (*[user_id]{.underline}*, role, *usn*, *faculty_id*, created_at)
+    - FK (faculty_id) → public.faculty(faculty_id) ON DELETE RESTRICT
+    - FK (user_id) → auth.users(id) ON DELETE CASCADE
+    - FK (usn) → public.student(usn) ON DELETE RESTRICT
+- **COURSE_SKILL** (*[course_code]{.underline}*, *[skill_id]{.underline}*)
+    - FK (course_code) → public.course(course_code) ON DELETE CASCADE
+    - FK (skill_id) → public.skill(skill_id) ON DELETE RESTRICT
+- **SKILL_EVIDENCE** ([evidence_id]{.underline}, *usn*, *skill_id*, *claim_id*, *contribution_id*, level, created_at)
+    - FK (claim_id, usn) → public.claim(claim_id, usn) ON DELETE CASCADE
+    - FK (contribution_id, usn) → public.contribution(contribution_id, usn) ON DELETE CASCADE
+    - FK (skill_id) → public.skill(skill_id) ON DELETE RESTRICT
+    - FK (usn) → public.student(usn) ON DELETE CASCADE
+- **PRIVATE.NOTE** ([note_id]{.underline}, *owner_usn*, *team_id*, title, body, created_at, updated_at)
+    - FK (owner_usn) → public.student(usn) ON DELETE CASCADE
+    - FK (team_id) → public.team(team_id) ON DELETE SET NULL

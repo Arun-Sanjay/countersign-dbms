@@ -1,0 +1,36 @@
+// C6 Normalization - Figure 5: textbook ENROLLMENT example (Elmasri & Navathe TEACH pattern)
+// SECTION_ENROLL(USN, Course, Faculty) for one term, under the policy
+//   FD1: USN, Course -> Faculty     FD2: Faculty -> Course
+digraph Enroll {
+  graph [rankdir=TB, nodesep=0.3, ranksep=0.5, fontname="DejaVu Sans", fontsize=12,
+         pad=0.2, bgcolor="white"];
+  node  [fontname="DejaVu Sans", fontsize=13, shape=plain];
+  edge  [fontname="DejaVu Sans", fontsize=12, color="#444444", arrowsize=0.7];
+
+  r [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5">
+    <TR><TD COLSPAN="3" BGCOLOR="#f4ecf7"><B>SECTION_ENROLL</B> (one term)<BR/>keys {USN, Course}, {USN, Faculty}</TD></TR>
+    <TR><TD><U>USN</U></TD><TD><U>Course</U></TD><TD>Faculty</TD></TR>
+    <TR><TD COLSPAN="3" ALIGN="LEFT">FD1: USN, Course &#8594; Faculty<BR ALIGN="LEFT"/>FD2: Faculty &#8594; Course<BR ALIGN="LEFT"/><FONT COLOR="#7d3c98">3NF (Course is prime); not BCNF</FONT><BR ALIGN="LEFT"/></TD></TR>
+   </TABLE>>];
+
+  d1 [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#fdecea"><B>D1</B><BR/>{USN, Faculty},<BR/>{USN, Course}</TD></TR>
+    <TR><TD ALIGN="LEFT">R1 &#8745; R2 = {USN}<BR ALIGN="LEFT"/>USN &#8594; Faculty? no<BR ALIGN="LEFT"/>USN &#8594; Course? no<BR ALIGN="LEFT"/><FONT COLOR="#c0392b"><B>lossy</B><BR ALIGN="LEFT"/>(spurious tuples)</FONT><BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  d2 [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#fdecea"><B>D2</B><BR/>{Course, Faculty},<BR/>{Course, USN}</TD></TR>
+    <TR><TD ALIGN="LEFT">R1 &#8745; R2 = {Course}<BR ALIGN="LEFT"/>Course &#8594; Faculty? no<BR ALIGN="LEFT"/>Course &#8594; USN? no<BR ALIGN="LEFT"/><FONT COLOR="#c0392b"><B>lossy</B><BR ALIGN="LEFT"/>(spurious tuples)</FONT><BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  d3 [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#e8f5e9"><B>D3</B><BR/>{Faculty, Course},<BR/>{Faculty, USN}</TD></TR>
+    <TR><TD ALIGN="LEFT">R1 &#8745; R2 = {Faculty}<BR ALIGN="LEFT"/>Faculty &#8594; Course = R1 &#8722; R2<BR ALIGN="LEFT"/><FONT COLOR="#1e8449"><B>lossless</B>, both BCNF</FONT><BR ALIGN="LEFT"/><FONT COLOR="#c0392b">FD1 lost</FONT><BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+
+  impl [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD COLSPAN="2" BGCOLOR="#d6e4f0"><B>Implemented: the teaching assignment is</B><BR/><B>an entity with a surrogate key</B></TD></TR>
+    <TR><TD ALIGN="LEFT">course_offering(<U>offering_id</U>,<BR ALIGN="LEFT"/>   course_code, term_id,<BR ALIGN="LEFT"/>   section, faculty_id)<BR ALIGN="LEFT"/></TD><TD ALIGN="LEFT">keys {offering_id},<BR ALIGN="LEFT"/>{course_code, term_id, section}: BCNF<BR ALIGN="LEFT"/></TD></TR>
+    <TR><TD ALIGN="LEFT">enrollment(<U>usn</U>, <U>offering_id</U>,<BR ALIGN="LEFT"/>   enrolled_on)<BR ALIGN="LEFT"/></TD><TD ALIGN="LEFT">BCNF</TD></TR>
+    <TR><TD COLSPAN="2" ALIGN="LEFT">FD2 is not a business rule here (a faculty member<BR ALIGN="LEFT"/>may teach several courses), so the anomaly never arises.<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+
+  r -> d1; r -> d2; r -> d3 [color="#1e8449", penwidth=1.6];
+  {rank=same; d1; d2; d3;}
+  d3 -> impl [style=dashed, label="  generalised with\l  term + section\l"];
+}

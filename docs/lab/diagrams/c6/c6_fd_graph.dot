@@ -1,0 +1,62 @@
+// C6 Normalization - Figure 1: FD graph of the 1NF marks-sheet relation (minimal cover G)
+// Render: docs/lab/build_c6.sh (dot -Tsvg / -Tpdf / -Tpng -Gdpi=200). Caption is in C6_Normalization.md.
+digraph FD {
+  graph [rankdir=LR, nodesep=0.22, ranksep=0.85, fontname="DejaVu Sans", fontsize=12,
+         pad=0.3, bgcolor="white"];
+  node  [fontname="DejaVu Sans", fontsize=13, shape=box, style="rounded,filled", fillcolor="white", color="#333333", height=0.32];
+  edge  [fontname="DejaVu Sans", fontsize=11, color="#222222", arrowsize=0.7];
+
+  // ---- determinant (left-hand-side) attributes ----
+  USN  [label=<<U>USN</U>>,  fillcolor="#d6e4f0"];
+  Proj [label=<<U>Proj</U>>, fillcolor="#d6e4f0"];
+  No   [label=<<U>No</U>>,   fillcolor="#d6e4f0"];
+  Team [label=<Team>,         fillcolor="#e8eef5"];
+  Fac  [label=<Fac>];
+
+  // ---- dependent attributes ----
+  Name; Sec; Course; Title; Comp; Max; Part; Marks; FName;
+
+  // ---- junctions for composite left-hand sides ----
+  node [shape=point, width=0.09, height=0.09, style=filled, fillcolor="#222222", label=""];
+  j_up;   // {USN, Proj}
+  j_pn;   // {Proj, No}
+  j_upn;  // {USN, Proj, No}
+
+  edge [arrowhead=none, style=dashed, color="#777777"];
+  USN -> j_up;  Proj -> j_up;
+  Proj -> j_pn; No -> j_pn;
+  USN -> j_upn; Proj -> j_upn; No -> j_upn;
+
+  // ---- FDs, coloured by the normal form they violate in SHEET_1NF ----
+  edge [arrowhead=normal, style=solid];
+  // full dependency on the primary key (allowed in every NF)
+  j_upn -> Marks [color="#111111", penwidth=1.6];
+  j_upn -> Fac   [color="#111111", penwidth=1.6];
+  // partial dependencies (2NF violations)
+  USN  -> Name   [color="#c0392b", penwidth=1.4];
+  USN  -> Sec    [color="#c0392b", penwidth=1.4];
+  Proj -> Course [color="#c0392b", penwidth=1.4];
+  j_pn -> Comp   [color="#c0392b", penwidth=1.4];
+  j_pn -> Max    [color="#c0392b", penwidth=1.4];
+  j_pn -> Part   [color="#c0392b", penwidth=1.4];
+  Team -> Title  [color="#c0392b", penwidth=1.4];
+  // transitive dependency (3NF violation)
+  Fac  -> FName  [color="#d68910", penwidth=1.4];
+  // dependencies among prime attributes
+  j_up -> Team   [color="#2e86c1", penwidth=1.4];
+  Team -> Proj   [color="#7d3c98", penwidth=1.4, constraint=false];
+
+  // ---- legend (placed in the right-hand column, below the attributes) ----
+  legend [shape=plain, style="", fontsize=12, label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="1" CELLPADDING="2" COLOR="#999999">
+      <TR><TD COLSPAN="2" ALIGN="LEFT"><B>Edge colour</B></TD></TR>
+      <TR><TD><FONT COLOR="#111111"><B>&#8212;&#9654;</B></FONT></TD><TD ALIGN="LEFT">full dependency on K1</TD></TR>
+      <TR><TD><FONT COLOR="#c0392b"><B>&#8212;&#9654;</B></FONT></TD><TD ALIGN="LEFT">partial (violates 2NF)</TD></TR>
+      <TR><TD><FONT COLOR="#d68910"><B>&#8212;&#9654;</B></FONT></TD><TD ALIGN="LEFT">transitive (violates 3NF)</TD></TR>
+      <TR><TD><FONT COLOR="#2e86c1"><B>&#8212;&#9654;</B></FONT></TD><TD ALIGN="LEFT">USN, Proj &#8594; Team<BR ALIGN="LEFT"/>(prime RHS; lost by BCNF)<BR ALIGN="LEFT"/></TD></TR>
+      <TR><TD><FONT COLOR="#7d3c98"><B>&#8212;&#9654;</B></FONT></TD><TD ALIGN="LEFT">Team &#8594; Proj<BR ALIGN="LEFT"/>(violates BCNF only)<BR ALIGN="LEFT"/></TD></TR>
+      <TR><TD><FONT COLOR="#777777">- - -</FONT></TD><TD ALIGN="LEFT">part of a composite LHS<BR ALIGN="LEFT"/>(&#9679; = junction)<BR ALIGN="LEFT"/></TD></TR>
+    </TABLE>>];
+  {rank=same; Title; FName; legend;}
+  FName -> legend [style=invis];
+}

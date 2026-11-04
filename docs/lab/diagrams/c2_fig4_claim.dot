@@ -1,0 +1,59 @@
+// C2 SRS, Figure 4 (revision 1.1): UML state machine of a claim, drawn top to bottom.
+// claim.status is a DERIVED attribute (trg_claim_status_derived, trg_countersign_sync_status):
+//   any dispute -> contested; else any confirm -> confirmed; else pending.
+// The component lock is NOT a value of claim.status: it is a second, orthogonal region of
+// the composite state "Claim". Every status transition t1..t10 has the guard [in Open]
+// (trg_claim_guard, trg_claim_evidence_check, trg_countersign_check).
+// Labels are transition ids; the transition table under FR6 in C2_SRS.md gives the trigger,
+// guard and enforcing database object of each transition.
+// Notation: filled dot = initial pseudostate; bull's-eye = final state; dashed boxes =
+// the two orthogonal regions of the composite state.
+digraph claim {
+    graph [rankdir=TB, fontname="DejaVu Sans", fontsize=13, nodesep=0.9, ranksep=0.75,
+           pad=0.15, newrank=true];
+    node  [fontname="DejaVu Sans", fontsize=13, shape=box, style="rounded,filled",
+           color="#333333", fillcolor="#ffffff", margin="0.15,0.06"];
+    edge  [fontname="DejaVu Sans", fontsize=12, color="#333333", arrowsize=0.8];
+
+    subgraph cluster_claim {
+        label="Claim  (composite state; two orthogonal regions)"; labeljust=l;
+        style=rounded; color="#1f4e79"; penwidth=1.4;
+
+        subgraph cluster_status {
+            label="Region 1: claim.status (derived)"; labeljust=l; style="rounded,dashed";
+            color="#777777"; fontsize=12;
+            i1 [shape=point, width=0.16, label="", fillcolor="#222222"];
+            pending   [label=<<b>pending</b><br/><font point-size="12">editable by the claimant</font>>, fillcolor="#fdf6e3"];
+            confirmed [label=<<b>confirmed</b><br/><font point-size="12">content frozen</font>>, fillcolor="#eaf6ea"];
+            contested [label=<<b>contested</b><br/><font point-size="12">content frozen;<br/>in v_contested_claims</font>>, fillcolor="#fbeaea"];
+        }
+        subgraph cluster_lock {
+            label="Region 2: component lock (milestone.locked_at)"; labeljust=l;
+            style="rounded,dashed"; color="#777777"; fontsize=12;
+            i2 [shape=point, width=0.16, label="", fillcolor="#222222"];
+            open   [label=<<b>Open</b><br/><font point-size="12">locked_at IS NULL</font>>];
+            locked [label=<<b>Locked</b><br/><font point-size="12">locked_at IS NOT NULL</font>>, fillcolor="#eeeeee"];
+            { rank=same; open; locked; }
+        }
+    }
+    final [shape=point, width=0.2, peripheries=2, label="", fillcolor="#222222", color="#222222"];
+    { rank=same; pending; final; }
+
+    i1 -> pending        [label=" t1 file"];
+    pending -> pending   [label="t2 edit ", tailport=nw, headport=w];
+    pending -> confirmed [label="t3 confirm "];
+    pending -> contested [label=" t4 dispute"];
+    confirmed -> contested [label=" t5 dispute"];
+    contested -> confirmed [label="t6 [no dispute\nremains] "];
+    contested -> contested [label=" t7 [a dispute\n remains]", tailport=e, headport=se];
+    confirmed -> pending [label="t8 withdraw\n[none remains] ", constraint=false];
+    contested -> pending [label=" t9 withdraw\n [none remains]", constraint=false];
+    pending -> final     [label="t10 claim_delete\n(withdrawn)"];
+
+    i2 -> open;
+    open -> locked [label="l1 lock_milestone()"];
+    locked -> open [label="l2 admin unlocks"];
+
+    // keep region 2 below region 1
+    contested -> i2 [style=invis];
+}

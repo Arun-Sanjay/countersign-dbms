@@ -1,0 +1,92 @@
+// C6 Normalization - Figure 3: deliberate (controlled) redundancy and the composite FKs that pin it.
+// Render: docs/lab/build_c6.sh. Caption is in C6_Normalization.md.
+// Scope: the copies pinned by composite FKs (B.2.1-B.2.3, B.2.5, B.2.6), plus the two derived
+// columns on tables drawn here (milestone.counts_in_reduced, claim.status).
+// artifact_chunk.tsv (GENERATED) is not drawn: it involves no FK (see B.2.7).
+digraph Redundancy {
+  graph [rankdir=LR, nodesep=0.22, ranksep=0.9, fontname="DejaVu Sans", pad=0.2, bgcolor="white", newrank=true];
+  node  [fontname="DejaVu Sans", fontsize=13, shape=plain];
+  edge  [fontname="DejaVu Sans", fontsize=11, arrowsize=0.8];
+
+  // ---------- referencing tables (left column) ----------
+  artifact [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#e8eef5"><B>artifact</B></TD></TR>
+    <TR><TD ALIGN="LEFT">PK <U>artifact_id</U></TD></TR>
+    <TR><TD PORT="tp" ALIGN="LEFT">team_id, <FONT COLOR="#c0392b"><B>project_id</B></FONT></TD></TR>
+    <TR><TD PORT="pm" ALIGN="LEFT"><FONT COLOR="#c0392b"><B>project_id</B></FONT>, milestone_no</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT COLOR="#c0392b">transitive: team_id &#8594; project_id</FONT></TD></TR></TABLE>>];
+  submission [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#e8eef5"><B>submission</B></TD></TR>
+    <TR><TD ALIGN="LEFT">PK <U>submission_id</U><BR ALIGN="LEFT"/>key {team_id, milestone_no, attempt_no}<BR ALIGN="LEFT"/></TD></TR>
+    <TR><TD PORT="tp" ALIGN="LEFT">team_id, <FONT COLOR="#c0392b"><B>project_id</B></FONT></TD></TR>
+    <TR><TD PORT="pm" ALIGN="LEFT"><FONT COLOR="#c0392b"><B>project_id</B></FONT>, milestone_no</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT COLOR="#c0392b">partial: team_id &#8594; project_id</FONT></TD></TR></TABLE>>];
+  claim [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#e8eef5"><B>claim</B></TD></TR>
+    <TR><TD ALIGN="LEFT">PK <U>claim_id</U>; usn, <FONT COLOR="#d68910"><B>status</B></FONT></TD></TR>
+    <TR><TD PORT="tp" ALIGN="LEFT">team_id, <FONT COLOR="#c0392b"><B>project_id</B></FONT></TD></TR>
+    <TR><TD PORT="pm" ALIGN="LEFT"><FONT COLOR="#c0392b"><B>project_id</B></FONT>, milestone_no</TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT COLOR="#c0392b">transitive: team_id &#8594; project_id</FONT></TD></TR></TABLE>>];
+  skill_ev [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#e8eef5"><B>skill_evidence</B></TD></TR>
+    <TR><TD ALIGN="LEFT">PK <U>evidence_id</U></TD></TR>
+    <TR><TD PORT="c" ALIGN="LEFT">claim_id, <FONT COLOR="#c0392b"><B>usn</B></FONT></TD></TR>
+    <TR><TD PORT="k" ALIGN="LEFT">contribution_id, <FONT COLOR="#c0392b"><B>usn</B></FONT></TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT COLOR="#c0392b">transitive: claim_id &#8594; usn,<BR ALIGN="LEFT"/>contribution_id &#8594; usn</FONT><BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  project [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#e8eef5"><B>project</B></TD></TR>
+    <TR><TD ALIGN="LEFT">PK <U>project_id</U></TD></TR>
+    <TR><TD PORT="o" ALIGN="LEFT">offering_id, <FONT COLOR="#c0392b"><B>course_code</B></FONT></TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT COLOR="#c0392b">transitive: offering_id &#8594; course_code</FONT></TD></TR></TABLE>>];
+
+  // ---------- referenced tables (right column) ----------
+  team [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#d6e4f0"><B>team</B></TD></TR>
+    <TR><TD ALIGN="LEFT">PK <U>team_id</U>; project_id</TD></TR>
+    <TR><TD PORT="sk" BGCOLOR="#fef9e7" ALIGN="LEFT">UNIQUE (team_id, project_id)<BR ALIGN="LEFT"/><I>superkey</I><BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  milestone [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#d6e4f0"><B>milestone</B></TD></TR>
+    <TR><TD PORT="pk" BGCOLOR="#eaf2f8" ALIGN="LEFT">PK (<U>project_id</U>, <U>milestone_no</U>)<BR ALIGN="LEFT"/><I>primary key</I><BR ALIGN="LEFT"/></TD></TR>
+    <TR><TD ALIGN="LEFT">cie_part, <FONT COLOR="#d68910"><B>counts_in_reduced</B></FONT></TD></TR></TABLE>>];
+  claim_t [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#d6e4f0"><B>claim</B> (referenced)</TD></TR>
+    <TR><TD ALIGN="LEFT">PK <U>claim_id</U></TD></TR>
+    <TR><TD PORT="sk" BGCOLOR="#fef9e7" ALIGN="LEFT">UNIQUE (claim_id, usn)<BR ALIGN="LEFT"/><I>superkey</I><BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  contrib_t [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#d6e4f0"><B>contribution</B></TD></TR>
+    <TR><TD ALIGN="LEFT">PK <U>contribution_id</U></TD></TR>
+    <TR><TD PORT="sk" BGCOLOR="#fef9e7" ALIGN="LEFT">UNIQUE (contribution_id, usn)<BR ALIGN="LEFT"/><I>superkey</I><BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  offering [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#d6e4f0"><B>course_offering</B></TD></TR>
+    <TR><TD ALIGN="LEFT">PK <U>offering_id</U></TD></TR>
+    <TR><TD PORT="sk" BGCOLOR="#fef9e7" ALIGN="LEFT">UNIQUE (offering_id, course_code)<BR ALIGN="LEFT"/><I>superkey</I><BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+
+  {rank=same; artifact; submission; claim; skill_ev; project;}
+  {rank=same; team; milestone; claim_t; contrib_t; offering;}
+  artifact -> submission -> claim -> skill_ev -> project [style=invis];
+  team -> milestone -> claim_t -> contrib_t -> offering [style=invis];
+
+  // composite FK onto a UNIQUE superkey: solid dark line
+  edge [color="#1f3b5c", penwidth=1.6, style=solid];
+  artifact:tp:e   -> team:sk:w;
+  claim:tp:e      -> team:sk:w;
+  submission:tp:e -> team:sk:w;
+  skill_ev:c:e    -> claim_t:sk:w;
+  skill_ev:k:e    -> contrib_t:sk:w;
+  project:o:e     -> offering:sk:w;
+  // composite FK onto the PRIMARY KEY: dashed blue line, open arrowhead
+  edge [color="#2e86c1", penwidth=1.6, style=dashed, arrowhead=empty];
+  artifact:pm:e   -> milestone:pk:w;
+  claim:pm:e      -> milestone:pk:w;
+  submission:pm:e -> milestone:pk:w;
+
+  legend [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="1" CELLPADDING="3" COLOR="#999999">
+    <TR><TD COLSPAN="2" ALIGN="LEFT"><B>Legend</B></TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT COLOR="#c0392b"><B>red</B></FONT></TD><TD ALIGN="LEFT">copy that is transitively or partially<BR ALIGN="LEFT"/>dependent on the table's key<BR ALIGN="LEFT"/></TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT COLOR="#d68910"><B>orange</B></FONT></TD><TD ALIGN="LEFT">derived column, maintained by the<BR ALIGN="LEFT"/>DBMS (GENERATED or trigger)<BR ALIGN="LEFT"/></TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT COLOR="#1f3b5c"><B>&#9473;&#9473;&#9654;</B></FONT></TD><TD ALIGN="LEFT">composite FK onto a UNIQUE<BR ALIGN="LEFT"/>superkey (yellow cell)<BR ALIGN="LEFT"/></TD></TR>
+    <TR><TD ALIGN="LEFT"><FONT COLOR="#2e86c1"><B>- - &#9655;</B></FONT></TD><TD ALIGN="LEFT">composite FK onto the<BR ALIGN="LEFT"/>primary key (blue cell)<BR ALIGN="LEFT"/></TD></TR>
+    </TABLE>>];
+  {rank=same; offering; legend;}
+  offering -> legend [style=invis];
+}

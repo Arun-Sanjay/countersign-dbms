@@ -1,0 +1,21 @@
+\usepackage{float}
+\let\origfigure\figure
+\let\endorigfigure\endfigure
+\renewenvironment{figure}[1][2] {\expandafter\origfigure\expandafter[H]} {\endorigfigure}
+% figure and table numbers are written in the captions themselves (Figure 2a, 2b ...)
+\usepackage{caption}
+\captionsetup{labelformat=empty,font=small}
+\usepackage{etoolbox}
+\AtBeginEnvironment{longtable}{\footnotesize}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+% allow line breaks after underscores in long SQL identifiers
+\makeatletter
+\DeclareRobustCommand{\_}{\ifmmode\nfss@text{\textunderscore}\else\textunderscore\allowbreak\fi}
+\makeatother
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize RV College of Engineering, Bengaluru \textbullet{} Dept.\ of CSE \textbullet{} CD252IA}
+\fancyhead[R]{\footnotesize Lab Component 2: SRS (rev.\ 1.1)}
+\fancyfoot[C]{\footnotesize \thepage}

@@ -1,0 +1,10 @@
+er_core_overview 32.639 21.972
+er_legend 13.333 8.708
+er_refinement_skills 8.431 6.819
+er_va_academic 15.875 16.153
+er_vb_students 14.889 17.736
+er_vc_work 15.431 16.583
+er_vd_assessment 16.264 14.389
+er_ve_claims 13.528 16.347
+schema_part1 20.875 15.986
+schema_part2 25.250 15.722

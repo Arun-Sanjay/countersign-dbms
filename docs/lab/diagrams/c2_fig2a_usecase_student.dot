@@ -1,0 +1,32 @@
+// C2 SRS, Figure 2a (revision 1.1): UML use-case diagram, primary actor Student.
+// Actors are UML stick figures (c2_actor.png); associations are plain lines.
+// Solid ellipse = built; dashed ellipse = specified, not built or only partly built
+// (status as of 4 Nov 2026, C2_SRS.md §1.5). Each use case names the FR it realises.
+digraph usecase_student {
+    graph [rankdir=LR, fontname="DejaVu Sans", fontsize=13, nodesep=0.14, ranksep=0.7, pad=0.15, newrank=true];
+    node  [fontname="DejaVu Sans", fontsize=13];
+    edge  [arrowhead=none, color="#555555", penwidth=1.0];
+    student [shape=none, margin=0, label=<<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="1"><TR><TD FIXEDSIZE="TRUE" WIDTH="30" HEIGHT="55"><IMG SRC="c2_actor.png" SCALE="TRUE"/></TD></TR><TR><TD>Student</TD></TR></TABLE>>];
+    voyage [shape=none, margin=0, label=<<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="1"><TR><TD FIXEDSIZE="TRUE" WIDTH="30" HEIGHT="55"><IMG SRC="c2_actor.png" SCALE="TRUE"/></TD></TR><TR><TD><FONT POINT-SIZE="12">«secondary»</FONT></TD></TR><TR><TD>Voyage AI</TD></TR></TABLE>>];
+    claude [shape=none, margin=0, label=<<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="1"><TR><TD FIXEDSIZE="TRUE" WIDTH="30" HEIGHT="55"><IMG SRC="c2_actor.png" SCALE="TRUE"/></TD></TR><TR><TD><FONT POINT-SIZE="12">«secondary»</FONT></TD></TR><TR><TD>Anthropic</TD></TR><TR><TD>Claude API</TD></TR></TABLE>>];
+
+    subgraph cluster_uc {
+        label="Countersign"; style=rounded; color="#1f4e79"; penwidth=1.5; fontsize=14;
+        node [shape=ellipse, style=filled, fillcolor="#ffffff", color="#333333", margin="0.04,0.02"];
+        hub    [label="View semester hub [FR3]"];
+        join   [label="Join / leave a team [FR4]"];
+        find   [label="Find complementary teammates;\nview skill gap [FR4, FR8]"];
+        art    [label="Record artifact, version,\ncontribution [FR5]"];
+        notes  [label="Keep private notes and\nteam notes [FR5, FR11]"];
+        claim  [label="File claim with evidence [FR6]"];
+        sign   [label="Countersign a teammate's\nclaim [FR6]"];
+        submit [label="Submit component\n(freeze versions) [FR7]"];
+        fview  [label="Preview what faculty\nsees [FR7]"];
+        cie    [label="View own lab CIE marks [FR7]"];
+        cons   [label="View cross-store\nconsistency [FR11]"];
+        port   [label="Export portfolio [FR10]", style="dashed,filled"];
+        ask    [label="Ask the cited assistant [FR9]", style="dashed,filled"];
+    }
+    student -> {hub join find art notes claim sign submit fview cie cons port ask};
+    ask -> {voyage claude};
+}

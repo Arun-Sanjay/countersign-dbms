@@ -1,0 +1,53 @@
+// Fig. C3-1: notation key for the Component 3 ER figures (Chen notation, Elmasri & Navathe Ch. 3).
+// Every symbol is shown on a REAL element of the schema.  Render: neato -n2
+graph legend {
+  graph [splines=line, pad=0.25, outputorder=edgesfirst, fontname="DejaVu Sans", fontsize=20,
+         label=<<B>Notation key: Chen notation (Elmasri &amp; Navathe), each symbol on a real element</B>>, labelloc=t];
+  node [fontname="DejaVu Sans", fontsize=14, fixedsize=true, penwidth=1.4];
+  edge [penwidth=1.3];
+
+  // ---------------- left column: shapes and lines
+  e1 [shape=box, style=filled, fillcolor="#eef3fb", label=<<B>STUDENT</B>>, pos="60,0!", width=1.45, height=0.46];
+  t1 [shape=plaintext, fixedsize=false, pos="262,0!", label=<<TABLE BORDER="0"><TR><TD WIDTH="225" ALIGN="LEFT">Entity type</TD></TR></TABLE>>];
+  e2 [shape=box, peripheries=2, style=filled, fillcolor="#eef3fb", label=<<B>MILESTONE</B>>, pos="60,-58!", width=1.55, height=0.46];
+  t2 [shape=plaintext, fixedsize=false, pos="262,-58!", label=<<TABLE BORDER="0"><TR><TD WIDTH="225" ALIGN="LEFT">Weak entity type (owner PROJECT)</TD></TR></TABLE>>];
+  r1 [shape=diamond, style=filled, fillcolor="#fdf3e1", label=<<B>MEMBER_OF</B>>, pos="60,-122!", width=1.75, height=0.66, fontsize=12];
+  t3 [shape=plaintext, fixedsize=false, pos="262,-122!", label=<<TABLE BORDER="0"><TR><TD WIDTH="225" ALIGN="LEFT">Relationship type</TD></TR></TABLE>>];
+  r2 [shape=diamond, peripheries=2, style=filled, fillcolor="#fdf3e1", label=<<B>HAS_MILESTONE</B>>, pos="60,-192!", width=2.0, height=0.70, fontsize=11];
+  t4 [shape=plaintext, fixedsize=false, pos="262,-192!", label=<<TABLE BORDER="0"><TR><TD WIDTH="225" ALIGN="LEFT">Identifying relationship type<BR ALIGN="LEFT"/>(of the weak entity MILESTONE)<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  e3 [shape=box, style=filled, fillcolor="#e4e6ea", label=<<B>TEAM</B>>, pos="60,-252!", width=1.2, height=0.46];
+  t5 [shape=plaintext, fixedsize=false, pos="262,-252!", label=<<TABLE BORDER="0"><TR><TD WIDTH="225" ALIGN="LEFT">Grey: entity type whose attributes<BR ALIGN="LEFT"/>are drawn in another view<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+
+  p1 [shape=point, width=0.01, style=invis, pos="0,-310!"]; p2 [shape=point, width=0.01, style=invis, pos="120,-310!"];
+  p1 -- p2 [color="black:invis:black", penwidth=1.1];
+  l1 [shape=box, style=filled, fillcolor=white, color=white, penwidth=0, margin=0, pos="60,-310!", width=0.62, height=0.28, label=<<B><FONT COLOR="#1a3d8f">(1,1)</FONT></B>>, fontsize=15];
+  t6 [shape=plaintext, fixedsize=false, pos="262,-310!", label=<<TABLE BORDER="0"><TR><TD WIDTH="225" ALIGN="LEFT">Total participation: double line,<BR ALIGN="LEFT"/>min = 1<BR ALIGN="LEFT"/>(TEAM in HAS_TEAM)<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  p3 [shape=point, width=0.01, style=invis, pos="0,-374!"]; p4 [shape=point, width=0.01, style=invis, pos="120,-374!"];
+  p3 -- p4;
+  l2 [shape=box, style=filled, fillcolor=white, color=white, penwidth=0, margin=0, pos="60,-374!", width=0.62, height=0.28, label=<<B><FONT COLOR="#1a3d8f">(0,N)</FONT></B>>, fontsize=15];
+  t7 [shape=plaintext, fixedsize=false, pos="262,-374!", label=<<TABLE BORDER="0"><TR><TD WIDTH="225" ALIGN="LEFT">Partial participation: single line,<BR ALIGN="LEFT"/>min = 0<BR ALIGN="LEFT"/>(PROJECT in HAS_TEAM)<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  p5 [shape=point, width=0.01, style=invis, pos="-10,-438!"]; p6 [shape=point, width=0.01, style=invis, pos="130,-438!"];
+  p5 -- p6;
+  l3 [shape=box, style=filled, fillcolor=white, color=white, penwidth=0, margin=0, pos="60,-438!", width=1.6, height=0.28, label=<<B><FONT COLOR="#1a3d8f">parent (0,N)</FONT></B>>, fontsize=15];
+  t8 [shape=plaintext, fixedsize=false, pos="262,-438!", label=<<TABLE BORDER="0"><TR><TD WIDTH="225" ALIGN="LEFT">Role name and (min,max) on a<BR ALIGN="LEFT"/>recursive relationship type<BR ALIGN="LEFT"/>(SKILL in SUBSKILL_OF)<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  p7 [shape=point, width=0.01, style=invis, pos="0,-500!"]; p8 [shape=point, width=0.01, style=invis, pos="120,-500!"];
+  p7 -- p8;
+  l4 [shape=box, style=filled, fillcolor=white, color=white, penwidth=0, margin=0, pos="60,-500!", width=1.0, height=0.28, label=<<B><FONT COLOR="#1a3d8f">(0,N) </FONT><FONT COLOR="#a01818"><I>M</I></FONT></B>>, fontsize=15];
+  t9 [shape=plaintext, fixedsize=false, pos="262,-500!", label=<<TABLE BORDER="0"><TR><TD WIDTH="225" ALIGN="LEFT">Red letter: cardinality ratio of the<BR ALIGN="LEFT"/>ternary ASSESSES (M:N:1);<BR ALIGN="LEFT"/>STUDENT takes the M<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+
+  // ---------------- right column: attributes, each on a real attribute
+  a1 [shape=ellipse, label=<<U>usn</U>>, pos="510,0!", width=1.3, height=0.44];
+  u1 [shape=plaintext, fixedsize=false, pos="690,0!", label=<<TABLE BORDER="0"><TR><TD WIDTH="225" ALIGN="LEFT">Key attribute (underlined):<BR ALIGN="LEFT"/>STUDENT.usn<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  a2 [shape=ellipse, label=<<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD BORDER="1" SIDES="B" STYLE="dashed">milestone_no</TD></TR></TABLE>>, pos="510,-58!", width=1.6, height=0.44];
+  u2 [shape=plaintext, fixedsize=false, pos="690,-58!", label=<<TABLE BORDER="0"><TR><TD WIDTH="225" ALIGN="LEFT">Partial key (dashed underline) of<BR ALIGN="LEFT"/>a weak entity type:<BR ALIGN="LEFT"/>MILESTONE.milestone_no<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  a3 [shape=ellipse, style=dashed, label="current_size", pos="510,-122!", width=1.6, height=0.44];
+  u3 [shape=plaintext, fixedsize=false, pos="690,-122!", label=<<TABLE BORDER="0"><TR><TD WIDTH="225" ALIGN="LEFT">Derived attribute (dashed oval):<BR ALIGN="LEFT"/>TEAM.current_size<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  a4 [shape=ellipse, label="period", pos="500,-184!", width=1.1, height=0.42];
+  a5 [shape=ellipse, label="start_date", pos="452,-236!", width=1.25, height=0.40, fontsize=13];
+  a6 [shape=ellipse, label="end_date", pos="550,-236!", width=1.1, height=0.40, fontsize=13];
+  a4 -- a5; a4 -- a6;
+  u4 [shape=plaintext, fixedsize=false, pos="705,-205!", label=<<TABLE BORDER="0"><TR><TD WIDTH="225" ALIGN="LEFT">Composite attribute and its<BR ALIGN="LEFT"/>components:<BR ALIGN="LEFT"/>ACADEMIC_TERM.period<BR ALIGN="LEFT"/>(also PROJECT.duration)<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  a7 [shape=ellipse, peripheries=2, label="skills", pos="510,-312!", width=1.2, height=0.46];
+  u5 [shape=plaintext, fixedsize=false, pos="690,-312!", label=<<TABLE BORDER="0"><TR><TD WIDTH="225" ALIGN="LEFT">Multivalued attribute (double oval):<BR ALIGN="LEFT"/>{skills} of STUDENT in the rejected<BR ALIGN="LEFT"/>naive design; drawn only in<BR ALIGN="LEFT"/>Fig. C3-8<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+  n1 [shape=plaintext, fixedsize=false, pos="600,-470!", label=<<TABLE BORDER="1" CELLPADDING="6" COLOR="#888888"><TR><TD WIDTH="340" ALIGN="LEFT"><B>Reading (min,max).</B> Every line between an entity<BR ALIGN="LEFT"/>type and a relationship type carries one (min,max),<BR ALIGN="LEFT"/>printed on that line next to the entity type: each<BR ALIGN="LEFT"/>entity takes part in at least min and at most max<BR ALIGN="LEFT"/>instances of the relationship type.<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+}

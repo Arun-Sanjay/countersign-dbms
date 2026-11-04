@@ -1,0 +1,26 @@
+// Fig. C3-8: why "skills" is NOT a multivalued attribute in the final schema. Render: dot
+graph refine {
+  graph [rankdir=TB, splines=line, pad=0.25, nodesep=0.22, ranksep=0.40, fontname="DejaVu Sans", fontsize=17,
+         label=<<B>Refining the multivalued attribute {skills}</B>>, labelloc=t];
+  node [fontname="DejaVu Sans", fontsize=15, penwidth=1.4];
+  edge [fontname="DejaVu Sans", fontsize=15, penwidth=1.3];
+  subgraph cluster_a { label=<<B>(a) Naive (rejected):<BR/>multivalued attribute</B>>; fontsize=15; style=dashed; color=gray50;
+    k1 [shape=ellipse, label=<<U>usn</U>>];
+    s1 [shape=box, style=filled, fillcolor="#eef3fb", label=<<B>STUDENT</B>>];
+    m1 [shape=ellipse, peripheries=2, label="skills"];
+    k1 -- s1; s1 -- m1;
+  }
+  subgraph cluster_b { label=<<B>(b) Implemented: entity type SKILL,<BR/>M:N relationship type HAS_SKILL</B>>; fontsize=15; style=dashed; color=gray50;
+    k2 [shape=ellipse, label=<<U>usn</U>>];
+    s2 [shape=box, style=filled, fillcolor="#eef3fb", label=<<B>STUDENT</B>>];
+    h2 [shape=diamond, style=filled, fillcolor="#fdf3e1", label=<<B>HAS_SKILL</B>>];
+    lv [shape=ellipse, label="level"];
+    vl [shape=ellipse, style=dashed, label="verified_level"];
+    sk [shape=box, style=filled, fillcolor="#eef3fb", label=<<B>SKILL</B>>];
+    sid [shape=ellipse, label=<<U>skill_id</U>>]; snm [shape=ellipse, label=<<U>name</U>>]; sct [shape=ellipse, label="category"];
+    k2 -- s2;
+    s2 -- h2 [label=<<B><FONT COLOR="#1a3d8f">(0,N)</FONT></B>>];
+    h2 -- sk [label=<<B><FONT COLOR="#1a3d8f">(0,N)</FONT></B>>];
+    h2 -- lv; h2 -- vl; sk -- sid; sk -- snm; sk -- sct;
+  }
+}
