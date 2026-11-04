@@ -1,0 +1,19 @@
+run_id,strategy,isolation,size,logical_schedule,edges,cycle_or_serial_order,verdict,cycle_incl_aborted
+72721,S1,READ COMMITTED,5/4,r2(team:T02) r2(members:T02) r1(team:T02) r1(members:T02) w1(members:T02) c1 w2(members:T02) c2,"T1->T2, T2->T1",T1 -> T2 -> T1,NOT conflict-serializable,T1 -> T2 -> T1
+76721,S1,REPEATABLE READ,5/4,r2(team:T02) r2(members:T02) r1(team:T02) r1(members:T02) w2(members:T02) c2 w1(members:T02) c1,"T1->T2, T2->T1",T1 -> T2 -> T1,NOT conflict-serializable,T1 -> T2 -> T1
+80721,S1,SERIALIZABLE,4/4,r1(team:T02) r1(members:T02) r2(team:T02) r2(members:T02) w1(members:T02) c1 a2[40001],(none),T1,conflict-serializable,
+84721,S2,READ COMMITTED,4/4,r2(team:T02) r2(members:T02) w2(members:T02) c2 r1(team:T02) r1(members:T02) a1[refused],(none),T2,conflict-serializable,
+88721,S2,REPEATABLE READ,5/4,r2(team:T02) r2(members:T02) r1(team:T02) r1(members:T02) w2(members:T02) c2 w1(members:T02) c1,"T1->T2, T2->T1",T1 -> T2 -> T1,NOT conflict-serializable,T1 -> T2 -> T1
+92721,S2,SERIALIZABLE,4/4,r2(team:T02) r2(members:T02) w2(members:T02) c2 a1[40001],(none),T2,conflict-serializable,
+96721,S3,READ COMMITTED,4/4,r1(counter:T02) w1(counter:T02) w1(members:T02) c1 r2(counter:T02) a2[refused],(none),T1,conflict-serializable,
+100721,S3,REPEATABLE READ,4/4,r2(counter:T02) w2(counter:T02) w2(members:T02) c2 a1[40001],(none),T2,conflict-serializable,
+104721,S3,SERIALIZABLE,4/4,r2(counter:T02) w2(counter:T02) w2(members:T02) c2 a1[40001],(none),T2,conflict-serializable,
+108721,S4,READ COMMITTED,5/4,r1(team:T02) r1(members:T02) r2(team:T02) r2(members:T02) w1(members:T02) w2(members:T02) c1 c2,"T1->T2, T2->T1",T1 -> T2 -> T1,NOT conflict-serializable,T1 -> T2 -> T1
+112721,S4,REPEATABLE READ,5/4,r2(team:T02) r2(members:T02) r1(team:T02) r1(members:T02) w1(members:T02) w2(members:T02) c1 c2,"T1->T2, T2->T1",T1 -> T2 -> T1,NOT conflict-serializable,T1 -> T2 -> T1
+116721,S4,SERIALIZABLE,4/4,r2(team:T02) r2(members:T02) r1(team:T02) r1(members:T02) w2(members:T02) w1(members:T02) a1[40001] c2 r1.1(team:T02) r1.1(members:T02) a1.1[refused],(none),T2,conflict-serializable,T1 -> T2 -> T1
+120721,S6,READ COMMITTED,4/4,r2(seats:T02) r1(seats:T02) w2(seats:T02) w2(members:T02) c2 r1(seats:T02) a1[refused],(none),T2,conflict-serializable,T1 -> T2 -> T1
+124721,S6,REPEATABLE READ,4/4,r2(seats:T02) w2(seats:T02) w2(members:T02) c2 a1[40001],(none),T2,conflict-serializable,
+128721,S6,SERIALIZABLE,4/4,r2(seats:T02) w2(seats:T02) w2(members:T02) c2 a1[40001],(none),T2,conflict-serializable,
+132721,S7,READ COMMITTED,4/4,w2(team:T02) r2(members:T02) w2(members:T02) c2 w1(team:T02) r1(members:T02) a1[refused],(none),T2,conflict-serializable,
+136721,S7,REPEATABLE READ,4/4,r2(members:T02) w2(team:T02) w2(members:T02) c2 a1[40001],(none),T2,conflict-serializable,
+140721,S7,SERIALIZABLE,4/4,r2(members:T02) w2(team:T02) w2(members:T02) c2 a1[40001],(none),T2,conflict-serializable,

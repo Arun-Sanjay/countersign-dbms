@@ -1,0 +1,33 @@
+== Strategy S2, READ COMMITTED: race-A takes T02's last seat and holds for 4s ==
+== 1. Wait-for graph: who waits on whom (one row per edge) ==
+ waiter | waiter_pid |                | blocker | blocker_pid | blocker_state | waiter_wait_event  |                      waiter_wants                      | waiting_s |                              waiter_query                              
+--------+------------+----------------+---------+-------------+---------------+--------------------+--------------------------------------------------------+-----------+------------------------------------------------------------------------
+ race-B |        880 | --waits for--> | race-A  |         873 | active        | Lock:transactionid | transactionid ShareLock xid 2314849                    |      1.33 | INSERT INTO team_member (team_id, usn, role, joined_at) VALUES ('T02',
+ race-C |        887 | --waits for--> | race-B  |         880 | active        | Lock:tuple         | tuple AccessExclusiveLock on team (page 29, tuple 107) |      1.03 | INSERT INTO team_member (team_id, usn, role, joined_at) VALUES ('T02',
+
+== 2. Lock table of the racing sessions (relation, tuple and transactionid locks) ==
+ session | pid |   locktype    |  relation   | page_tuple |   xid   |        mode         | granted | session_is_waiting | own_xid | state  
+---------+-----+---------------+-------------+------------+---------+---------------------+---------+--------------------+---------+--------
+ race-A  | 873 | relation      | team        |            |         | RowShareLock        | t       | f                  | 2314849 | active
+ race-A  | 873 | relation      | team_member |            |         | AccessShareLock     | t       | f                  | 2314849 | active
+ race-A  | 873 | relation      | team_member |            |         | RowExclusiveLock    | t       | f                  | 2314849 | active
+ race-A  | 873 | transactionid |             |            | 2314849 | ExclusiveLock       | t       | f                  | 2314849 | active
+ race-B  | 880 | relation      | team        |            |         | RowShareLock        | t       | t                  |         | active
+ race-B  | 880 | relation      | team_member |            |         | RowExclusiveLock    | t       | t                  |         | active
+ race-B  | 880 | tuple         | team        | 29/107     |         | AccessExclusiveLock | t       | t                  |         | active
+ race-B  | 880 | transactionid |             |            | 2314849 | ShareLock           | f       | t                  |         | active
+ race-C  | 887 | relation      | team        |            |         | RowShareLock        | t       | t                  |         | active
+ race-C  | 887 | relation      | team_member |            |         | RowExclusiveLock    | t       | t                  |         | active
+ race-C  | 887 | tuple         | team        | 29/107     |         | AccessExclusiveLock | f       | t                  |         | active
+
+== 3. Predicate (SIREAD) locks held by SERIALIZABLE transactions, if any ==
+ session | pid | relation | page | tuple | mode 
+---------+-----+----------+------+-------+------
+
+  [race-B] ERROR:  Team T02 is full (4 / 4)
+  [race-B] CONTEXT:  PL/pgSQL function check_team_capacity() line 9 at RAISE
+  [race-A] done
+  [race-C] ERROR:  Team T02 is full (4 / 4)
+  [race-C] CONTEXT:  PL/pgSQL function check_team_capacity() line 9 at RAISE
+
+T02 after the race: 4/4  (1RV99XX001 admitted)

@@ -1,0 +1,11 @@
+== Precedence-graph self-test (hand-derived answers vs exp.v_* views) ==
+         name          |         edges          |        cycle         |  serial_order  |  cycle_incl_aborted  | dbms_break | result 
+-----------------------+------------------------+----------------------+----------------+----------------------+------------+--------
+ A acyclic 3 txns      | T1->T2, T3->T1         | -                    | T3 -> T1 -> T2 | -                    | f          | PASS
+ B 3-cycle             | T1->T2, T2->T3, T3->T1 | T1 -> T2 -> T3 -> T1 | -              | T1 -> T2 -> T3 -> T1 | f          | PASS
+ C lost update         | T1->T2, T2->T1         | T1 -> T2 -> T1       | -              | T1 -> T2 -> T1       | f          | PASS
+ D write skew          | T1->T2, T2->T1         | T1 -> T2 -> T1       | -              | T1 -> T2 -> T1       | f          | PASS
+ E serial T2;T1        | T2->T1                 | -                    | T2 -> T1       | -                    | f          | PASS
+ F broken by abort     | (none)                 | -                    | T1             | T1 -> T2 -> T1       | t          | PASS
+ G RC re-read, refused | (none)                 | -                    | T2             | T1 -> T2 -> T1       | f          | PASS
+

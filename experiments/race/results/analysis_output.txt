@@ -1,0 +1,182 @@
+Null display is "-".
+SET
+DROP VIEW
+CREATE VIEW
+== (a) Over-admission, aborts, refusals and latency per strategy x isolation x N ==
+ strategy |       iso       |  n  | trials | over% | worst_size | admitted | 40001 | refused | retries | p50_ms | p95_ms | rk 
+----------+-----------------+-----+--------+-------+------------+----------+-------+---------+---------+--------+--------+----
+ S1       | READ COMMITTED  |   2 |   1000 | 100.0 | 5/4        |     2.00 |  0.00 |    0.00 |    0.00 |  13.34 |  17.42 |  6
+ S1       | READ COMMITTED  |   8 |   1000 | 100.0 | 11/4       |     8.00 |  0.00 |    0.00 |    0.00 |  13.50 |  17.09 |  6
+ S1       | READ COMMITTED  |  32 |   1000 | 100.0 | 35/4       |    32.00 |  0.00 |    0.00 |    0.00 |  14.60 |  17.01 |  6
+ S1       | READ COMMITTED  | 100 |   1000 | 100.0 | 103/4      |   100.00 |  0.00 |    0.00 |    0.00 |  18.13 |  20.43 |  6
+ S1       | REPEATABLE READ |   2 |   1000 | 100.0 | 5/4        |     2.00 |  0.00 |    0.00 |    0.00 |  13.43 |  17.61 |  6
+ S1       | REPEATABLE READ |   8 |   1000 | 100.0 | 11/4       |     8.00 |  0.00 |    0.00 |    0.00 |  13.43 |  17.29 |  6
+ S1       | REPEATABLE READ |  32 |   1000 | 100.0 | 35/4       |    32.00 |  0.00 |    0.00 |    0.00 |  14.47 |  17.02 |  6
+ S1       | REPEATABLE READ | 100 |   1000 | 100.0 | 103/4      |   100.00 |  0.00 |    0.00 |    0.00 |  18.15 |  20.44 |  5
+ S1       | SERIALIZABLE    |   2 |   1000 |   0.0 | 4/4        |     1.00 |  1.00 |    0.00 |    0.00 |  13.11 |  17.40 |  5
+ S1       | SERIALIZABLE    |   8 |   1000 |   0.0 | 4/4        |     1.00 |  7.00 |    0.00 |    0.00 |  13.40 |  17.07 |  5
+ S1       | SERIALIZABLE    |  32 |   1000 |   0.0 | 4/4        |     1.00 | 31.00 |    0.00 |    0.00 |  15.07 |  16.55 |  5
+ S1       | SERIALIZABLE    | 100 |   1000 |   0.0 | 4/4        |     1.00 | 99.00 |    0.00 |    0.00 |  21.78 |  25.61 |  5
+ S2       | READ COMMITTED  |   2 |   1000 |   0.0 | 4/4        |     1.00 |  0.00 |    1.00 |    0.00 |   0.52 |   0.71 |  1
+ S2       | READ COMMITTED  |   8 |   1000 |   0.0 | 4/4        |     1.00 |  0.00 |    7.00 |    0.00 |   1.03 |   1.47 |  2
+ S2       | READ COMMITTED  |  32 |   1000 |   0.0 | 4/4        |     1.00 |  0.00 |   31.00 |    0.00 |   2.36 |   3.70 |  2
+ S2       | READ COMMITTED  | 100 |   1000 |   0.0 | 4/4        |     1.00 |  0.00 |   99.00 |    0.00 |   7.12 |  12.08 |  2
+ S2       | REPEATABLE READ |   2 |   1000 | 100.0 | 5/4        |     2.00 |  0.00 |    0.00 |    0.00 |   0.48 |   0.71 |  1
+ S2       | REPEATABLE READ |   8 |   1000 | 100.0 | 11/4       |     8.00 |  0.00 |    0.00 |    0.00 |   1.16 |   2.08 |  4
+ S2       | REPEATABLE READ |  32 |   1000 | 100.0 | 35/4       |    32.00 |  0.00 |    0.00 |    0.00 |   4.37 |   8.09 |  4
+ S2       | REPEATABLE READ | 100 |   1000 | 100.0 | 103/4      |    99.99 |  0.00 |    0.01 |    0.00 |  14.55 |  28.98 |  6
+ S2       | SERIALIZABLE    |   2 |   1000 |   0.0 | 4/4        |     1.00 |  1.00 |    0.00 |    0.00 |   0.52 |   0.75 |  2
+ S2       | SERIALIZABLE    |   8 |   1000 |   0.0 | 4/4        |     1.00 |  7.00 |    0.00 |    0.00 |   1.11 |   1.74 |  3
+ S2       | SERIALIZABLE    |  32 |   1000 |   0.0 | 4/4        |     1.00 | 30.96 |    0.04 |    0.00 |   2.57 |   4.14 |  4
+ S2       | SERIALIZABLE    | 100 |   1000 |   0.0 | 4/4        |     1.00 | 98.91 |    0.09 |    0.00 |   7.28 |  12.21 |  4
+ S3       | READ COMMITTED  |   2 |   1000 |   0.0 | 4/4        |     1.00 |  0.00 |    1.00 |    0.00 |   0.59 |   0.84 |  3
+ S3       | READ COMMITTED  |   8 |   1000 |   0.0 | 4/4        |     1.00 |  0.00 |    7.00 |    0.00 |   1.12 |   1.91 |  3
+ S3       | READ COMMITTED  |  32 |   1000 |   0.0 | 4/4        |     1.00 |  0.00 |   31.00 |    0.00 |   3.47 |   6.45 |  4
+ S3       | READ COMMITTED  | 100 |   1000 |   0.0 | 4/4        |     1.00 |  0.00 |   99.00 |    0.00 |   9.72 |  17.07 |  4
+ S3       | REPEATABLE READ |   2 |   1000 |   0.0 | 4/4        |     1.00 |  1.00 |    0.00 |    0.00 |   0.63 |   0.91 |  3
+ S3       | REPEATABLE READ |   8 |   1000 |   0.0 | 4/4        |     1.00 |  7.00 |    0.00 |    0.00 |   1.02 |   1.37 |  2
+ S3       | REPEATABLE READ |  32 |   1000 |   0.0 | 4/4        |     1.00 | 31.00 |    0.00 |    0.00 |   2.06 |   2.64 |  2
+ S3       | REPEATABLE READ | 100 |   1000 |   0.0 | 4/4        |     1.00 | 98.98 |    0.02 |    0.00 |   4.88 |   6.92 |  2
+ S3       | SERIALIZABLE    |   2 |   1000 |   0.0 | 4/4        |     1.00 |  1.00 |    0.00 |    0.00 |   0.64 |   0.96 |  3
+ S3       | SERIALIZABLE    |   8 |   1000 |   0.0 | 4/4        |     1.00 |  7.00 |    0.00 |    0.00 |   1.06 |   1.59 |  2
+ S3       | SERIALIZABLE    |  32 |   1000 |   0.0 | 4/4        |     1.00 | 31.00 |    0.00 |    0.00 |   2.01 |   2.62 |  1
+ S3       | SERIALIZABLE    | 100 |   1000 |   0.0 | 4/4        |     1.00 | 98.92 |    0.08 |    0.00 |   4.57 |   6.02 |  1
+ S4       | READ COMMITTED  |   2 |   1000 | 100.0 | 5/4        |     2.00 |  0.00 |    0.00 |    0.00 |  13.18 |  17.28 |  5
+ S4       | READ COMMITTED  |   8 |   1000 | 100.0 | 11/4       |     8.00 |  0.00 |    0.00 |    0.00 |  13.31 |  16.75 |  5
+ S4       | READ COMMITTED  |  32 |   1000 | 100.0 | 35/4       |    32.00 |  0.00 |    0.00 |    0.00 |  14.36 |  16.60 |  5
+ S4       | READ COMMITTED  | 100 |   1000 | 100.0 | 103/4      |   100.00 |  0.00 |    0.00 |    0.00 |  17.93 |  20.30 |  5
+ S4       | REPEATABLE READ |   2 |   1000 | 100.0 | 5/4        |     2.00 |  0.00 |    0.00 |    0.00 |  12.89 |  17.17 |  5
+ S4       | REPEATABLE READ |   8 |   1000 | 100.0 | 11/4       |     8.00 |  0.00 |    0.00 |    0.00 |  13.31 |  16.54 |  5
+ S4       | REPEATABLE READ |  32 |   1000 | 100.0 | 35/4       |    32.00 |  0.00 |    0.00 |    0.00 |  14.32 |  16.53 |  5
+ S4       | REPEATABLE READ | 100 |   1000 | 100.0 | 103/4      |   100.00 |  0.00 |    0.00 |    0.00 |  17.92 |  20.21 |  4
+ S4       | SERIALIZABLE    |   2 |   1000 |   0.0 | 4/4        |     1.00 |  1.00 |    1.00 |    0.50 |  16.75 |  22.83 |  6
+ S4       | SERIALIZABLE    |   8 |   1000 |   0.0 | 4/4        |     1.00 |  7.00 |    7.00 |    0.88 |  16.94 |  20.44 |  6
+ S4       | SERIALIZABLE    |  32 |   1000 |   0.0 | 4/4        |     1.00 | 31.02 |   31.00 |    0.97 |  18.58 |  21.10 |  6
+ S4       | SERIALIZABLE    | 100 |   1000 |   0.0 | 4/4        |     1.00 | 99.22 |   99.00 |    0.99 |  27.29 |  31.87 |  6
+ S6       | READ COMMITTED  |   2 |   1000 |   0.0 | 4/4        |     1.00 |  0.00 |    1.00 |    0.00 |   0.82 |   1.69 |  4
+ S6       | READ COMMITTED  |   8 |   1000 |   0.0 | 4/4        |     1.00 |  0.00 |    7.00 |    0.00 |   1.34 |   1.93 |  4
+ S6       | READ COMMITTED  |  32 |   1000 |   0.0 | 4/4        |     1.00 |  0.00 |   31.00 |    0.00 |   2.57 |   3.38 |  1
+ S6       | READ COMMITTED  | 100 |   1000 |   0.0 | 4/4        |     1.00 |  0.00 |   99.00 |    0.00 |   6.47 |   8.23 |  1
+ S6       | REPEATABLE READ |   2 |   1000 |   0.0 | 4/4        |     1.00 |  1.00 |    0.00 |    0.00 |   0.88 |   1.43 |  4
+ S6       | REPEATABLE READ |   8 |   1000 |   0.0 | 4/4        |     1.00 |  7.00 |    0.00 |    0.00 |   1.22 |   1.68 |  3
+ S6       | REPEATABLE READ |  32 |   1000 |   0.0 | 4/4        |     1.00 | 30.88 |    0.12 |    0.00 |   2.50 |   4.00 |  3
+ S6       | REPEATABLE READ | 100 |   1000 |   0.0 | 4/4        |     1.00 | 98.88 |    0.12 |    0.00 |   5.50 |   7.34 |  3
+ S6       | SERIALIZABLE    |   2 |   1000 |   0.0 | 4/4        |     1.00 |  1.00 |    0.00 |    0.00 |   0.70 |   1.13 |  4
+ S6       | SERIALIZABLE    |   8 |   1000 |   0.0 | 4/4        |     1.00 |  7.00 |    0.00 |    0.00 |   1.12 |   1.96 |  4
+ S6       | SERIALIZABLE    |  32 |   1000 |   0.0 | 4/4        |     1.00 | 30.97 |    0.03 |    0.00 |   2.32 |   3.20 |  3
+ S6       | SERIALIZABLE    | 100 |   1000 |   0.0 | 4/4        |     1.00 | 98.99 |    0.01 |    0.00 |   5.36 |   6.94 |  3
+ S7       | READ COMMITTED  |   2 |   1000 |   0.0 | 4/4        |     1.00 |  0.00 |    1.00 |    0.00 |   0.53 |   0.81 |  2
+ S7       | READ COMMITTED  |   8 |   1000 |   0.0 | 4/4        |     1.00 |  0.00 |    7.00 |    0.00 |   1.06 |   1.46 |  1
+ S7       | READ COMMITTED  |  32 |   1000 |   0.0 | 4/4        |     1.00 |  0.00 |   31.00 |    0.00 |   2.62 |   4.30 |  3
+ S7       | READ COMMITTED  | 100 |   1000 |   0.0 | 4/4        |     1.00 |  0.00 |   99.00 |    0.00 |   6.71 |  12.10 |  3
+ S7       | REPEATABLE READ |   2 |   1000 |   0.0 | 4/4        |     1.00 |  1.00 |    0.00 |    0.00 |   0.53 |   0.83 |  2
+ S7       | REPEATABLE READ |   8 |   1000 |   0.0 | 4/4        |     1.00 |  7.00 |    0.00 |    0.00 |   0.91 |   1.18 |  1
+ S7       | REPEATABLE READ |  32 |   1000 |   0.0 | 4/4        |     1.00 | 31.00 |    0.01 |    0.00 |   1.89 |   2.40 |  1
+ S7       | REPEATABLE READ | 100 |   1000 |   0.0 | 4/4        |     1.00 | 98.99 |    0.01 |    0.00 |   4.62 |   5.99 |  1
+ S7       | SERIALIZABLE    |   2 |   1000 |   0.0 | 4/4        |     1.00 |  1.00 |    0.00 |    0.00 |   0.53 |   0.71 |  1
+ S7       | SERIALIZABLE    |   8 |   1000 |   0.0 | 4/4        |     1.00 |  7.00 |    0.00 |    0.00 |   0.92 |   1.22 |  1
+ S7       | SERIALIZABLE    |  32 |   1000 |   0.0 | 4/4        |     1.00 | 30.96 |    0.04 |    0.00 |   1.95 |   2.64 |  2
+ S7       | SERIALIZABLE    | 100 |   1000 |   0.0 | 4/4        |     1.00 | 98.38 |    0.62 |    0.00 |   4.61 |   6.29 |  2
+
+== (a2) Over-admission % matrix (strategy x isolation, all N pooled) ==
+ strategy | rc_pct | rr_pct | ser_pct | worst 
+----------+--------+--------+---------+-------
+ S1       |  100.0 |  100.0 |     0.0 | 103/4
+ S2       |    0.0 |  100.0 |     0.0 | 103/4
+ S3       |    0.0 |    0.0 |     0.0 | 4/4
+ S4       |  100.0 |  100.0 |     0.0 | 103/4
+ S6       |    0.0 |    0.0 |     0.0 | 4/4
+ S7       |    0.0 |    0.0 |     0.0 | 4/4
+
+== (a3) How each attempt ended (counts) ==
+ strategy |       iso       | admitted | refused | ser_fail | deadlock | error |  sqlstates  
+----------+-----------------+----------+---------+----------+----------+-------+-------------
+ S1       | READ COMMITTED  |   142000 |       0 |        0 |        0 |     0 | -
+ S1       | REPEATABLE READ |   142000 |       0 |        0 |        0 |     0 | -
+ S1       | SERIALIZABLE    |     4000 |       0 |   138000 |        0 |     0 | 40001
+ S2       | READ COMMITTED  |     4000 |  138000 |        0 |        0 |     0 | P0001
+ S2       | REPEATABLE READ |   141989 |      11 |        0 |        0 |     0 | P0001
+ S2       | SERIALIZABLE    |     4000 |     134 |   137866 |        0 |     0 | 40001,P0001
+ S3       | READ COMMITTED  |     4000 |  138000 |        0 |        0 |     0 | APP
+ S3       | REPEATABLE READ |     4000 |      24 |   137976 |        0 |     0 | 40001,APP
+ S3       | SERIALIZABLE    |     4000 |      83 |   137917 |        0 |     0 | 40001,APP
+ S4       | READ COMMITTED  |   142000 |       0 |        0 |        0 |     0 | -
+ S4       | REPEATABLE READ |   142000 |       0 |        0 |        0 |     0 | -
+ S4       | SERIALIZABLE    |     4000 |  138000 |        0 |        0 |     0 | APP
+ S6       | READ COMMITTED  |     4000 |  138000 |        0 |        0 |     0 | APP
+ S6       | REPEATABLE READ |     4000 |     246 |   137754 |        0 |     0 | 40001,APP
+ S6       | SERIALIZABLE    |     4000 |      39 |   137961 |        0 |     0 | 40001,APP
+ S7       | READ COMMITTED  |     4000 |  138000 |        0 |        0 |     0 | 23514
+ S7       | REPEATABLE READ |     4000 |      18 |   137982 |        0 |     0 | 23514,40001
+ S7       | SERIALIZABLE    |     4000 |     659 |   137341 |        0 |     0 | 23514,40001
+
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+== (b1) N = 2 runs: conflict-serializability of the LOGICAL client-recorded schedule ==
+ strategy |       iso       | runs |  cs  | not_cs | over_admitted | verdict_matches_outcome | cycle_only_with_aborted | broken_by_dbms_abort 
+----------+-----------------+------+------+--------+---------------+-------------------------+-------------------------+----------------------
+ S1       | READ COMMITTED  | 1000 |    0 |   1000 |          1000 |                    1000 |                       0 |                    0
+ S1       | REPEATABLE READ | 1000 |    0 |   1000 |          1000 |                    1000 |                       0 |                    0
+ S1       | SERIALIZABLE    | 1000 | 1000 |      0 |             0 |                    1000 |                     753 |                  753
+ S2       | READ COMMITTED  | 1000 | 1000 |      0 |             0 |                    1000 |                       0 |                    0
+ S2       | REPEATABLE READ | 1000 |    0 |   1000 |          1000 |                    1000 |                       0 |                    0
+ S2       | SERIALIZABLE    | 1000 | 1000 |      0 |             0 |                    1000 |                       0 |                    0
+ S3       | READ COMMITTED  | 1000 | 1000 |      0 |             0 |                    1000 |                       0 |                    0
+ S3       | REPEATABLE READ | 1000 | 1000 |      0 |             0 |                    1000 |                       0 |                    0
+ S3       | SERIALIZABLE    | 1000 | 1000 |      0 |             0 |                    1000 |                       0 |                    0
+ S4       | READ COMMITTED  | 1000 |    0 |   1000 |          1000 |                    1000 |                       0 |                    0
+ S4       | REPEATABLE READ | 1000 |    0 |   1000 |          1000 |                    1000 |                       0 |                    0
+ S4       | SERIALIZABLE    | 1000 | 1000 |      0 |             0 |                    1000 |                     805 |                  805
+ S6       | READ COMMITTED  | 1000 | 1000 |      0 |             0 |                    1000 |                    1000 |                    0
+ S6       | REPEATABLE READ | 1000 | 1000 |      0 |             0 |                    1000 |                       0 |                    0
+ S6       | SERIALIZABLE    | 1000 | 1000 |      0 |             0 |                    1000 |                       0 |                    0
+ S7       | READ COMMITTED  | 1000 | 1000 |      0 |             0 |                    1000 |                       0 |                    0
+ S7       | REPEATABLE READ | 1000 | 1000 |      0 |             0 |                    1000 |                       0 |                    0
+ S7       | SERIALIZABLE    | 1000 | 1000 |      0 |             0 |                    1000 |                       0 |                    0
+
+== (b2) One example run per strategy x isolation (first trial): schedule, edges, verdict ==
+ strategy |       iso       | size |                                                                   logical_schedule                                                                    |     edges      | cycle_or_serial_order |          verdict          | cycle_incl_aborted 
+----------+-----------------+------+-------------------------------------------------------------------------------------------------------------------------------------------------------+----------------+-----------------------+---------------------------+--------------------
+ S1       | READ COMMITTED  | 5/4  | r2(team:T02) r2(members:T02) r1(team:T02) r1(members:T02) w1(members:T02) c1 w2(members:T02) c2                                                       | T1->T2, T2->T1 | T1 -> T2 -> T1        | NOT conflict-serializable | T1 -> T2 -> T1
+ S1       | REPEATABLE READ | 5/4  | r2(team:T02) r2(members:T02) r1(team:T02) r1(members:T02) w2(members:T02) c2 w1(members:T02) c1                                                       | T1->T2, T2->T1 | T1 -> T2 -> T1        | NOT conflict-serializable | T1 -> T2 -> T1
+ S1       | SERIALIZABLE    | 4/4  | r1(team:T02) r1(members:T02) r2(team:T02) r2(members:T02) w1(members:T02) c1 a2[40001]                                                                | (none)         | T1                    | conflict-serializable     | -
+ S2       | READ COMMITTED  | 4/4  | r2(team:T02) r2(members:T02) w2(members:T02) c2 r1(team:T02) r1(members:T02) a1[refused]                                                              | (none)         | T2                    | conflict-serializable     | -
+ S2       | REPEATABLE READ | 5/4  | r2(team:T02) r2(members:T02) r1(team:T02) r1(members:T02) w2(members:T02) c2 w1(members:T02) c1                                                       | T1->T2, T2->T1 | T1 -> T2 -> T1        | NOT conflict-serializable | T1 -> T2 -> T1
+ S2       | SERIALIZABLE    | 4/4  | r2(team:T02) r2(members:T02) w2(members:T02) c2 a1[40001]                                                                                             | (none)         | T2                    | conflict-serializable     | -
+ S3       | READ COMMITTED  | 4/4  | r1(counter:T02) w1(counter:T02) w1(members:T02) c1 r2(counter:T02) a2[refused]                                                                        | (none)         | T1                    | conflict-serializable     | -
+ S3       | REPEATABLE READ | 4/4  | r2(counter:T02) w2(counter:T02) w2(members:T02) c2 a1[40001]                                                                                          | (none)         | T2                    | conflict-serializable     | -
+ S3       | SERIALIZABLE    | 4/4  | r2(counter:T02) w2(counter:T02) w2(members:T02) c2 a1[40001]                                                                                          | (none)         | T2                    | conflict-serializable     | -
+ S4       | READ COMMITTED  | 5/4  | r1(team:T02) r1(members:T02) r2(team:T02) r2(members:T02) w1(members:T02) w2(members:T02) c1 c2                                                       | T1->T2, T2->T1 | T1 -> T2 -> T1        | NOT conflict-serializable | T1 -> T2 -> T1
+ S4       | REPEATABLE READ | 5/4  | r2(team:T02) r2(members:T02) r1(team:T02) r1(members:T02) w1(members:T02) w2(members:T02) c1 c2                                                       | T1->T2, T2->T1 | T1 -> T2 -> T1        | NOT conflict-serializable | T1 -> T2 -> T1
+ S4       | SERIALIZABLE    | 4/4  | r2(team:T02) r2(members:T02) r1(team:T02) r1(members:T02) w2(members:T02) w1(members:T02) a1[40001] c2 r1.1(team:T02) r1.1(members:T02) a1.1[refused] | (none)         | T2                    | conflict-serializable     | T1 -> T2 -> T1
+ S6       | READ COMMITTED  | 4/4  | r2(seats:T02) r1(seats:T02) w2(seats:T02) w2(members:T02) c2 r1(seats:T02) a1[refused]                                                                | (none)         | T2                    | conflict-serializable     | T1 -> T2 -> T1
+ S6       | REPEATABLE READ | 4/4  | r2(seats:T02) w2(seats:T02) w2(members:T02) c2 a1[40001]                                                                                              | (none)         | T2                    | conflict-serializable     | -
+ S6       | SERIALIZABLE    | 4/4  | r2(seats:T02) w2(seats:T02) w2(members:T02) c2 a1[40001]                                                                                              | (none)         | T2                    | conflict-serializable     | -
+ S7       | READ COMMITTED  | 4/4  | w2(team:T02) r2(members:T02) w2(members:T02) c2 w1(team:T02) r1(members:T02) a1[refused]                                                              | (none)         | T2                    | conflict-serializable     | -
+ S7       | REPEATABLE READ | 4/4  | r2(members:T02) w2(team:T02) w2(members:T02) c2 a1[40001]                                                                                             | (none)         | T2                    | conflict-serializable     | -
+ S7       | SERIALIZABLE    | 4/4  | r2(members:T02) w2(team:T02) w2(members:T02) c2 a1[40001]                                                                                             | (none)         | T2                    | conflict-serializable     | -
+
+== (b3) The edges of the S2 / REPEATABLE READ example (why it is not serializable) ==
+ run_id |   edge   |                               because                                
+--------+----------+----------------------------------------------------------------------
+  88721 | T1 -> T2 | r1(members:T02) < w2(members:T02)
+  88721 | T2 -> T1 | r2(members:T02) < w1(members:T02); w2(members:T02) < w1(members:T02)
+
+== (b4) The same idea for S1 / SERIALIZABLE: the cycle existed, SSI aborted one participant ==
+ run_id |   edge   |                               because                                
+--------+----------+----------------------------------------------------------------------
+  80723 | T1 -> T2 | r1(members:T02) < w2(members:T02); w1(members:T02) < w2(members:T02)
+  80723 | T2 -> T1 | r2(members:T02) < w1(members:T02)
+
+== (b5) S6 / READ COMMITTED: the loser is on a cycle too, but only through its own two reads ==
+   (RC non-repeatable read: it read the seat set before and after the winner committed;
+    it wrote nothing and rolled back itself after "no free seat", so no DBMS abort was needed)
+ run_id |   edge   |            because            
+--------+----------+-------------------------------
+ 120721 | T1 -> T2 | r1(seats:T02) < w2(seats:T02)
+ 120721 | T2 -> T1 | w2(seats:T02) < r1(seats:T02)
+

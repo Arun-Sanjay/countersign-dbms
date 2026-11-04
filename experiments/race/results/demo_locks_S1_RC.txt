@@ -1,0 +1,37 @@
+== Strategy S1, READ COMMITTED: race-A takes T02's last seat and holds for 4s ==
+  [race-B]    joined   
+  [race-B] ------------
+  [race-B]  1RV99XX002
+  [race-B] (1 row)
+  [race-B] 
+  [race-B] done
+  [race-C]  joined 
+  [race-C] --------
+  [race-C] (0 rows)
+  [race-C] 
+  [race-C] done
+== 1. Wait-for graph: who waits on whom (one row per edge) ==
+ waiter | waiter_pid |   | blocker | blocker_pid | blocker_state | waiter_wait_event | waiter_wants | waiting_s | waiter_query 
+--------+------------+---+---------+-------------+---------------+-------------------+--------------+-----------+--------------
+
+== 2. Lock table of the racing sessions (relation, tuple and transactionid locks) ==
+ session | pid  |   locktype    |  relation   | page_tuple |   xid   |       mode       | granted | session_is_waiting | own_xid | state  
+---------+------+---------------+-------------+------------+---------+------------------+---------+--------------------+---------+--------
+ race-A  | 1227 | relation      | team        |            |         | RowShareLock     | t       | f                  | 2314879 | active
+ race-A  | 1227 | relation      | team        |            |         | AccessShareLock  | t       | f                  | 2314879 | active
+ race-A  | 1227 | relation      | team_member |            |         | RowExclusiveLock | t       | f                  | 2314879 | active
+ race-A  | 1227 | relation      | team_member |            |         | AccessShareLock  | t       | f                  | 2314879 | active
+ race-A  | 1227 | transactionid |             |            | 2314879 | ExclusiveLock    | t       | f                  | 2314879 | active
+
+== 3. Predicate (SIREAD) locks held by SERIALIZABLE transactions, if any ==
+ session | pid | relation | page | tuple | mode 
+---------+-----+----------+------+-------+------
+
+  [race-A]    joined   
+  [race-A] ------------
+  [race-A]  1RV99XX001
+  [race-A] (1 row)
+  [race-A] 
+  [race-A] done
+
+T02 after the race: 5/4  (1RV99XX001, 1RV99XX002 admitted)

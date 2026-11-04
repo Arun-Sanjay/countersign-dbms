@@ -1,0 +1,45 @@
+== Strategy S1, SERIALIZABLE: race-A takes T02's last seat and holds for 4s ==
+  [race-B]    joined   
+  [race-B] ------------
+  [race-B]  1RV99XX002
+  [race-B] (1 row)
+  [race-B] 
+  [race-B] done
+  [race-C]  joined 
+  [race-C] --------
+  [race-C] (0 rows)
+  [race-C] 
+  [race-C] done
+== 1. Wait-for graph: who waits on whom (one row per edge) ==
+ waiter | waiter_pid |   | blocker | blocker_pid | blocker_state | waiter_wait_event | waiter_wants | waiting_s | waiter_query 
+--------+------------+---+---------+-------------+---------------+-------------------+--------------+-----------+--------------
+
+== 2. Lock table of the racing sessions (relation, tuple and transactionid locks) ==
+ session | pid  |   locktype    |  relation   | page_tuple |   xid   |       mode       | granted | session_is_waiting | own_xid | state  
+---------+------+---------------+-------------+------------+---------+------------------+---------+--------------------+---------+--------
+ race-A  | 1171 | relation      | team        |            |         | RowShareLock     | t       | f                  | 2314875 | active
+ race-A  | 1171 | relation      | team        |            |         | AccessShareLock  | t       | f                  | 2314875 | active
+ race-A  | 1171 | relation      | team_member |            |         | AccessShareLock  | t       | f                  | 2314875 | active
+ race-A  | 1171 | relation      | team_member |            |         | RowExclusiveLock | t       | f                  | 2314875 | active
+ race-A  | 1171 | relation      | team_member |            |         | SIReadLock       | t       | f                  | 2314875 | active
+ race-A  | 1171 | transactionid |             |            | 2314875 | ExclusiveLock    | t       | f                  | 2314875 | active
+ race-A  | 1171 | tuple         | team        | 29/1       |         | SIReadLock       | t       | f                  | 2314875 | active
+
+== 3. Predicate (SIREAD) locks held by SERIALIZABLE transactions, if any ==
+ session | pid  |  relation   | page | tuple |    mode    
+---------+------+-------------+------+-------+------------
+ race-A  | 1171 | student     |      |       | SIReadLock
+ race-A  | 1171 | team        |   29 |     1 | SIReadLock
+ race-A  | 1171 | team_pkey   |    1 |       | SIReadLock
+ race-A  | 1171 | team_member |      |       | SIReadLock
+
+  [race-A]    joined   
+  [race-A] ------------
+  [race-A]  1RV99XX001
+  [race-A] (1 row)
+  [race-A] 
+  [race-A] ERROR:  could not serialize access due to read/write dependencies among transactions
+  [race-A] DETAIL:  Reason code: Canceled on identification as a pivot, during commit attempt.
+  [race-A] HINT:  The transaction might succeed if retried.
+
+T02 after the race: 4/4  (1RV99XX002 admitted)
