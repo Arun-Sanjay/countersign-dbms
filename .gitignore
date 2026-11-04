@@ -18,3 +18,8 @@ __pycache__/
 .DS_Store
 supabase/.temp/
 supabase/.branches/
+
+# test artifacts
+web/screenshots/
+web/test-results/
+web/playwright-report/
