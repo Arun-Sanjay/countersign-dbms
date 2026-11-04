@@ -12,7 +12,7 @@ Source of truth: `PROJECT_MASTER.md` (vision, schema, seed, verified queries, ru
 - No Teron/Metacognisync code or branding.
 
 ## Local
-- Local PG17: `docker start elp-pg17` (port 54329, password `localdev`). Race check: `experiments/race/rr_trigger_check.sh`.
+- Local plain PG17 (fixture/race tests): container `elp-pg17` (port 54329, password `localdev`), stopped while the local Supabase stack runs. Race check: `experiments/race/rr_trigger_check.sh`.
 - Python via `uv` (3.12), Node 24. Tools via npx: `npx supabase`, `npx mongosh`, `npx vercel`.
 
 ## Cloud
