@@ -37,7 +37,7 @@ Vite env modes: `vite` (mode `development`) loads `.env.local`. `vite --mode rem
 
 **Personas.** These are created by `scripts/create_personas.py` (repo root). All use the password `Countersign@2026`.
 
-- Students: `arun@example.edu`, `sanvid@`, `nikhil@`, `meera@`
+- Students: `arun@example.edu` (solo team T00), `nikhil@`, `meera@` (T06: a teammate's C4 claim waits for her countersign)
 - Faculty: `ramesh@` (F01, teaches CD252IA) and `lakshmi@` (F02)
 - Admin: `admin@`
 
@@ -59,7 +59,7 @@ npm run e2e:typecheck    # tsc for the e2e code
 npm run e2e:report       # open the HTML report (playwright-report/)
 ```
 
-The specs run in file order with one worker because they share the database: 02 files arun's C3 claim, 03 has sanvid confirm it, 05 records a mark on C2 and locks C2. 10 builds a fresh push (random SHAs, a unique word in a new vault note), signs and POSTs it with `scripts/replay_webhooks.py` to the local `github-webhook` function (started with `supabase functions serve` if it is not running), drains the queue with `uv run python -m app.worker --once`, requires BOTH halves (ingest_event projected with a mongo_id, and the raw event in the local Mongo `elp.github_events`), and checks the live toast and feed on ramesh's `/sheet/P01`, the trace sheet behind the feed item, that meera's search and Activity tab find the note, and that lakshmi finds nothing in P06. A broken Edge Function or worker FAILS the spec; only with `E2E_ALLOW_FALLBACK=1` may it call `ingest_receive` / `project_push` over PostgREST with the local service key instead (`e2e/ingest.ts`; the key is never printed). `E2E_INGEST_WORKER=0` skips the worker (it drains the whole queue) and also needs `E2E_ALLOW_FALLBACK=1`. globalSetup refuses to run unless `.env.local` points at 127.0.0.1/localhost; after the reset it also clears the worker's documents in the LOCAL Mongo container (`scripts/clear_local_pipeline.sh`), so the admin consistency panel compares like with like.
+The specs run in file order with one worker because they share the database: 02 files arun's C3 claim (T00 is a solo team, so it stays pending: no teammate to countersign), 03 has meera confirm Aditi's seeded pending C4 claim on T06 and checks the solo-team wording for arun (his page and ramesh's claim drawer), 05 records a mark on C2 and locks C2. 10 builds a fresh push (random SHAs, a unique word in a new vault note), signs and POSTs it with `scripts/replay_webhooks.py` to the local `github-webhook` function (started with `supabase functions serve` if it is not running), drains the queue with `uv run python -m app.worker --once`, requires BOTH halves (ingest_event projected with a mongo_id, and the raw event in the local Mongo `elp.github_events`), and checks the live toast and feed on ramesh's `/sheet/P01`, the trace sheet behind the feed item, that meera's search and Activity tab find the note, and that lakshmi finds nothing in P06. A broken Edge Function or worker FAILS the spec; only with `E2E_ALLOW_FALLBACK=1` may it call `ingest_receive` / `project_push` over PostgREST with the local service key instead (`e2e/ingest.ts`; the key is never printed). `E2E_INGEST_WORKER=0` skips the worker (it drains the whole queue) and also needs `E2E_ALLOW_FALLBACK=1`. globalSetup refuses to run unless `.env.local` points at 127.0.0.1/localhost; after the reset it also clears the worker's documents in the LOCAL Mongo container (`scripts/clear_local_pipeline.sh`), so the admin consistency panel compares like with like.
 
 ## Layout
 

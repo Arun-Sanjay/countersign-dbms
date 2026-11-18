@@ -157,7 +157,7 @@
       "event": "push",
       "delivery": "50235787-a792-589a-8473-64025b70c77a",
       "sign": "valid",
-      "description": "T01: Meera's ER note + drawio, an unknown author (skipped, warning), Co-Authored-By without the trailer",
+      "description": "T01: Meera's ER note + drawio, a commit by the unlinked login outside-dev (logged, credits nobody), Co-Authored-By without the trailer",
       "expect": {
         "http": 202,
         "status": "queued",

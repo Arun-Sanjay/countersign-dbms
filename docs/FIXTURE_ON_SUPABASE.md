@@ -25,7 +25,7 @@ Q1–Q29 are read-only and are safe anywhere.
 ## Expected differences from Appendix H on the migrated and seeded local DB
 | Query | Difference | Why |
 |---|---|---|
-| Q1, 3, 5, 6, 9, 10, 12–18, 24, 27, 28, 32 | different rows or counts | the demo seed adds P06, T00/T06, Sanvid, … |
+| Q1, 3, 5, 6, 9, 10, 12–18, 24, 27, 28, 32 | different rows or counts | the demo seed adds P06, the teams T00 (solo) and T06, their enrollments, artifacts, claims and marks, … |
 | Q8, Q29 | 'NoSQL' and 'Normalization' swap places | database collation is en_US.UTF-8; Appendix H used byte order (C) |
 | Q21 | same rows in a different order | the query has no ORDER BY |
 | Q34 | the DETAIL row shows two extra `null`s | team gained `topic_title` and `abstract` (0002) |

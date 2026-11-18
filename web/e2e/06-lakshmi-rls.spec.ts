@@ -6,7 +6,7 @@ test.describe('6 · lakshmi (teaches another course) cannot see P06', () => {
     await page.goto('/sheet/P06')
     await expect(page.getByText('No rows visible to you')).toBeVisible()
     await expect(page.locator('[data-cell]')).toHaveCount(0)
-    for (const name of ['S Arun Sanjay', 'Sanvid Razdan', 'Aditi Rao', 'Karthik M', 'Meera Iyer']) {
+    for (const name of ['S Arun Sanjay', 'Aditi Rao', 'Karthik M', 'Meera Iyer']) {
       await expect(page.getByText(name)).toHaveCount(0)
     }
   })

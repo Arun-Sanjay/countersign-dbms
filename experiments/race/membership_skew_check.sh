@@ -6,8 +6,8 @@
 #        student in no P06 team). Expected: B waits; RC -> 55000 has-history, RR/SER -> 40001.
 # Race 2 "leave, then mark": the same two statements in the other order. Expected: A waits;
 #        RC -> 23514 not-in-any-team, RR/SER -> 40001.
-# Race 3 "edit vs countersign": A edits a pending claim and holds; B countersigns it with
-#        the revision it read before the edit. Expected: B waits; RC -> 55000 stale
+# Race 3 "edit vs countersign": A edits Aditi's pending T06 claim and holds; B (her teammate
+#        Meera) countersigns it with the revision it read before the edit. Expected: B waits; RC -> 55000 stale
 #        revision, RR/SER -> 40001. Never: a confirm attached to text B did not read.
 # Pass = every invariant query returns 0 after every race, at every isolation level.
 #
@@ -55,11 +55,11 @@ cleanup_member
 echo; echo "== Race 3: edit vs countersign (claim revision) =="
 for ISO in "READ COMMITTED" "REPEATABLE READ" "SERIALIZABLE"; do
   CID=$(psqlc -tAc "INSERT INTO claim (usn, team_id, project_id, milestone_no, statement)
-                    VALUES ('1RV24CY051', 'T00', 'P06', 5, 'Drew the level-0 DFD (race test).') RETURNING claim_id;" | head -1)
+                    VALUES ('1RV24CY011', 'T06', 'P06', 5, 'Drew the level-0 DFD (race test).') RETURNING claim_id;" | head -1)
   REV=$(psqlc -tAc "SELECT revision FROM claim WHERE claim_id = $CID;")     # what B 'read'
   race "$ISO" \
        "UPDATE claim SET statement = 'I designed the WHOLE schema myself (race test).' WHERE claim_id = $CID;" \
-       "INSERT INTO countersign (claim_id, endorser_usn, verdict, claim_revision) VALUES ($CID, '1RV24CY047', 'confirm', $REV);"
+       "INSERT INTO countersign (claim_id, endorser_usn, verdict, claim_revision) VALUES ($CID, '1RV24CY033', 'confirm', $REV);"
   BAD=$(psqlc -tAc "SELECT count(*) FROM countersign cs JOIN claim c USING (claim_id) WHERE cs.claim_revision <> c.revision;")
   [ "$BAD" -eq 0 ] || FAIL=1
   [ -n "$OUT" ] || FAIL=1

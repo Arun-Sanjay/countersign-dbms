@@ -1,6 +1,6 @@
 """Generate docs/lab/c11/schema_listing.md (Appendix A of C11_Final_Report.md) from the
 catalog of the LOCAL Supabase database (container supabase_db_countersign-dbms), which has
-the same migrations 0001-0006 as the cloud project. Read only: the session runs with
+the same migrations 0001-0007 as the cloud project. Read only: the session runs with
 default_transaction_read_only = on. Run by build_c9_c11.sh, or by hand:
     python3 docs/lab/c11/gen_schema_listing.py [container]
 """

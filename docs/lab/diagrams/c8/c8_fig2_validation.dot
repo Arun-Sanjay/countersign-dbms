@@ -29,8 +29,8 @@ digraph Validation {
     <TR><TD COLSPAN="2" BGCOLOR="#eef5ee"><B>Layer 3: the table</B> (holds for the RPC AND for a direct INSERT)</TD></TR>
     <TR><TD ALIGN="LEFT">trigger trg_assessment_check:<BR ALIGN="LEFT"/>marks &#8804; milestone.max_marks, not locked,<BR ALIGN="LEFT"/>student in a team of the project<BR ALIGN="LEFT"/></TD>
         <TD ALIGN="LEFT"><FONT COLOR="#c0392b">7 &#8594; 23514, assessment_marks_le_max</FONT><BR ALIGN="LEFT"/></TD></TR>
-    <TR><TD ALIGN="LEFT">CHECK (marks &gt;= 0), NUMERIC(4,1), NOT NULL, FKs<BR ALIGN="LEFT"/></TD>
-        <TD ALIGN="LEFT"><FONT COLOR="#c0392b">-1 &#8594; 23514, assessment_marks_check</FONT><BR ALIGN="LEFT"/></TD></TR>
+    <TR><TD ALIGN="LEFT">CHECK (marks &gt;= 0), NUMERIC, NOT NULL, FKs<BR ALIGN="LEFT"/>CHECK (marks = round(marks, 1)) (0007)<BR ALIGN="LEFT"/></TD>
+        <TD ALIGN="LEFT"><FONT COLOR="#c0392b">-1 &#8594; 23514, assessment_marks_check</FONT><BR ALIGN="LEFT"/><FONT COLOR="#c0392b">4.25 direct &#8594; 23514, assessment_marks_one_decimal</FONT><BR ALIGN="LEFT"/></TD></TR>
     <TR><TD ALIGN="LEFT">RLS assessment_insert WITH CHECK:<BR ALIGN="LEFT"/>teaches_project AND assessed_by = me<BR ALIGN="LEFT"/></TD>
         <TD ALIGN="LEFT"><FONT COLOR="#c0392b">lakshmi direct &#8594; 42501 (RLS)</FONT><BR ALIGN="LEFT"/></TD></TR>
    </TABLE>>];

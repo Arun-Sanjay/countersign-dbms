@@ -1,6 +1,6 @@
 # MASTER FILE — Unified Experiential Learning and Project Intelligence Platform
 
-> **For the coding agent (Claude Code):** this file is the single source of truth for this project. It contains every decision, the full database schema, sample data, all tested SQL and MongoDB queries, the course requirements it must satisfy, and what is still to be built. Read it fully before writing code. Sections marked **[DECIDED]** are settled; **[PROPOSED]** are recommendations not yet confirmed by the team; **[OPEN]** need a decision.
+> **For the coding agent (Claude Code):** this file is the single source of truth for this project. It contains every decision, the full database schema, sample data, all tested SQL and MongoDB queries, the course requirements it must satisfy, and what is still to be built. Read it fully before writing code. Sections marked **[DECIDED]** are settled; **[PROPOSED]** are recommendations not yet confirmed by the author; **[OPEN]** need a decision.
 
 ---
 
@@ -8,14 +8,14 @@
 
 | Item | Value |
 |---|---|
-| **Project title** | Unified Experiential Learning and Project Intelligence Platform (short: *Unified Experiential Learning Platform*) — descriptive working title; the team may rename it |
+| **Project title** | Unified Experiential Learning and Project Intelligence Platform (short: *Unified Experiential Learning Platform*) — descriptive working title; the author may rename it |
 | **Course** | Database Management Systems (CD252IA), Semester V, RV College of Engineering (RVCE), Bengaluru — Dept. of CSE |
 | **Course format** | Theory + Lab. Credits L:T:P = 3:0:1. 45L + 30P hours. CIE 100+50, SEE 100+50 |
-| **Team** | S Arun Sanjay (USN **1RV24CY047**) · Sanvid Razdan (USN **1RV24CY051**) |
+| **Team** | S Arun Sanjay (USN **1RV24CY047**), solo project |
 | **Type** | Open-ended DBMS lab mini project. The database is the product; the evaluators grade the data layer |
 | **Target user (product)** | Colleges (B2B). The college mandates it, like the SAP results portal — students use it because submissions/marks go through it |
 | **Core stack [DECIDED]** | PostgreSQL 17 on **Supabase** (relational + pgvector) · **MongoDB 8** (NoSQL) · **FastAPI** (Python) · **React + TypeScript + Tailwind** · **Claude API** · **Voyage AI** embeddings · GitHub App + webhooks · Obsidian (via Obsidian Git plugin) · Tiptap + Yjs (Hocuspocus) |
-| **Status (as of 4 Nov 2026)** | Synopsis written (DOCX + PDF). Schema, sample data and 62 queries (37 SQL + 25 MongoDB) written and **verified by execution**. Component 4 (Test) prepared and executed on Supabase + OneCompiler. Application code: **not started** |
+| **Status (as of 19 Nov 2026)** | Synopsis (C1) and Test (C4) done; the 62 fixture queries (37 SQL + 25 MongoDB) still match Appendix H (37/37, 25/25). Working prototype **Countersign** built: migrations 0001–0007 all live on Supabase `countersign-dbms` (0007 = strict marks: one-decimal CHECK, the NUMERIC(4,1) rounding gap closed); web app (student, faculty, admin, Race arena `/race`); FastAPI; GitHub ingestion (Edge Function → pgmq → worker → Mongo log → Postgres projection); keyword search with citations. Tests: pgTAP 710, API pytest 66, e2e 44. Demo seed: solo team T00 (Arun) on P06; the countersign flow is shown on fixture team T06. Not built: viva practice, hash-chained audit log, consent ledger, EXPLAIN bench, embeddings in use, hosting. Current detail: `README.md` § Status. (On 4 Nov 2026: synopsis, schema, seed and queries done; application code not started.) |
 
 ---
 
@@ -226,7 +226,7 @@ Indexes: compound `{team_id: 1, created_at: -1}` on notes; text index `{title: "
 Future: key-value presence/session data; shard by college (B2B tenancy = natural sharding key); master-slave replication for read-heavy days.
 
 ### 5.6 Sample data (for tests/demo)
-12 students, 4 faculty, 4 courses, 5 projects, 5 teams, 19 team memberships, 13 milestones, 14 skills, 46 student-skill rows, 12 project-skill rows, 12 artifacts, 28 contributions, 7 chunks. **All names except S Arun Sanjay are fictional** (Sanvid Razdan is *not* in the seed data — add him / real teammates if desired). Designed so queries return meaningful results: Team Alpha (T01) is full (4/4), Team Beta (T02) has 1 free slot, Nikhil Bhat and Ananya Gowda have no team, Meera (T01) and Vikram (T02) are "ghost members", Arun/Aditi/Rahul/Nikhil have all P01 skills, P05 has no team.
+12 students, 4 faculty, 4 courses, 5 projects, 5 teams, 19 team memberships, 13 milestones, 14 skills, 46 student-skill rows, 12 project-skill rows, 12 artifacts, 28 contributions, 7 chunks. **All names except S Arun Sanjay are fictional.** Designed so queries return meaningful results: Team Alpha (T01) is full (4/4), Team Beta (T02) has 1 free slot, Nikhil Bhat and Ananya Gowda have no team, Meera (T01) and Vikram (T02) are "ghost members", Arun/Aditi/Rahul/Nikhil have all P01 skills, P05 has no team.
 Full data: **Appendix B** (SQL) and **Appendix E** (MongoDB).
 
 ---
@@ -286,7 +286,7 @@ Full data: **Appendix B** (SQL) and **Appendix E** (MongoDB).
 
 ## 7. Synopsis (as submitted) — content summary
 
-File: `DBMS_Synopsis.docx` / `.pdf` (built from a classmate's template, exact RVCE format). Header: "RV College of Engineering®, Bengaluru – 59 / Department of Computer Science and Engineering / DATABASE MANAGEMENT SYSTEMS (CD252IA) / Synopsis". Table: TITLE + TEAM (USN, Name): 1RV24CY047 S Arun Sanjay; 1RV24CY051 Sanvid Razdan.
+File: `DBMS_Synopsis.docx` / `.pdf` (built from a classmate's template, exact RVCE format). Header: "RV College of Engineering®, Bengaluru – 59 / Department of Computer Science and Engineering / DATABASE MANAGEMENT SYSTEMS (CD252IA) / Synopsis". Table: TITLE + TEAM (USN, Name): 1RV24CY047 S Arun Sanjay.
 
 Sections:
 1. **Introduction** — DB-driven EL platform, single system of record across courses/semesters; Supabase (PostgreSQL) for structured entities, MongoDB for notes/GitHub events/version history; RAG layer where every chunk carries author, version, timestamp, permission; relational filters + hybrid search (Postgres FTS + pgvector) in one SQL query; answers by Claude API; RLS-restricted, traceable.
@@ -415,7 +415,7 @@ All SQL was executed on PostgreSQL 16; all MongoDB on MongoDB 8.2 (mongosh). Q34
 
 ### 11.4 Open decisions [OPEN]
 - Final product name.
-- Whether to add Sanvid Razdan / real classmates to seed data.
+- ~~Whether to add real classmates to seed data.~~ Decided: no. The project is solo; the demo seed adds no student, and T00 has Arun as its only member.
 - RVCE email domain / Google Workspace for OAuth.
 - MongoDB host for final demo: Atlas vs OneCompiler (Test used OneCompiler).
 - Which extended features (Tribunal, viva engine, work signature, rubric-native view) go into the final demo vs future scope.

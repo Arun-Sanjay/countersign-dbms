@@ -1,4 +1,4 @@
-import { ARUN_C3_STATEMENT, expect, login, restGet, test, toast } from './helpers'
+import { ARUN_C3_STATEMENT, expect, login, restGet, SOLO_TEAM_NOTE, test, toast } from './helpers'
 
 interface ClaimRow {
   claim_id: number
@@ -58,6 +58,8 @@ test.describe('2 · arun: semester hub and filing a claim', () => {
     await expect(card.locator('[data-status="pending"]')).toBeVisible()
     await expect(card).toContainText('Evidence (2)')
     await expect(card).toContainText('https://example.org/countersign/er-v2-review')
+    // T00 is a solo team: nobody can countersign, and the card says so
+    await expect(card.getByTestId('solo-team-note')).toHaveText(SOLO_TEAM_NOTE)
 
     // and the database agrees (read as arun, under RLS)
     const rows = await restGet<ClaimRow>('arun', `claim?select=claim_id,status,milestone_no,statement,revision&claim_id=eq.${claimId}`)

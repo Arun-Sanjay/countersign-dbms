@@ -277,8 +277,8 @@ def gen_privileges() -> None:
 # --------------------------------------------------------------------------------------------
 # 4. RLS matrix (02) -> green/red grid (Graphviz) + the other 02 checks
 # --------------------------------------------------------------------------------------------
-PERSONAS = ["arun", "sanvid", "meera", "nikhil", "f01", "f02", "admin", "anon"]
-SUB = {"arun": "student", "sanvid": "student", "meera": "student", "nikhil": "no team",
+PERSONAS = ["arun", "aditi", "meera", "nikhil", "f01", "f02", "admin", "anon"]
+SUB = {"arun": "student", "aditi": "student", "meera": "student", "nikhil": "no team",
        "f01": "faculty", "f02": "faculty", "admin": "admin", "anon": "signed out"}
 
 
@@ -415,7 +415,8 @@ SHOWN_AS = {
 
 def gen_gallery() -> None:
     src = (TESTS / "01_constraints.sql").read_text()
-    src = src.replace("SELECT plan(45);", "SELECT plan(45);\n" + CAPTURE, 1)
+    src = re.sub(r"^(SELECT plan\(\d+\);)$", lambda m: m.group(1) + "\n" + CAPTURE, src, count=1, flags=re.M)
+    assert CAPTURE in src, "01_constraints.sql: SELECT plan(n); line not found"
     src = src.replace("SELECT throws_ok(", "SELECT pg_temp.capture(")
     src = src.replace("SELECT * FROM finish();",
                       "SELECT '@@GALLERY@@' || json_agg(g ORDER BY n)::text FROM gallery g;")

@@ -7,7 +7,7 @@
 -- Same persona mechanism as 02/03; everything is rolled back at the end.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(119);
+SELECT plan(120);
 
 -- ---------------------------------------------------------------------
 -- Fixtures
@@ -16,8 +16,8 @@ DELETE FROM app_user;
 
 CREATE TEMP TABLE persona (name TEXT PRIMARY KEY, uid UUID, role TEXT, usn TEXT, faculty_id TEXT);
 INSERT INTO persona VALUES
-    ('arun',   '00000000-0000-4000-a000-000000000047', 'student', '1RV24CY047', NULL),  -- T00 T01 T03 T05
-    ('sanvid', '00000000-0000-4000-a000-000000000051', 'student', '1RV24CY051', NULL),  -- T00 only
+    ('arun',   '00000000-0000-4000-a000-000000000047', 'student', '1RV24CY047', NULL),  -- T00 (solo) T01 T03 T05
+    ('vikram', '00000000-0000-4000-a000-000000000058', 'student', '1RV24CY058', NULL),  -- T02 T04 (not T01)
     ('meera',  '00000000-0000-4000-a000-000000000033', 'student', '1RV24CY033', NULL),  -- T01 T03 T06
     ('aditi',  '00000000-0000-4000-a000-000000000011', 'student', '1RV24CY011', NULL),  -- T01 T05 T06
     ('nikhil', '00000000-0000-4000-a000-000000000077', 'student', '1RV24CY077', NULL),  -- no team
@@ -474,9 +474,9 @@ SELECT is((SELECT count(*)::int FROM search_chunks('BCNF', p_team_id => 'T00')
           'p_team_id T00 filters the T01 chunk out (whatever T00 itself holds)');
 RESET ROLE;
 
-SELECT pg_temp.become('sanvid');
+SELECT pg_temp.become('vikram');
 SELECT is((SELECT count(*)::int FROM search_chunks('BCNF decomposition superkey') WHERE team_id = 'T01'), 0,
-          'sanvid (T00 only) cannot retrieve T01''s chunks');
+          'vikram (T02, T04; not T01) cannot retrieve T01''s chunks');
 RESET ROLE;
 
 SELECT pg_temp.become('nikhil');
@@ -552,10 +552,10 @@ SELECT is((SELECT count(*)::int FROM search_chunks('zzzunmatchedterm',
           'vector-only match is still returned (rank_fts null)');
 RESET ROLE;
 
-SELECT pg_temp.become('sanvid');
+SELECT pg_temp.become('vikram');
 SELECT is((SELECT count(*)::int FROM search_chunks('zzzunmatchedterm',
                               p_query_embedding => ('[1' || repeat(',0', 1023) || ']')::extensions.vector)), 0,
-          'the vector path is RLS-filtered too (sanvid gets nothing from T01)');
+          'the vector path is RLS-filtered too (vikram gets nothing from T01)');
 RESET ROLE;
 
 -- ---------------------------------------------------------------------
@@ -576,7 +576,7 @@ SELECT is((SELECT bool_and(private) FROM realtime.messages WHERE topic IN ('proj
 -- a contribution to a PRIVATE artifact is never broadcast (only its owner may know it exists)
 CREATE TEMP TABLE rt_before AS SELECT count(*) AS n FROM realtime.messages;
 INSERT INTO contribution (usn, artifact_id, contribution_type, description, created_at)
-VALUES ('1RV24CY051', 'A18', 'research', 'private doubt', '2026-11-04');
+VALUES ('1RV24CY047', 'A18', 'research', 'private doubt', '2026-11-04');
 SELECT is((SELECT count(*) FROM realtime.messages) - (SELECT n FROM rt_before), 0::bigint,
           'no broadcast for a contribution to a private artifact');
 SELECT realtime.send('{"probe": true}'::jsonb, 'contribution', 'project:P06', true);
@@ -596,10 +596,13 @@ SELECT pg_temp.become('f02');
 SELECT is((SELECT count(*)::int FROM realtime.messages WHERE topic IN ('project:P01', 'project:P06', 'team:T01', 'team:T00')), 0,
           'f02 receives neither P01 nor P06 topics');
 RESET ROLE;
-SELECT pg_temp.become('sanvid');
-SELECT is((SELECT count(*)::int FROM realtime.messages WHERE topic IN ('project:P01', 'team:T01', 'project:P06')), 0,
-          'sanvid: no P01 topics, and project:P06 is staff only');
-SELECT ok((SELECT count(*) FROM realtime.messages WHERE topic = 'team:T00') > 0, 'sanvid (T00) may receive team:T00');
+SELECT pg_temp.become('vikram');
+SELECT is((SELECT count(*)::int FROM realtime.messages WHERE topic IN ('project:P01', 'team:T01', 'project:P06', 'team:T00')), 0,
+          'vikram: neither project:P01 / project:P06 (staff only) nor another team''s topic (T01, T00)');
+SELECT ok((SELECT count(*) FROM realtime.messages WHERE topic = 'team:T02') > 0, 'vikram (T02) may receive team:T02');
+RESET ROLE;
+SELECT pg_temp.become('arun');
+SELECT ok((SELECT count(*) FROM realtime.messages WHERE topic = 'team:T00') > 0, 'arun (solo team T00) may receive team:T00');
 RESET ROLE;
 SELECT pg_temp.become('nikhil');
 SELECT is((SELECT count(*)::int FROM realtime.messages), 0, 'nikhil (no team) receives nothing');
@@ -627,7 +630,7 @@ BEGIN
     END LOOP;
 END $$;
 SELECT pg_temp.become('arun');   SELECT pg_temp.snap('arun');   RESET ROLE;
-SELECT pg_temp.become('sanvid'); SELECT pg_temp.snap('sanvid'); RESET ROLE;
+SELECT pg_temp.become('vikram'); SELECT pg_temp.snap('vikram'); RESET ROLE;
 SELECT pg_temp.become('meera');  SELECT pg_temp.snap('meera');  RESET ROLE;
 SELECT pg_temp.become('nikhil'); SELECT pg_temp.snap('nikhil'); RESET ROLE;
 SELECT pg_temp.become('f01');    SELECT pg_temp.snap('f01');    RESET ROLE;
@@ -636,7 +639,7 @@ SELECT pg_temp.become('admin');  SELECT pg_temp.snap('admin');  RESET ROLE;
 SELECT pg_temp.become('anon');   SELECT pg_temp.snap('anon');   RESET ROLE;
 
 -- student_identity: own rows; faculty: students of projects they teach (F01: P01+P06 students,
---   9 rows incl. Aditi's e-mail identity; F02: P02 = T03's 5 students); admin: all 14.
+--   8 rows incl. Aditi's e-mail identity; F02: P02 = T03's 5 students); admin: all 13.
 -- team_repo: repos of the caller's teams / overseen projects.
 -- ingest_event (test-% rows only): admin all 8 (d1, branch, unknown-repo, issues, d3, ghost,
 --   broken, dead); F01 the 6 with team T01 (not the unregistered repo nor the issues event);
@@ -644,9 +647,9 @@ SELECT pg_temp.become('anon');   SELECT pg_temp.snap('anon');   RESET ROLE;
 SELECT is(string_agg(persona || '=' || n, ' ' ORDER BY persona), e.expected, 'RLS: ' || rel)
 FROM vis
 JOIN (VALUES
-    ('student_identity', 'admin=14 anon=denied arun=1 f01=9 f02=5 meera=1 nikhil=1 sanvid=1'),
-    ('team_repo',        'admin=4 anon=denied arun=3 f01=3 f02=1 meera=2 nikhil=0 sanvid=1'),
-    ('ingest_event',     'admin=8 anon=denied arun=0 f01=6 f02=0 meera=0 nikhil=0 sanvid=0')
+    ('student_identity', 'admin=13 anon=denied arun=1 f01=8 f02=5 meera=1 nikhil=1 vikram=1'),
+    ('team_repo',        'admin=4 anon=denied arun=3 f01=3 f02=1 meera=2 nikhil=0 vikram=1'),
+    ('ingest_event',     'admin=8 anon=denied arun=0 f01=6 f02=0 meera=0 nikhil=0 vikram=0')
 ) AS e(rel_name, expected) ON e.rel_name = vis.rel
 GROUP BY rel, e.expected
 ORDER BY rel;

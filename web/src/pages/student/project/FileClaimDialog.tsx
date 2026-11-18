@@ -39,10 +39,12 @@ interface Props {
   /** Component to preselect (from a row's "Claim" button). */
   initialMilestone?: number
   options: EvidenceOptions
+  /** My team has one member: no teammate can countersign, so the claim rests on its evidence. */
+  solo?: boolean
 }
 
 /** "I did X for component C": file_claim + evidence, with AI assistance declared. */
-export function FileClaimDialog({ projectId, open, onOpenChange, components, initialMilestone, options }: Props) {
+export function FileClaimDialog({ projectId, open, onOpenChange, components, initialMilestone, options, solo = false }: Props) {
   const fileClaim = useFileClaim(projectId)
   const openComponents = components.filter((c) => !c.locked)
   const defaultMilestone = initialMilestone ?? openComponents[0]?.milestone_no
@@ -95,7 +97,9 @@ export function FileClaimDialog({ projectId, open, onOpenChange, components, ini
       const n = res.evidence.length + v.evidence.length
       toastSuccess(
         `Claim #${res.claim_id} filed for ${componentLabel(v.milestone_no)}`,
-        `${n} piece${n === 1 ? '' : 's'} of evidence attached. It is pending until a teammate countersigns it.`,
+        solo
+          ? `${n} piece${n === 1 ? '' : 's'} of evidence attached. Solo team: no teammate to countersign, so it rests on its evidence and faculty review.`
+          : `${n} piece${n === 1 ? '' : 's'} of evidence attached. It is pending until a teammate countersigns it.`,
       )
       onOpenChange(false)
     } catch (e) {

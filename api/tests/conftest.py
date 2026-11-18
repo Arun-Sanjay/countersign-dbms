@@ -86,7 +86,9 @@ def mongo_db(settings):
     db.github_events.insert_many([dict(e) for e in EVENTS])
     # Apply the real validators + indexes + backfill to the scratch database.
     script = f"var ELP_DB = {TEST_DB!r};\n" + (ROOT / "mongo" / "validators.js").read_text()
-    proc = subprocess.run(["npx", "-y", "mongosh@latest", settings.mongodb_uri, "--quiet"],
+    # mongosh 2.14.2 on npm is broken (missing module mongodb-redact): pin the last good release.
+    mongosh = os.environ.get("MONGOSH_NPX", "mongosh@2.14.1")
+    proc = subprocess.run(["npx", "-y", mongosh, settings.mongodb_uri, "--quiet"],
                           input=script, capture_output=True, text=True, timeout=240)
     assert '"invalid":0' in proc.stdout and "Error" not in proc.stdout, "validators.js failed on the test db"
     yield db
@@ -108,7 +110,7 @@ def client(settings, mongo_db):
 def tokens(settings) -> dict[str, str]:
     out = {}
     with httpx.Client(timeout=15) as http:
-        for who in ("arun", "sanvid", "nikhil", "meera", "ramesh", "lakshmi", "admin"):
+        for who in ("arun", "nikhil", "meera", "ramesh", "lakshmi", "admin"):
             r = http.post(f"{settings.supabase_url}/auth/v1/token", params={"grant_type": "password"},
                           headers={"apikey": settings.supabase_anon_key},
                           json={"email": f"{who}@example.edu", "password": PASSWORD})

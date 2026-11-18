@@ -1,9 +1,10 @@
 # Known issues in the app (all fixed)
 
-State: 5 November 2026. Issues found with migrations 0001–0006; **all seven are fixed** in the
-working tree (web app, API and migration `20261105000007_strict_marks.sql`), each with its test.
-Migration 0007 is applied to the local stack and to the live project (pushed 5 Nov 2026; the
-live `assessment` table carries the one-decimal CHECK). The web fixes reach the demo laptop with
+State: 19 November 2026. Issues 1–7 were found with migrations 0001–0006; issues 8 and 9 were
+found later in the API. **All nine are fixed** (web app, API and migration
+`20261105000007_strict_marks.sql`), each with its test. Migration 0007 is applied to the local
+stack and to the live project (pushed 5 Nov 2026; all seven migrations 0001–0007 verified live on
+19 Nov 2026; the live `assessment` table carries the one-decimal CHECK). The web fixes reach the demo laptop with
 the next `npm run dev:remote` / build.
 
 These came out of the read-only demo rehearsal on the live project (C9 §14) and the lab panel's
@@ -12,10 +13,11 @@ the original repro and cause, then a **Fixed** paragraph that can be used as the
 description. Database defects that are already in the C2 known-defects register (§3.8: D1, D2,
 D4–D10) are not repeated, except where the rehearsal added something.
 
-Verified after the fixes (local stack, after `scripts/reset_local.sh`): pgTAP 701/701
-(`npx -y supabase@latest test db`), API pytest 60/60 (49 product tests + 11 race-arena tests,
-`MONGO_TARGET=local`), web typecheck, lint and build clean, and e2e 44/44 (39 in `e2e/01`–`10`,
-one of them new for #4, plus the race arena's `e2e/11`).
+Verified on 19 November 2026 (local stack, after `scripts/reset_local.sh`, with the current
+solo-team demo seed): pgTAP 710/710 in 7 files (`npx -y supabase@latest test db`), API pytest
+66/66 (`SUPABASE_TARGET=local MONGO_TARGET=local`, race lab `elp-race-pg` up; without it 65 pass
+and 1 is skipped), web typecheck and lint clean, and e2e 44/44 across `e2e/01`–`11` (including
+the race arena's `e2e/11`).
 
 Severity: **minor** = cosmetic or wording; **moderate** = misleads a user or blocks a demo step;
 none is a security or integrity defect.
@@ -29,6 +31,8 @@ none is a security or integrity defect.
 | 5 | The rubric sheet does not refresh after a teammate countersigns | minor | **fixed** (e2e 03) |
 | 6 | The rubric grid does not fit a 1440 px screen; the Live chip is below the fold | minor | **fixed** (e2e 05) |
 | 7 | A two-decimal mark is rounded, not refused, on a direct INSERT | minor (data layer) | **fixed** (migration 0007, pgTAP 01 + 07) |
+| 8 | `python -m app.worker --loop` exits on the first Postgres or Mongo outage | moderate (blocks live ingestion) | **fixed** (pytest `test_worker.py`) |
+| 9 | A `POST /race/run` refused as busy (409) still resets the race lab | moderate (spoils a running race) | **fixed** (pytest `test_race.py`) |
 
 Not app bugs (recorded so nobody "fixes" them): the anonymous 42501 error carries PostgREST's
 hint "GRANT SELECT ON public.assessment TO anon" (that is PostgREST's generic advice; `anon`
@@ -154,9 +158,9 @@ only untracked files, so the "not projected" line is checked by type and review,
 **Where:** `web/src/lib/query.ts:14` (`refetchOnWindowFocus: false`), and the Realtime broadcast
 of migration 0005, which covers new contributions only.
 
-**Repro:** faculty window on `/sheet/P06`; in a second browser profile Arun confirms claim #5.
-Switch back to the faculty window: the C3 glyph for Sanvid is still the clock until Cmd+R
-(C9 §3.4 step 4 and §5 tell the presenter to reload).
+**Repro (before the fix):** faculty window on `/sheet/P06`; in a second browser profile a
+teammate confirms a pending claim. Switch back to the faculty window: the cell's glyph is still
+the clock until a manual reload (C9 §3.4 step 4 and §5 told the presenter to reload).
 
 **Proposed fix (either):** (a) set `refetchOnWindowFocus: true` for the rubric-sheet and drawer
 queries only (not globally, so that forms keep their state); or (b) broadcast a metadata-only
@@ -170,10 +174,11 @@ comes back. `useRubricSheet` and `useCellClaims` (`web/src/data/faculty.ts`) set
 which is exactly the demo's timing. The global default stays `false`, so forms keep their state.
 TanStack Query only listens to `visibilitychange`, which does not fire when the presenter
 switches between two visible browser windows, so `web/src/lib/query.ts` also hands the window
-`focus` event to `focusManager`. Test: e2e 03 opens ramesh's `/sheet/P06` in a second browser
-context before sanvid confirms the claim, checks arun's C3 cell says "1 pending", fires a window
-focus and expects "1 confirmed" without a reload. The C9 presenter notes no longer need the
-Cmd+R step. Option (b), a `claim_status` broadcast, is not needed for the demo and was not built.
+`focus` event to `focusManager`. Test: e2e 03 (`03-meera-countersign.spec.ts`) opens ramesh's
+`/sheet/P06` in a second browser context before meera confirms Aditi Rao's (1RV24CY011) pending
+C4 claim on T06, checks that the cell says "1 pending", fires a window focus and expects no
+pending claim left, without a reload. The sheet now refetches on window focus, so the presenter
+never reloads. Option (b), a `claim_status` broadcast, is not needed for the demo and was not built.
 
 ## 6. The grid does not fit a 1440 px screen; the Live chip is below the fold
 
@@ -240,3 +245,39 @@ row in `supabase/tests/01_constraints.sql` (4.25 refused) and `supabase/tests/07
 re-created views' options, grants and output). Web: `lib/errors.ts` maps both constraint names to
 a field error on *marks*; `npm run sql:extract` picked up the re-created views, the new function
 and trigger, and the "Record marks" SQL panel lists them; `npm run types:gen` produced no change.
+
+## 8. The worker's `--loop` exits on the first outage
+
+**Where:** `api/app/worker.py` (`--loop`), `Worker.recover_followups`, `SqlStore`.
+
+**Repro (before the fix):** run `python -m app.worker --loop --interval 1`, then stop the local
+Postgres or Mongo for a few seconds. The drain raises `StoreError` or a pymongo error and the
+process ends, so pushes stay `queued` until someone restarts the worker. `recover_followups`
+also raised when Mongo was down.
+
+**Fixed.** A new `run_loop` catches `StoreError` (Postgres) and `PyMongoError` (Mongo) on each
+pass, logs one JSON line `{event: drain_failed, error, retry_in_s}` to stderr (Mongo URIs are
+masked), and retries after a backoff of 1 s doubling to 30 s (`LOOP_BACKOFF_MIN`,
+`LOOP_BACKOFF_MAX`). The first good drain logs `drain_recovered` and resets the backoff. Any
+other exception still ends the process, so real bugs are not hidden. `recover_followups` counts
+an error, records `mongo_error` and ends that pass. A store built with `SqlStore.connect()`
+reopens a closed connection on next use. `--once` exit codes are unchanged (0 ok, 1 failed
+messages or `StoreError`, 2 configuration). Still true: if Postgres is unreachable when `--loop`
+starts, the worker exits with code 2; only drains after startup are retried. Tests (all in
+`api/tests/test_worker.py`): `test_loop_backs_off_on_postgres_and_mongo_outages_and_keeps_going`,
+`test_loop_does_not_hide_bugs`, `test_recover_followups_stops_quietly_when_mongo_is_down`,
+`test_sql_store_reopens_a_connection_lost_in_an_outage`.
+
+## 9. A busy `POST /race/run` resets someone else's race
+
+**Where:** `api/app/race.py` (`run_race`).
+
+**Repro (before the fix):** start a live race on the Race arena page (`/race`), and send a second
+`POST /race/run` while it runs. The second request is refused with 409 `race_busy`, but its
+clean-up still ran `reset_t02` and `use_strategy('S1')`, which reset the lab under the first race.
+
+**Fixed.** `run_race` sets an `owns_lab` flag only after the readiness and busy checks pass, and
+the final reset (`reset_t02`, `use_strategy('S1')`) runs only when the flag is set. A request
+refused with 409, or one that finds schema `exp` missing, runs no statement on the lab. Tests
+(`api/tests/test_race.py`): `test_a_busy_request_never_resets_the_lab` (fails on the old code)
+and `test_the_owner_resets_the_lab_before_and_after`.

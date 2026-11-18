@@ -10,7 +10,8 @@ DELETE FROM app_user;
 CREATE TEMP TABLE persona (name TEXT PRIMARY KEY, uid UUID, role TEXT, usn TEXT, faculty_id TEXT);
 INSERT INTO persona VALUES
     ('arun',    '00000000-0000-4000-a000-000000000047', 'student', '1RV24CY047', NULL),
-    ('sanvid',  '00000000-0000-4000-a000-000000000051', 'student', '1RV24CY051', NULL),
+    ('aditi',   '00000000-0000-4000-a000-000000000011', 'student', '1RV24CY011', NULL),   -- T06 lead
+    ('karthik', '00000000-0000-4000-a000-000000000024', 'student', '1RV24CY024', NULL),   -- T06
     ('meera',   '00000000-0000-4000-a000-000000000033', 'student', '1RV24CY033', NULL),
     ('nikhil',  '00000000-0000-4000-a000-000000000077', 'student', '1RV24CY077', NULL),
     ('ananya',  '00000000-0000-4000-a000-000000000082', 'student', '1RV24CY082', NULL),
@@ -24,10 +25,12 @@ GRANT SELECT ON persona TO authenticated;
 
 CREATE TEMP TABLE ref (name TEXT PRIMARY KEY, id INT);
 INSERT INTO ref
-SELECT 'arun_c1',   claim_id FROM claim WHERE usn = '1RV24CY047' AND project_id = 'P06' AND milestone_no = 1 UNION ALL
-SELECT 'sanvid_c3', claim_id FROM claim WHERE usn = '1RV24CY051' AND project_id = 'P06' AND milestone_no = 3 UNION ALL
+-- karthik_c1: confirmed by Aditi, on the locked C1. aditi_rev: her pending C4 review claim.
+SELECT 'karthik_c1', claim_id FROM claim WHERE usn = '1RV24CY024' AND project_id = 'P06' AND milestone_no = 1 UNION ALL
+SELECT 'aditi_rev',  claim_id FROM claim WHERE usn = '1RV24CY011' AND project_id = 'P06' AND milestone_no = 4
+                                         AND contribution_type = 'review' UNION ALL
 SELECT 'sub_t00_c4', submission_id FROM submission WHERE team_id = 'T00' AND milestone_no = 4 UNION ALL
-SELECT 'arun_commit', contribution_id FROM contribution WHERE source_ref = '3f9c2ab';
+SELECT 'karthik_sql', contribution_id FROM contribution WHERE usn = '1RV24CY024' AND source_ref = 'A20@v1';
 GRANT SELECT, INSERT ON ref TO authenticated;
 
 CREATE FUNCTION pg_temp.become(p_name TEXT) RETURNS void LANGUAGE plpgsql AS $$
@@ -104,71 +107,73 @@ SELECT pg_temp.become('arun');
 SELECT is(pg_temp.err($$INSERT INTO claim (usn, team_id, project_id, milestone_no, statement)
                         VALUES ('1RV24CY047', 'T00', 'P06', 1, 'A late claim on the locked synopsis.')$$),
           '55000:milestone_locked', 'lock: a direct claim INSERT on locked C1 is refused');
+RESET ROLE;
+SELECT pg_temp.become('karthik');
 SELECT is(pg_temp.err(format($$INSERT INTO claim_evidence (claim_id, evidence_no, kind, ref)
                                VALUES (%s, 99, 'url', 'https://evil.example/after-confirm')$$,
-                             (SELECT id FROM ref WHERE name = 'arun_c1'))),
+                             (SELECT id FROM ref WHERE name = 'karthik_c1'))),
           '55000:claim_not_pending', 'evidence: none can be added to a confirmed claim (direct INSERT)');
 RESET ROLE;
 
-SELECT pg_temp.become('sanvid');
-SELECT is(pg_temp.err(format($$DELETE FROM countersign WHERE claim_id = %s$$, (SELECT id FROM ref WHERE name = 'arun_c1'))),
+SELECT pg_temp.become('aditi');    -- she confirmed Karthik's C1 claim
+SELECT is(pg_temp.err(format($$DELETE FROM countersign WHERE claim_id = %s$$, (SELECT id FROM ref WHERE name = 'karthik_c1'))),
           '55000:milestone_locked', 'lock: a countersign on a locked claim cannot be withdrawn');
 SELECT is(pg_temp.err(format($$UPDATE countersign SET verdict = 'dispute', comment = 'changed my mind'
-                               WHERE claim_id = %s$$, (SELECT id FROM ref WHERE name = 'arun_c1'))),
+                               WHERE claim_id = %s$$, (SELECT id FROM ref WHERE name = 'karthik_c1'))),
           '55000:milestone_locked', 'lock: ... nor flipped to a dispute');
-SELECT is(pg_temp.err(format($$UPDATE claim SET milestone_no = 1 WHERE claim_id = %s$$, (SELECT id FROM ref WHERE name = 'sanvid_c3'))),
+SELECT is(pg_temp.err(format($$UPDATE claim SET milestone_no = 1 WHERE claim_id = %s$$, (SELECT id FROM ref WHERE name = 'aditi_rev'))),
           '55000:milestone_locked', 'lock: a pending claim cannot be moved onto a locked component');
 RESET ROLE;
-SELECT is((SELECT status::text FROM claim WHERE claim_id = (SELECT id FROM ref WHERE name = 'arun_c1')),
-          'confirmed', 'lock: Arun''s C1 receipt is unchanged');
+SELECT is((SELECT status::text FROM claim WHERE claim_id = (SELECT id FROM ref WHERE name = 'karthik_c1')),
+          'confirmed', 'lock: Karthik''s C1 receipt is unchanged');
 
 -- ---------------------------------------------------------------------
 -- 3. Countersign is bound to the revision the signer read
 -- ---------------------------------------------------------------------
-INSERT INTO ref SELECT 'c3_rev', revision FROM claim WHERE claim_id = (SELECT id FROM ref WHERE name = 'sanvid_c3');
-SELECT pg_temp.become('sanvid');
-UPDATE claim SET statement = 'I designed the WHOLE schema and wrote every query myself.'
-WHERE claim_id = (SELECT id FROM ref WHERE name = 'sanvid_c3');
+INSERT INTO ref SELECT 'rev_before', revision FROM claim WHERE claim_id = (SELECT id FROM ref WHERE name = 'aditi_rev');
+SELECT pg_temp.become('aditi');
+UPDATE claim SET statement = 'I answered the WHOLE Test and wrote every query myself.'
+WHERE claim_id = (SELECT id FROM ref WHERE name = 'aditi_rev');
 RESET ROLE;
-SELECT is((SELECT revision FROM claim WHERE claim_id = (SELECT id FROM ref WHERE name = 'sanvid_c3')),
-          (SELECT id + 1 FROM ref WHERE name = 'c3_rev'), 'revision: editing the statement bumps claim.revision');
-SELECT pg_temp.become('arun');      -- Arun's screen still shows the old revision
+SELECT is((SELECT revision FROM claim WHERE claim_id = (SELECT id FROM ref WHERE name = 'aditi_rev')),
+          (SELECT id + 1 FROM ref WHERE name = 'rev_before'), 'revision: editing the statement bumps claim.revision');
+SELECT pg_temp.become('meera');     -- Meera's screen still shows the old revision
 SELECT is(pg_temp.err(format($$SELECT countersign_claim(%s, 'confirm', NULL, %s)$$,
-                             (SELECT id FROM ref WHERE name = 'sanvid_c3'), (SELECT id FROM ref WHERE name = 'c3_rev'))),
-          '55000:countersign_stale_revision', 'revision: a confirm of the text he read is refused after the edit');
-SELECT is(countersign_claim((SELECT id FROM ref WHERE name = 'sanvid_c3'), 'confirm', NULL,
-                            (SELECT revision FROM claim WHERE claim_id = (SELECT id FROM ref WHERE name = 'sanvid_c3')))
+                             (SELECT id FROM ref WHERE name = 'aditi_rev'), (SELECT id FROM ref WHERE name = 'rev_before'))),
+          '55000:countersign_stale_revision', 'revision: a confirm of the text she read is refused after the edit');
+SELECT is(countersign_claim((SELECT id FROM ref WHERE name = 'aditi_rev'), 'confirm', NULL,
+                            (SELECT revision FROM claim WHERE claim_id = (SELECT id FROM ref WHERE name = 'aditi_rev')))
               ->> 'claim_status', 'confirmed', 'revision: re-reading and signing the current revision works');
 RESET ROLE;
-SELECT pg_temp.become('sanvid');
+SELECT pg_temp.become('aditi');
 SELECT is(pg_temp.err(format($$UPDATE claim SET statement = 'Rewritten after the confirm, sneakily.' WHERE claim_id = %s RETURNING 1$$,
-                             (SELECT id FROM ref WHERE name = 'sanvid_c3'))),
+                             (SELECT id FROM ref WHERE name = 'aditi_rev'))),
           'ok', 'finality: an UPDATE of a confirmed claim matches no row (RLS: pending only) ...');
-SELECT is((SELECT statement::text FROM claim WHERE claim_id = (SELECT id FROM ref WHERE name = 'sanvid_c3')),
-          'I designed the WHOLE schema and wrote every query myself.', '... so the confirmed text is unchanged');
+SELECT is((SELECT statement::text FROM claim WHERE claim_id = (SELECT id FROM ref WHERE name = 'aditi_rev')),
+          'I answered the WHOLE Test and wrote every query myself.', '... so the confirmed text is unchanged');
 RESET ROLE;
 SELECT is(pg_temp.err(format($$UPDATE claim SET statement = 'Rewritten by a superuser.' WHERE claim_id = %s$$,
-                             (SELECT id FROM ref WHERE name = 'sanvid_c3'))),
+                             (SELECT id FROM ref WHERE name = 'aditi_rev'))),
           '55000:claim_not_pending', 'finality: even outside RLS a countersigned claim''s content cannot change');
 
 -- ---------------------------------------------------------------------
 -- 4. Evidence: own contributions only, typed refs, no duplicates
 -- ---------------------------------------------------------------------
-SELECT pg_temp.become('sanvid');
-INSERT INTO ref SELECT 'sanvid_c5', (file_claim('P06', 5, 'design', 'Drew the level-0 DFD for the claim flow.') ->> 'claim_id')::int;
+SELECT pg_temp.become('aditi');
+INSERT INTO ref SELECT 'aditi_c5', (file_claim('P06', 5, 'design', 'Drew the level-0 DFD for the issue flow.') ->> 'claim_id')::int;
 SELECT is(pg_temp.err(format($$SELECT add_claim_evidence(%s, 'contribution', '%s')$$,
-                             (SELECT id FROM ref WHERE name = 'sanvid_c5'), (SELECT id FROM ref WHERE name = 'arun_commit'))),
+                             (SELECT id FROM ref WHERE name = 'aditi_c5'), (SELECT id FROM ref WHERE name = 'karthik_sql'))),
           '23514:claim_evidence_own_contribution', 'evidence: cannot cite a teammate''s contribution as your own');
 SELECT is(pg_temp.err(format($$INSERT INTO claim_evidence (claim_id, evidence_no, kind, ref)
-                               VALUES (%s, 5, 'url', 'javascript:alert(document.cookie)')$$, (SELECT id FROM ref WHERE name = 'sanvid_c5'))),
+                               VALUES (%s, 5, 'url', 'javascript:alert(document.cookie)')$$, (SELECT id FROM ref WHERE name = 'aditi_c5'))),
           '23514:claim_evidence_ref_format', 'evidence: a url must be http(s) (no javascript: links)');
 SELECT is(pg_temp.err(format($$INSERT INTO claim_evidence (claim_id, evidence_no, kind, ref)
-                               VALUES (%s, 6, 'commit', 'zzz')$$, (SELECT id FROM ref WHERE name = 'sanvid_c5'))),
+                               VALUES (%s, 6, 'commit', 'zzz')$$, (SELECT id FROM ref WHERE name = 'aditi_c5'))),
           '23514:claim_evidence_ref_format', 'evidence: a commit must be a hex SHA');
-SELECT is(add_claim_evidence((SELECT id FROM ref WHERE name = 'sanvid_c5'), 'artifact_version', 'A17@v1') ->> 'evidence_no',
-          '1', 'evidence: cite A17@v1 once ...');
+SELECT is(add_claim_evidence((SELECT id FROM ref WHERE name = 'aditi_c5'), 'artifact_version', 'A20@v2') ->> 'evidence_no',
+          '1', 'evidence: cite A20@v2 once ...');
 SELECT is(pg_temp.err(format($$INSERT INTO claim_evidence (claim_id, evidence_no, kind, artifact_id, version_no)
-                               VALUES (%s, 7, 'artifact_version', 'A17', 1)$$, (SELECT id FROM ref WHERE name = 'sanvid_c5'))),
+                               VALUES (%s, 7, 'artifact_version', 'A20', 2)$$, (SELECT id FROM ref WHERE name = 'aditi_c5'))),
           '23505:claim_evidence_once_version', '... but not twice');
 RESET ROLE;
 SELECT is(pg_temp.err($$INSERT INTO skill_evidence (usn, skill_id, claim_id, level)
@@ -183,8 +188,6 @@ SELECT is(pg_temp.err($$UPDATE artifact SET visibility = 'private', owner_usn = 
           '55000:artifact_submitted_final', 'artifact: a submitted artifact cannot be made private');
 SELECT is(pg_temp.err($$UPDATE artifact SET visibility = 'team', milestone_no = 2 WHERE artifact_id = 'A13'$$),
           '55000:artifact_submitted_final', 'artifact: ... nor un-submitted or moved to another component');
-SELECT is(pg_temp.err($$UPDATE artifact SET visibility = 'private', owner_usn = '1RV24CY047' WHERE artifact_id = 'A17'$$),
-          '42501:artifact_owner_only', 'artifact: a teammate''s shared draft cannot be taken over and hidden');
 SELECT is(pg_temp.err($$UPDATE artifact SET team_id = 'T01', project_id = 'P01', milestone_no = 1 WHERE artifact_id = 'A14'$$),
           '42501:', 'artifact: team_id / project_id are not updatable (no column privilege)');
 SELECT is(pg_temp.err($$INSERT INTO artifact (artifact_id, team_id, project_id, milestone_no, title, type, source, visibility)
@@ -201,6 +204,15 @@ SELECT is(pg_temp.err($$UPDATE artifact SET visibility = 'team' WHERE artifact_i
 RESET ROLE;
 SELECT is(pg_temp.err($$UPDATE artifact SET team_id = 'T01', project_id = 'P01', milestone_no = 1 WHERE artifact_id = 'A14'$$),
           '23514:artifact_team_immutable', 'artifact: no path moves an artifact to another team');
+
+-- a T06 shared draft holding Karthik's work (made as the test superuser)
+INSERT INTO artifact (artifact_id, team_id, project_id, milestone_no, title, type, source)
+VALUES ('A93', 'T06', 'P06', 5, 'DFD level 1 (draft)', 'diagram', 'editor');
+INSERT INTO artifact_version (artifact_id, version_no, created_by) VALUES ('A93', 1, '1RV24CY024');
+SELECT pg_temp.become('aditi');
+SELECT is(pg_temp.err($$UPDATE artifact SET visibility = 'private', owner_usn = '1RV24CY011' WHERE artifact_id = 'A93'$$),
+          '42501:artifact_owner_only', 'artifact: a teammate''s shared draft cannot be taken over and hidden');
+RESET ROLE;
 
 SELECT pg_temp.become('f01');
 SELECT is((SELECT count(*)::int FROM artifact WHERE artifact_id = 'A13'), 1, 'artifact: faculty still see submitted A13');
@@ -223,9 +235,9 @@ SELECT is(pg_temp.err($$SELECT submit_milestone('T00', 3, ARRAY['A15'])$$),
 RESET ROLE;
 
 INSERT INTO artifact_chunk (artifact_id, version_no, author_usn, content)
-VALUES ('A17', 1, '1RV24CY051', 'ER v2: CLAIM_EVIDENCE is a weak entity of CLAIM.');
-SELECT pg_temp.become('sanvid');
-SELECT is(submit_milestone('T00', 3, ARRAY['A17']) ->> 'attempt_no', '1', 'chunks: Sanvid submits A17 for C3');
+VALUES ('A17', 1, '1RV24CY047', 'ER v2: CLAIM_EVIDENCE is a weak entity of CLAIM.');
+SELECT pg_temp.become('arun');
+SELECT is(submit_milestone('T00', 3, ARRAY['A17']) ->> 'attempt_no', '1', 'chunks: Arun submits A17 for C3');
 RESET ROLE;
 SELECT pg_temp.become('f01');
 SELECT is((SELECT count(*)::int FROM artifact_chunk WHERE artifact_id = 'A17'), 1,

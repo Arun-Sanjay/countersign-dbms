@@ -1,8 +1,9 @@
 """API tests against the local Supabase stack (personas, RLS) and MongoDB (Atlas by default).
 
-Personas (scripts/create_personas.py): arun 1RV24CY047 (T00, T01, T03, T05), sanvid 1RV24CY051
-(T00), meera 1RV24CY033 (T01, T03, T06), nikhil 1RV24CY077 (no team), ramesh = faculty F01
+Personas (scripts/create_personas.py): arun 1RV24CY047 (T00 solo lead, T01, T03, T05),
+meera 1RV24CY033 (T01, T03, T06), nikhil 1RV24CY077 (no team), ramesh = faculty F01
 (teaches CD252IA: T00, T01, T02, T06), lakshmi = faculty F02 (CD253IA: T03), admin.
+T00 is a solo team, so teammate rules are checked on T01, where arun and meera are both members.
 """
 
 from __future__ import annotations
@@ -171,12 +172,19 @@ def test_create_update_and_history(client, auth, mongo_db):
     assert v["versions"][0]["ai_assistance"] == "assisted"
     assert {x["author_usn"] for x in v["versions"]} == {"1RV24CY047"}
 
-    # the teammate sees the final note, but cannot write a version of arun's note
-    listed = client.get("/notes", params={"team_id": "T00"}, headers=auth("sanvid")).json()
-    assert note_id in ids(listed)
-    r = client.post("/notes", headers=auth("sanvid"), json={
+    # T00 is a solo team: a student of another team can neither read nor write its notes
+    r = client.get("/notes", params={"team_id": "T00"}, headers=auth("meera"))
+    assert r.status_code == 403 and r.json()["detail"]["code"] == "team_access_denied"
+    r = client.post("/notes", headers=auth("meera"), json={
         "note_id": note_id, "team_id": "T00", "title": "hijack", "content": "x"})
+    assert r.status_code == 403
+
+    # a teammate (meera, T01) sees arun's final note N01, but cannot write a version of it
+    assert "N01" in ids(client.get("/notes", params={"team_id": "T01"}, headers=auth("meera")).json())
+    r = client.post("/notes", headers=auth("meera"), json={
+        "note_id": "N01", "team_id": "T01", "title": "hijack", "content": "x"})
     assert r.status_code == 403 and r.json()["detail"]["code"] == "note_author_required"
+    assert mongo_db.notes.find_one({"note_id": "N01"})["content"].startswith("Problem statement")
 
     # the stored documents passed the $jsonSchema validators
     assert mongo_db.note_versions.count_documents({"note_id": note_id}) == 2
@@ -184,10 +192,10 @@ def test_create_update_and_history(client, auth, mongo_db):
 
 
 def test_new_note_without_id_gets_one(client, auth):
-    r = client.post("/notes", headers=auth("sanvid"), json={"team_id": "T00", "title": "Cardinality", "content": "1:N"})
+    r = client.post("/notes", headers=auth("arun"), json={"team_id": "T00", "title": "Cardinality", "content": "1:N"})
     assert r.status_code == 201
     assert r.json()["note"]["note_id"].startswith("N-")
-    assert r.json()["note"]["author_usn"] == "1RV24CY051"
+    assert r.json()["note"]["author_usn"] == "1RV24CY047"
 
 
 def test_write_is_forbidden_outside_the_team_and_for_faculty(client, auth):
@@ -223,10 +231,11 @@ def test_consistency_for_a_student(client, auth):
     t01 = _team(body, "T01")       # M2 pushes E01, E02
     assert {a["usn"]: a["outside_pipeline"]["mongo_commits"] for a in t01["authors"]
             if a["outside_pipeline"]["mongo_commits"]} == {"1RV24CY011": 1, "1RV24CY024": 2, "1RV24CY047": 2}
-    t00 = _team(body, "T00")       # demo rows 3f9c2ab (arun) and 8d41e07 (sanvid)
-    sanvid = next(a for a in t00["authors"] if a["usn"] == "1RV24CY051")
-    assert sanvid["outside_pipeline"] == {"mongo_commits": 0, "postgres_contributions": 1}
-    assert sanvid["status"] == "outside_pipeline" and sanvid["only_in_postgres"] == []
+    t00 = _team(body, "T00")       # solo team: demo rows 3f9c2ab and 8d41e07 are both arun's
+    assert {a["usn"] for a in t00["authors"]} == {"1RV24CY047"}
+    arun = t00["authors"][0]
+    # (status is not asserted: it depends on whether the T00 replay pushes were drained locally)
+    assert arun["outside_pipeline"] == {"mongo_commits": 0, "postgres_contributions": 2}
     for team in body["teams"]:
         for a in team["authors"]:
             if not (a["matched"] or a["only_in_mongo"] or a["only_in_postgres"] or a["not_projected"]):

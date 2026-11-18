@@ -110,6 +110,8 @@ export default function ProjectPage() {
     )
   }
   const myTeam = team.data
+  // teams of any size: with one member there is nobody to countersign (no special status, only the wording changes)
+  const solo = myTeam.members.length === 1
 
   const componentRows = components.data ?? []
   const componentTitle = (no: number) => componentRows.find((c) => c.milestone_no === no)?.component
@@ -300,6 +302,7 @@ export default function ProjectPage() {
                     locked={isLocked(c.milestone_no)}
                     options={evidenceOptions}
                     lookups={lookups}
+                    solo={solo}
                   />
                 ))}
               </div>
@@ -319,7 +322,16 @@ export default function ProjectPage() {
             ) : claims.isPending ? (
               <PanelSkeleton lines={3} />
             ) : queue.length === 0 ? (
-              <EmptyState compact icon={Inbox} title="Nothing to sign" description="No teammate has a pending claim waiting for you." />
+              <EmptyState
+                compact
+                icon={Inbox}
+                title="Nothing to sign"
+                description={
+                  solo
+                    ? 'You are the only member of this team, so no teammate claim will wait for your countersign. Your own claims rest on their evidence and faculty review.'
+                    : 'No teammate has a pending claim waiting for you.'
+                }
+              />
             ) : (
               <div className="space-y-3">
                 {queue.map((c) => (
@@ -387,6 +399,7 @@ export default function ProjectPage() {
         components={componentRows}
         initialMilestone={claimDialog.milestone}
         options={evidenceOptions}
+        solo={solo}
       />
       {submitFor ? (
         <SubmitDialog

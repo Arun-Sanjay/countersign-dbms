@@ -36,7 +36,7 @@ const CHAIN: { icon: LucideIcon; title: string; body: string }[] = [
   {
     icon: Signature,
     title: 'Countersign',
-    body: 'A teammate confirms or disputes, against the exact revision they read. A dispute needs a reason.',
+    body: 'A teammate confirms or disputes, against the exact revision they read. A dispute needs a reason. In a solo team there is no teammate to countersign: the claim rests on its evidence and faculty review.',
   },
 ]
 
@@ -70,6 +70,7 @@ const UNITS: { unit: Unit; where: string[] }[] = [
       'The paper marks sheet normalized to BCNF and rebuilt as the v_rubric_sheet view',
       'CHECK constraints, triggers for cross-table rules, WITH RECURSIVE, aggregate FILTER',
       'Lab CIE /50 derived in a view, never stored',
+      'Strict marks: a mark above the maximum or with a second decimal is refused on every path, never rounded',
     ],
   },
   {
@@ -77,6 +78,7 @@ const UNITS: { unit: Unit; where: string[] }[] = [
     where: [
       'Atomic submit_milestone (one transaction freezes versions)',
       'Team capacity v2: serialize by writing the parent row (the RR over-admission finding)',
+      'Race arena: six capacity strategies raced at the three isolation levels, with precedence graphs and the verbatim SQL',
       'Optimistic concurrency: a countersign binds to the claim revision it read',
     ],
   },
@@ -193,7 +195,7 @@ interface FlowBox {
   h: number
   title: string
   lines: string[]
-  /** dashed = seeded in this prototype, automated ingest is the next phase */
+  /** dashed outline: not part of this prototype (every source below is live) */
   planned?: boolean
   tone?: 'brand' | 'default'
 }
@@ -205,8 +207,8 @@ const colX = (i: number) => 8 + i * (COL_W + GAP)
 const STAGES = ['1 · Sources', '2 · Raw log · MongoDB', '3 · Projection · PostgreSQL', '4 · Access · RLS', '5 · UI']
 
 const SOURCES: FlowBox[] = [
-  { x: colX(0), y: 40, w: COL_W, h: 62, title: 'GitHub', lines: ['push webhook', 'commit SHA + author'], planned: true },
-  { x: colX(0), y: 114, w: COL_W, h: 62, title: 'Obsidian', lines: ['vault notes', 'note saves'], planned: true },
+  { x: colX(0), y: 40, w: COL_W, h: 62, title: 'GitHub', lines: ['push webhook', 'commit SHA + author'] },
+  { x: colX(0), y: 114, w: COL_W, h: 62, title: 'Obsidian', lines: ['vault notes', 'pushed with the repo'] },
   { x: colX(0), y: 188, w: COL_W, h: 62, title: 'In-app editor', lines: ['versioned saves', 'POST /notes (API)'] },
 ]
 
@@ -332,7 +334,7 @@ function DataFlowDiagram() {
               dashed={b.planned}
             />
           ))}
-          <Arrow d={`M${right(1) + 2},${midY} L${colX(2) - 3},${midY}`} label="project" lx={(right(1) + colX(2)) / 2} ly={midY - 8} dashed />
+          <Arrow d={`M${right(1) + 2},${midY} L${colX(2) - 3},${midY}`} label="project" lx={(right(1) + colX(2)) / 2} ly={midY - 8} />
           <Arrow d={`M${right(2) + 2},${midY} L${colX(3) - 3},${midY}`} label="filter" lx={(right(2) + colX(3)) / 2} ly={midY - 8} />
           <Arrow d={`M${right(3) + 2},${midY} L${colX(4) - 3},${midY}`} label="as you" lx={(right(3) + colX(4)) / 2} ly={midY - 8} />
 
@@ -351,7 +353,7 @@ function DataFlowDiagram() {
             so the same view returns different rows to Arun,
           </text>
           <text x={colX(3) + 4} y={320} className="fill-muted-foreground text-[11.5px]">
-            Sanvid and their faculty.
+            Meera and their faculty.
           </text>
         </svg>
       </div>
@@ -360,8 +362,8 @@ function DataFlowDiagram() {
           <span className="h-3 w-5 rounded-sm border border-foreground/30 bg-card" /> live in this prototype
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-3 w-5 rounded-sm border border-dashed border-foreground/40" /> seeded today; the webhook and the
-          projection worker are the next phase
+          <span className="h-0 w-5 border-t border-dashed border-foreground/40" /> consistency check (read-only); the GitHub
+          webhook, the Mongo log and the projection worker are all live
         </span>
       </figcaption>
     </figure>

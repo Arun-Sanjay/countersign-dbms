@@ -5,7 +5,8 @@
 --
 --  Real:        Arun-Sanjay (GitHub user 228202223) -> 1RV24CY047;
 --               repository Arun-Sanjay/countersign-dbms -> team T00.
---  Placeholder: sanvid-razdan -> 1RV24CY051 (replace with Sanvid's real login once known).
+--  Unlinked:    'outside-dev' (Outside Dev) has NO student_identity row on purpose: the replay
+--               fixtures push as that login to show that a push is logged but credits nobody.
 --  Fictional:   the fixture students' logins and the fixture teams' repositories
 --               rvce-el/team-alpha (T01) and rvce-el/team-gamma (T03), the same repo names
 --               as Mongo elp.github_events (M2), used by the synthetic replay fixtures.
@@ -14,11 +15,10 @@
 -- verified_at: crediting requires a VERIFIED identity for the pusher (payload.sender; see
 -- private.ingest_actor). Arun's is real. The fictional students' logins and numeric ids
 -- (7700xx, the USN suffix) are the ones the synthetic replay fixtures use, stamped as
--- admin-verified for the demo. Sanvid's login is a placeholder, so it stays UNVERIFIED and a
--- push sent as 'sanvid-razdan' is logged but credits nobody.
+-- admin-verified for the demo. A push sent as an unlinked login (e.g. 'outside-dev') is
+-- logged but credits nobody.
 INSERT INTO student_identity (provider, provider_login, provider_user_id, usn, verified_at) VALUES
 ('github', 'arun-sanjay',     228202223, '1RV24CY047', '2026-11-05 09:00+05:30'),
-('github', 'sanvid-razdan',   NULL,      '1RV24CY051', NULL),
 ('github', 'aditi-rao',       770011,    '1RV24CY011', '2026-11-05 09:00+05:30'),
 ('github', 'karthik-m',       770024,    '1RV24CY024', '2026-11-05 09:00+05:30'),
 ('github', 'meera-iyer',      770033,    '1RV24CY033', '2026-11-05 09:00+05:30'),

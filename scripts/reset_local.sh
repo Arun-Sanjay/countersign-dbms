@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Reset the whole LOCAL world so Postgres and MongoDB agree (before a rehearsal or the demo):
 #   1. npx supabase db reset --local      migrations + seeds (fixture, demo, ingest)
-#   2. scripts/create_personas.py         the 7 demo logins
+#   2. scripts/create_personas.py         the 6 demo logins
 #   3. scripts/clear_local_pipeline.sh    the worker's raw log and mirrored notes in the
 #                                         local Mongo container (Postgres no longer has them)
 # Never touches the cloud project or Atlas.

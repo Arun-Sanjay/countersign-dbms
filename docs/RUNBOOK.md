@@ -18,7 +18,7 @@ Countersign is and how to run it.
 | Session pooler (pg_dump, psql) | host `aws-0-ap-south-1.pooler.supabase.com`, port 5432, user `postgres.oowtsesgkhhbojjmmlgk`, database `postgres` |
 | Webhook endpoint | `https://oowtsesgkhhbojjmmlgk.supabase.co/functions/v1/github-webhook` (a GET answers 405, which is correct) |
 | MongoDB | Atlas, database `elp` (`github_events`, `notes`, `note_versions`, `portfolios`) |
-| Personas | `arun`, `sanvid`, `nikhil`, `meera`, `ramesh`, `lakshmi` and `admin`, all `@example.edu`, password `Countersign@2026` |
+| Personas | `arun`, `nikhil`, `meera`, `ramesh`, `lakshmi` and `admin` (6), all `@example.edu`, password `Countersign@2026` |
 
 **Secret files** (all git-ignored; you need them on the demo laptop):
 
@@ -64,7 +64,8 @@ writes, and how to recover. If the two ever disagree, C9 wins and this file is w
    stack** (§1.3), where every step may write. Then rehearse on the **live project read-only**, as
    on 5 Nov 2026 (C9 §14): every persona signs in and every screen is opened, but the File a
    claim and Confirm dialogs are cancelled, no push is sent and no mark is entered. This keeps
-   Sanvid's claim #5 pending for the demo. If a rehearsal did write to the live project, undo it
+   Aditi Rao's (1RV24CY011) T06 C4 review claim #8 pending in Meera's countersign queue for the
+   demo. If a rehearsal did write to the live project, undo it
    with §5.2 and compare the fingerprint with the baseline.
 4. **Rehearse the fallback.** Bring up the local stack (§1.3) once, so that the Docker images are
    pulled and `npm install` / `uv sync` have run. Venue Wi-Fi is not reliable.
@@ -163,6 +164,11 @@ Show `experiments/race/results/over_admission_heatmap.png` and
 `results/results.md` for the 72,000-race numbers. The live harness at 1000 trials takes 14
 minutes; never run it live.
 
+The same finding is in the web app: the **Race arena** page (`/race`) replays the 72,000 recorded
+races and, with `elp-race-pg` up, runs single live races through the API (`POST /race/run`).
+Only the request that holds the lab resets T02 and restores strategy S1 afterwards; a request
+refused as busy (409 `race_busy`) changes nothing.
+
 ### 1.4 What the C9 run-of-show writes on the live project
 
 The steps are in C9 §3; this table only adds what each one writes and how to undo it (§5.2).
@@ -170,12 +176,12 @@ The steps are in C9 §3; this table only adds what each one writes and how to un
 | C9 step | Who / where | Writes on the live project | Undo |
 |:--|:--|:--|:--|
 | 3.1, 3.2 | ramesh → `/sheet/P06`, SQL drawer, `/marks/P06` | none | – |
-| 3.3 | **arun** → `/projects/P06` → *File a claim* on **C3** with an artifact and a Link | one `claim` (the next id, 10 or higher) and two `claim_evidence` rows | delete the claim by id (cascades to its evidence) |
-| 3.4 | **arun** → **Countersign queue** tab → *Confirm* Sanvid's claim #5; ramesh reloads the sheet (C3 cell: clock → tick) | one `countersign`; claim #5 becomes `confirmed` | delete the countersign (status re-derives to `pending`) |
+| 3.3 | **arun** → `/projects/P06` → *File a claim* on **C3** with an artifact and a Link | one `claim` (the next id, 9 or higher) and two `claim_evidence` rows; T00 is a solo team, so the claim stays `pending` (no teammate to countersign) | delete the claim by id (cascades to its evidence) |
+| 3.4 | **meera** → `/projects/P06` (T06) → **Countersign queue** tab → *Confirm* Aditi's C4 claim #8; ramesh's open sheet refetches on window focus (Aditi's C4 cell: 1 pending → confirmed, no reload needed) | one `countersign` (endorser 1RV24CY033); claim #8 becomes `confirmed` | delete the countersign (status re-derives to `pending`) |
 | 3.5 | Terminal: the fresh signed push of C9 Appendix 1 to the **cloud** Edge Function; worker in terminal 4 | one `ingest_event`, artifact, `artifact_version`, contribution and chunks; one Atlas `github_events` document | **leave it** (genuine evidence; see §5.2) |
 | 3.6 | Terminal `asuser …` calls; lakshmi on `/sheet/P06`; arun on `/faculty-view` | none (every attempt is refused) | – |
 | 3.7 | Race terminal, local container `elp-race-pg` | none on the live project | – |
-| §5 backups | sanvid confirms arun's new claim, if #5 was already confirmed | one `countersign` | as for 3.4 |
+| §5 backups | if #8 was already confirmed in a rehearsal, delete that countersign first (§5.2) so meera's queue shows it again | removes one `countersign` | – |
 
 The Team Beta join (nikhil → T02, which writes `team_member`), marks entry and locking are **not**
 in the C9 run; they are shown only if an examiner asks, and then preferably on the local stack.
@@ -201,7 +207,7 @@ set -a; . supabase/.env; set +a
 # project status: ACTIVE_HEALTHY (paused projects show INACTIVE or PAUSED)
 curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
   "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF" | jq '{name, region, status}'
-# migrations applied: expect 20261104000001 .. 20261105000006
+# migrations applied: expect 20261104000001 .. 20261105000007 (all 7; verified 19 Nov 2026)
 sbq "select version from supabase_migrations.schema_migrations order by 1"
 # Edge Function deployed: github-webhook ACTIVE, verify_jwt false
 curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
@@ -239,7 +245,7 @@ TOKEN=$(curl -s -X POST "$VITE_SUPABASE_URL/auth/v1/token?grant_type=password" \
 curl -s -o /dev/null -w 'supabase rest: HTTP %{http_code}\n' \
   "$VITE_SUPABASE_URL/rest/v1/course?select=course_code&limit=1" \
   -H "apikey: $VITE_SUPABASE_ANON_KEY" -H "Authorization: Bearer $TOKEN"        # expect 200
-npx -y mongosh@latest "$MONGODB_URI" --quiet --eval 'db.runCommand({ ping: 1 }).ok'   # expect 1
+npx -y mongosh@2.14.1 "$MONGODB_URI" --quiet --eval 'db.runCommand({ ping: 1 }).ok'   # expect 1
 unset TOKEN
 ```
 
@@ -387,17 +393,22 @@ sbq "select t, n from (values
   ('private_note',(select count(*) from private.note)), ('app_user',(select count(*) from public.app_user))) v(t,n)"
 ```
 
-The baseline below was read on 5 November 2026 at 02:00 IST, before any demo rehearsal.
+The values below are the **seed state** of the current demo seed (solo team T00), read on the
+local stack on 19 November 2026 after `scripts/reset_local.sh` and before any webhook replay.
+Re-read the baseline on the live project after the new seeds are applied there.
 
 | student | team_member | claim | claim_evidence | countersign | assessment | milestones_locked | submission |
 |--:|--:|--:|--:|--:|--:|--:|--:|
-| 13 | 24 | 9 | 12 | 8 | 10 | 1 (P06 C1) | 4 |
+| 12 | 23 | 8 | 15 | 4 | 8 | 1 (P06 C1) | 4 |
 
 | artifact | artifact_version | contribution | artifact_chunk | ingest_event | private_note | app_user |
 |--:|--:|--:|--:|--:|--:|--:|
-| 45 | 39 | 65 | 58 | 10 | 2 | 7 |
+| 20 | 12 | 39 | 9 | 0 | 2 | 6 |
 
-The highest seeded `claim_id` is 9, so any claim with a higher id was filed after seeding.
+On the live project the five ingest-derived columns (`artifact`, `artifact_version`,
+`contribution`, `artifact_chunk`, `ingest_event`) are higher by whatever replayed and real pushes
+it holds. The highest seeded `claim_id` is 8 (claims 1-3 are Arun's pending T00 claims, 4-8 are
+T06's), so any claim with a higher id was filed after seeding.
 
 **What changed since a time T** (read-only; set the timestamp to when the rehearsal started):
 
@@ -420,7 +431,7 @@ Re-run the fingerprint afterwards.
 | Demo action | Undo | Notes |
 |:--|:--|:--|
 | A claim was filed (and maybe countersigned) | `sbw "delete from public.claim where claim_id = 10 and created_at >= '$T' returning claim_id, usn, status"` | Cascades to `claim_evidence`, `countersign` and `skill_evidence`. Refused if the component has been locked since, so unlock it first (row below). |
-| Only a countersign (keep the claim) | `sbw "delete from public.countersign where claim_id = 7 and endorser_usn = '1RV24CY051' and signed_at >= '$T' returning *"` | The trigger re-derives the claim status (back to `pending`). |
+| Only a countersign (keep the claim) | `sbw "delete from public.countersign where claim_id = 8 and endorser_usn = '1RV24CY033' and signed_at >= '$T' returning *"` | The trigger re-derives the claim status (back to `pending`). |
 | A mark was entered | `sbw "delete from public.assessment where usn = '1RV24CY047' and project_id = 'P06' and milestone_no = 5 and assessed_at >= '$T' returning *"` | Refused while the component is locked: unlock first. If an earlier mark was overwritten, re-enter the old value in the UI as ramesh (the baseline backup has it). |
 | A component was locked | `sbw "update public.milestone set locked_at = null where project_id = 'P06' and milestone_no = 5 and locked_at >= '$T' returning project_id, milestone_no"` | The same as an admin unlocking. **Never** clear P06 C1: it is seed-locked (20 Sept 2026), and the time guard protects it. |
 | A student joined a team | As that student, press **Leave** on `/team` (`leave_team`), or `sbw "delete from public.team_member where team_id = 'T02' and usn = '1RV24CY077' returning *"` | Refused once the student has recorded work in the team (claims, countersigns, contributions, marks): undo those first. |
@@ -433,14 +444,14 @@ To remove a rehearsal note from Atlas:
 
 ```bash
 set -a; . ./atlas-credentials.env; set +a
-npx -y mongosh@latest "$MONGODB_URI" --quiet --eval \
+npx -y mongosh@2.14.1 "$MONGODB_URI" --quiet --eval \
   'const d=db.getSiblingDB("elp"); const id="N-xxxxxxxxxx";
    printjson({versions:d.note_versions.deleteMany({note_id:id}).deletedCount, notes:d.notes.deleteOne({note_id:id}).deletedCount})'
 ```
 
 Persona passwords drifted, for example someone changed one: run
 `uv run --python 3.12 --with httpx --with python-dotenv python scripts/create_personas.py --target remote`.
-It is idempotent: it resets the seven passwords to the default and upserts their `app_user`
+It is idempotent: it resets the six passwords to the default and upserts their `app_user`
 rows.
 
 ### 5.3 Which scripts are local-only
@@ -458,14 +469,35 @@ rows.
 | `npx supabase db reset --linked` | drops and rebuilds the remote database | **Never for a demo.** Last resort only (§5.4). |
 | `mongo/seed.js` | **drops** `notes`, `github_events` and `portfolios`, then reloads the fixture | **Never on Atlas.** It deletes the pipeline's raw log and the validators. |
 | `mongo/validators.js`, `mongo/portfolio_merge.js` | idempotent | Safe on Atlas. |
-| `scripts/create_personas.py --target remote` | creates or updates the 7 logins and `app_user` | Safe (idempotent); resets the persona passwords to the default. |
+| `scripts/create_personas.py --target remote` | creates or updates the 6 logins and `app_user` | Safe (idempotent); resets the persona passwords to the default. |
 | `scripts/replay_webhooks.py --url <live function>` | the 16 fixture deliveries | Safe but pointless: every push is already in, so all are answered as duplicates. `--fresh` also adds one `ignored` row for the `issues` event. |
 | `api`: `python -m app.worker --reproject-from-log` | rebuilds the Postgres projection from the Mongo raw log | Repair tool (§5.4). |
 
 ### 5.4 Last resort: rebuild the live project
 
-Use this only when targeted undo is impossible. It has **not been rehearsed**. Take both backups
-(§4) first, and expect about 30 minutes.
+Use this only when targeted undo is impossible. Take both backups (§4) first, and expect about
+30 minutes.
+
+**Run on 19 November 2026** (removing a former member's data, solo T00). What happened:
+
+- `db reset --linked --yes` dropped the `pgmq` extension but left its queue tables
+  (`pgmq.q_github_ingest`, `pgmq.a_github_ingest`) behind as orphans, so migration 0005 failed at
+  `SELECT pgmq.create('github_ingest')` (42P01, missing `q_github_ingest_msg_id_seq`). Migrations
+  0001-0004 had already been applied, and the seeds had not run.
+- The fix: confirm the schema holds no extension members, procedures or other objects; run
+  `drop schema pgmq cascade`; then `npx supabase db push --linked --yes` (applies 0005-0007); then load
+  the seeds by hand (step 2 below).
+- The reset also removed every `auth.users` row, so step 3 re-created all 6 personas.
+- Before replaying, the 9 replay events (the ones with a string `_id`) were deleted from Atlas
+  `github_events`: `deleteMany({_id: {$type: "string"}})`. The 3 fixture events with an ObjectId
+  `_id` were kept. Then all 16 fixtures were replayed to the live function and drained with
+  `app.worker --once` instead of `--reproject-from-log`, and `mongo/portfolio_merge.js` was re-run.
+- Result: 12 students, 8 claims, 4 countersigns, 66 contributions, 59 chunks, 10 deliveries
+  (9 projected), queue 0, 6 app users. Backups are in `~/countersign-backups/2026-11-19_pre-solo/`.
+
+The live project is free-tier and auto-pauses after about a week without activity. Restore it with
+`POST /v1/projects/$REF/restore` (Management API) or from the dashboard, then check
+`ACTIVE_HEALTHY` (§1.2).
 
 1. **Reset the database.** `set -a; . supabase/.env; set +a; npx -y supabase@latest db reset --linked`
    drops every user schema and re-applies `supabase/migrations/`. It asks for confirmation.
@@ -490,6 +522,25 @@ Use this only when targeted undo is impossible. It has **not been rehearsed**. T
    and its `GITHUB_WEBHOOK_SECRET` set (`npx supabase secrets list`; it shows names and digests
    only).
 6. **Fingerprint.** Compare §5.1 with the baseline.
+
+### 5.5 MongoDB Atlas: set up or repair `elp` safely
+
+`mongo/seed.js` is for the **local or throwaway** Mongo only (`scripts/mongo_local.sh`,
+`scripts/test_mongo_fixture.sh`). It drops `github_events`, `notes` and `portfolios` (and with them
+their validators) before reloading the fixture, so on Atlas it would delete the pipeline's raw log.
+On Atlas use only the idempotent scripts:
+
+```bash
+set -a; . ./atlas-credentials.env; set +a
+npx -y mongosh@2.14.1 "$MONGODB_URI" --quiet < mongo/validators.js        # $jsonSchema validators + indexes
+npx -y mongosh@2.14.1 "$MONGODB_URI" --quiet < mongo/portfolio_merge.js   # rebuilds portfolios with $merge
+```
+
+- To bring back lost collections, restore the last backup (§4.2, §4.4: `mongorestore --drop`),
+  then re-run `mongo/validators.js`.
+- If only the Postgres projection is wrong, rebuild it from the raw log (§5.4 step 4).
+- mongosh is pinned to 2.14.1: the npm release 2.14.2 crashes on start
+  (`Cannot find module 'mongodb-redact'`).
 
 ---
 

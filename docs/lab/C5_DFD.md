@@ -1,6 +1,6 @@
 ---
 title-meta: "Data Flow Diagrams: Unified Experiential Learning and Project Intelligence Platform (Countersign)"
-author-meta: "S Arun Sanjay (1RV24CY047); Sanvid Razdan (1RV24CY051)"
+author-meta: "S Arun Sanjay (1RV24CY047)"
 subject: "CD252IA Database Management Systems, Lab Component 5"
 lang: en-GB
 ---
@@ -27,13 +27,12 @@ lang: en-GB
 | USN | Name |
 |:--|:--|
 | 1RV24CY047 | S Arun Sanjay |
-| 1RV24CY051 | Sanvid Razdan |
 
 &nbsp;
 
 Semester V, 2026-27
 
-Revision 3, 5 November 2026
+Revision 4, 19 November 2026
 :::
 
 ::: toc
@@ -49,13 +48,13 @@ This document presents the data flow diagrams (DFDs) of the platform at three le
 
 A DFD models *what data moves where and what transforms it*. It is a logical model. It shows neither control flow (loops, decisions, the order in which processes run) nor the physical mechanism (HTTP, queues, threads). To help the evaluator connect a process to the implemented database, the bottom band of each process box names the stored procedure (RPC), trigger, view or script that realises it. This annotation is the Gane-Sarson "mechanism" compartment. It is not part of the logical model.
 
-**Implemented versus planned.** The diagrams show the system as it is built on 5 November 2026: migrations 0001 to 0006 (0005 adds the ingest inbox, `search_chunks()` and the Realtime broadcast; 0006 the worker's failure bookkeeping), the Edge Function `github-webhook`, `mongo/validators.js`, `mongo/portfolio_merge.js`, and the FastAPI service and ingest worker in `api/app`. All of these are applied or deployed on the live project `countersign-dbms`, where 16 replayed webhook deliveries produced 9 projected pushes, 29 GitHub contributions and 58 text chunks. Every element that is still planned is drawn **dashed** and labelled **[planned]**, and every table marks it in a *Status* column. Only three groups remain planned:
+**Implemented versus planned.** The diagrams show the system as it is built on 19 November 2026: migrations 0001 to 0007 (0005 adds the ingest inbox, `search_chunks()` and the Realtime broadcast; 0006 the worker's failure bookkeeping; 0007 the strict-marks CHECKs on `assessment.marks`, which change no flow), the Edge Function `github-webhook`, `mongo/validators.js`, `mongo/portfolio_merge.js`, and the FastAPI service and ingest worker in `api/app`. All of these are applied or deployed on the live project `countersign-dbms` (all seven migrations verified as applied on 19 November 2026). There, on 5 November 2026, 16 replayed webhook deliveries produced 9 projected pushes, 29 GitHub contributions and 58 text chunks; the same 16 deliveries were replayed on the local stack on 19 November 2026 with the expected result for each. Every element that is still planned is drawn **dashed** and labelled **[planned]**, and every table marks it in a *Status* column. Only three groups remain planned:
 
 * the **AI model services** (Claude API, Voyage AI): embeddings of chunk text (F16, F17) and the model-written answer (F41, F42). No API key is configured, so `POST /ask` answers **extractively** (it quotes the best sentence of each top chunk, each with its citation) and retrieval is keyword-only; the vector branch of `search_chunks()` and `--embed-missing` are built but unused;
 * the student-facing **portfolio export** (F43, F44); the admin-run rebuild (F55) is built;
 * the derivation of verified skill levels from confirmed claims (S43, S44).
 
-The API routes that exist today are `/health`, `GET /notes`, `GET /notes/{id}/versions`, `POST /notes`, `GET /consistency`, `POST /ask`, `POST /ingest/drain`, `GET /ingest/trace` and `GET /ingest/status` (`api/app/main.py`).
+The API routes that exist today are `/health`, `GET /notes`, `GET /notes/{id}/versions`, `POST /notes`, `GET /consistency`, `POST /ask`, `POST /ingest/drain`, `GET /ingest/trace`, `GET /ingest/status` and `POST /race/run` (`api/app/main.py`). `POST /race/run` belongs to the race arena page, a teaching experiment that runs on a separate disposable PostgreSQL database (the race lab of `experiments/race/`), not on the platform's stores, so it is not drawn as a process.
 
 All diagrams are generated from one machine-readable model (`docs/lab/dfd/src/dfd_model.py`). The same model produces every table in this document and runs the balancing, construction-rule and naming checks of Section 10, so a diagram and its tables cannot disagree.
 
@@ -489,7 +488,7 @@ R = read, W = write (insert, update or delete), A = write (append). A mode follo
 
 **5.1 Submit component** (`submit_milestone()`; triggers `trg_submission_open`, `trg_submission_artifact_check`, `trg_submission_artifact_same_txn`, `trg_artifact_chunk_visibility_sync`). Input F24: team, component and artifact ids. The process checks that the caller is a team member, that the component exists and is not locked, and that every artifact belongs to the team, is not private and has at least one saved version. A transaction-scoped advisory lock on (team, component) serialises concurrent submitters, and the process computes `attempt_no = max + 1`; `UNIQUE (team_id, project_id, milestone_no, attempt_no)` is the backstop. It writes the `submission` row and one `submission_artifact` row per artifact with the **latest `version_no` frozen**, and moves each artifact's visibility from `team` to `submitted`. A trigger propagates the change to its `artifact_chunk` rows. All of this is one transaction: either the whole submission is recorded or none of it is. Output F25: the receipt (submission id, attempt number, frozen versions).
 
-**5.2 Record marks** (`record_assessment()`; policies `assessment_insert`, `assessment_update`, `assessment_delete`; trigger `trg_assessment_check`). Input F27: USN, component, marks, remarks. `record_assessment()` accepts only faculty, and only the faculty member teaching the project's offering (`app.teaches_project()`, read from `course_offering` and `course`). Input F52: the admin corrects marks directly under the `assessment` policies (insert, update and, for the admin only, delete). For both inputs, marks must be non-negative (CHECK) and are stored with one decimal (`NUMERIC(4,1)`; the RPC also rejects a second decimal), and the trigger enforces `marks <= milestone.max_marks`, that the component is not locked (it takes a FOR SHARE lock on the milestone row, so a concurrent lock waits), and that the student is in a team of the project. The mark is keyed by `(usn, project_id, milestone_no)`, the component grain of the paper marks sheet. Output F29.1: the assessment receipt.
+**5.2 Record marks** (`record_assessment()`; policies `assessment_insert`, `assessment_update`, `assessment_delete`; trigger `trg_assessment_check`). Input F27: USN, component, marks, remarks. `record_assessment()` accepts only faculty, and only the faculty member teaching the project's offering (`app.teaches_project()`, read from `course_offering` and `course`). Input F52: the admin corrects marks directly under the `assessment` policies (insert, update and, for the admin only, delete). For both inputs, marks must be non-negative (CHECK) and may have at most one decimal: since migration 0007 the column is unconstrained `NUMERIC` with CHECK `assessment_marks_one_decimal`, so a second decimal is refused on every path instead of being rounded, and an accepted mark is stored at scale 1 (`trg_assessment_canonical_marks`), and the trigger enforces `marks <= milestone.max_marks`, that the component is not locked (it takes a FOR SHARE lock on the milestone row, so a concurrent lock waits), and that the student is in a team of the project. The mark is keyed by `(usn, project_id, milestone_no)`, the component grain of the paper marks sheet. Output F29.1: the assessment receipt.
 
 **5.3 Lock and unlock components** (`lock_milestone()`; policy `milestone_update`; trigger `trg_milestone_faculty_lock_only`). Inputs F28 (faculty) and F51 (admin): project and component. `lock_milestone()` admits the teaching faculty or the admin (`app.oversees_project()`). The update is conditional (`... WHERE locked_at IS NULL`), so two concurrent locks cannot both succeed. For faculty the lock is one-way, and faculty may change no other column of `milestone`. The admin may also unlock, by setting `locked_at` back to NULL through `milestone_update`. Locking is the system-wide "freeze" signal: once `milestone.locked_at` is set, 4.1 to 4.3, 5.1 and 5.2 read it and refuse further changes to that component's claims, evidence, countersigns, submissions and marks. Outputs F29.2 and F53: the lock summary (marks recorded, students not yet marked).
 
@@ -584,7 +583,7 @@ evidence_note     = 1{character}200
 ref               = [ commit_sha | url | file_path ]
 commit_sha        = 7{hex_digit}40
 url               = "http" + ("s") + "://" + {character}
-marks             = decimal(4,1)          * 0 <= marks <= milestone.max_marks *
+marks             = decimal               * 0 <= marks <= milestone.max_marks; at most one decimal place *
 remarks           = 1{character}200
 timestamp         = date + time + time_zone
 ```
@@ -759,7 +758,7 @@ The construction and naming rules checked are:
 
 # 12. Requirements traceability (FR -> process -> data store -> implementation)
 
-Numbers, titles and status follow the SRS, revision 1.2 of 5 November 2026 (C2_SRS.md §3.2), which was refreshed together with this revision; the two documents now agree.
+Numbers, titles and status follow the SRS, revision 1.3 of 19 November 2026 (C2_SRS.md §3.2), which was refreshed together with this revision; the two documents agree.
 
 ```{=latex}
 \begin{landscape}
@@ -796,10 +795,21 @@ Numbers, titles and status follow the SRS, revision 1.2 of 5 November 2026 (C2_S
 4. **Lab CIE rounding.** 5.5 rounds the reduced mark once, to one decimal, half away from zero. This assumption is still to be confirmed with the course faculty (C2 assumption A3).
 5. **Level 2 scope.** Level 2 is given for the two core processes, 4.0 and 5.0, as the component brief asks. The other processes can be exploded with the same generator. A Level 2 of 8.0 would show its local store `pg_portfolio_export`.
 6. **Schema-level paths without a screen yet.** Claim amendment and withdrawal (F18.2, F18.3), evidence removal (F19.2), verdict withdrawal (F20.2) and the admin's direct table writes (F52, unlock in F51) are allowed and guarded by the database (policies, column grants, triggers) and are reachable through the API, but the web client has no form for them yet. They are drawn because a DFD of the database models every data path it accepts.
-7. **C2 status column.** The difference recorded in revision 2 is closed: C2 revision 1.2 marks ingestion, search with extractive cited answers, the portfolio rebuild, `note_versions`, the validators, the consistency report and the Realtime notices as implemented, as this DFD does.
+7. **C2 status column.** The difference recorded in revision 2 is closed: C2 revisions 1.2 and 1.3 mark ingestion, search with extractive cited answers, the portfolio rebuild, `note_versions`, the validators, the consistency report and the Realtime notices as implemented, as this DFD does.
 8. **A real `git push` and file text.** The live project was exercised with 16 replayed, signed webhook deliveries through the deployed Edge Function. A push from GitHub itself takes the same path; searchable text from a real push additionally needs the worker's optional GitHub contents fetch, which is off by default (`docs/INGESTION.md` §7). This affects the content of S19, not the shape of any flow.
 
 # 14. Revision record
+
+Revision 4 (19 November 2026) follows the project becoming a solo project by S Arun Sanjay:
+
+| # | Change | Where |
+|--|--|--|
+| 1 | The cover names one author. | Cover |
+| 2 | Migration 0007 (strict marks) recorded: process 5.2 and the data element `marks` now state that a second decimal is refused on every write path. No flow, store or diagram changes. | Sections 1, 8 (5.2), 9 |
+| 3 | `POST /race/run` added to the list of API routes, and the reason it is not a process of this DFD. | Section 1 |
+| 4 | Section 12 now follows C2 revision 1.3. | Sections 12, 13 |
+
+The diagrams themselves are unchanged: a solo team uses the same flows of 4.0 (with no teammate there is no input F20, so 4.4 keeps the claim `pending` and it rests on its evidence and the faculty review), and no diagram names a person.
 
 Revision 3 (5 November 2026) brings the diagrams up to the system as built after migrations 0005 and 0006:
 

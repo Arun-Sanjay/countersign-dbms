@@ -6,11 +6,11 @@ faculty or admin personas. Every stage is tested before it is pushed. Built auto
 pinged only where a step needs his browser or accounts.
 
 Out of prototype scope (later phases from `docs/PLAN.md`):
-- GitHub webhook ingestion
-- RAG and embeddings
+- GitHub webhook ingestion (built later)
+- RAG and embeddings (search built later; embeddings not in use)
 - viva engine
 - Yjs co-editing
-- Race Arena UI (the race *finding* already exists)
+- Race Arena UI (the race *finding* already exists; the page `/race` was built later)
 - deployment hardening
 
 ## 0. Ground rules
@@ -68,16 +68,16 @@ Out of prototype scope (later phases from `docs/PLAN.md`):
 - **Hub:** `semester_hub`
 
 ### Demo seed: `supabase/seed/demo.sql` (never touches fixture rows)
-- **Students:** Sanvid Razdan (1RV24CY051) is added.
+- **Students:** none added; the fixture's 12 students (S Arun Sanjay is the only real one) are used.
 - **Term and courses:** term `2026-ODD`, with offerings and enrollments.
 - **Project:** **P06 "CD252IA Lab 2026-27"** with 11 milestones (milestone_no = component number; C10 and C11 have `counts_in_reduced = false`).
-- **Team:** **T00 "Countersign"**: Arun (lead) and Sanvid, max size 2.
+- **Team:** **T00 "Countersign"**: Arun (lead), a solo team.
 - **Claims and marks:**
-  - real claims, evidence and countersigns for C1 (Synopsis) and C4 (Test);
-  - one contested claim on a seeded team;
+  - real claims and evidence for C1 (Synopsis), C3 (ER diagram v2) and C4 (Test); T00 is solo, so they stay pending (no teammate to countersign) and rest on their evidence and the faculty review;
+  - on the seeded team T06: one contested claim, confirmed claims, and one pending C4 claim by 1RV24CY011 waiting for Meera's countersign;
   - sample marks for C1 and C4.
 - **Personas:** created by `scripts/create_personas.py` through the Auth Admin API, using the service key fetched with the access token. Emails are `@example.edu`:
-  - arun, sanvid, nikhil (has no team), meera (no evidence yet);
+  - arun, nikhil (has no team), meera (the teammate countersign persona, T06);
   - ramesh, faculty F01 (teaches CD252IA);
   - admin.
 

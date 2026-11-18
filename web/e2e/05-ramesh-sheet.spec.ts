@@ -11,7 +11,7 @@ test.describe('5 · ramesh: the P06 rubric sheet', () => {
     await page.goto('/sheet/P06')
     const grid = page.getByTestId('rubric-grid')
     await expect(grid).toBeVisible()
-    for (const name of ['S Arun Sanjay', 'Sanvid Razdan', 'Aditi Rao', 'Karthik M', 'Meera Iyer']) {
+    for (const name of ['S Arun Sanjay', 'Aditi Rao', 'Karthik M', 'Meera Iyer']) {
       await expect(grid.getByText(name, { exact: true })).toBeVisible()
     }
     await expect(grid).toContainText('/120')

@@ -4,8 +4,7 @@
 
 Countersign is the working prototype of the **Unified Experiential Learning and Project
 Intelligence Platform**. It is the DBMS lab mini project (CD252IA, Semester V, Department of CSE,
-RV College of Engineering, Bengaluru) of S Arun Sanjay (1RV24CY047) and Sanvid Razdan
-(1RV24CY051).
+RV College of Engineering, Bengaluru) of S Arun Sanjay (1RV24CY047), a solo project.
 
 Today a faculty member signs the paper lab evaluation sheet on trust: one student often does most
 of the work, and nothing records who built what. Countersign turns the rubric into the database
@@ -14,7 +13,8 @@ schema:
 - every rubric cell links to the students' **claims** ("I wrote the ER diagram");
 - each claim is backed by **evidence rows** (commits, artifact versions, notes, links);
 - a **teammate countersigns** the claim (confirm or dispute), and only contested claims reach
-  the faculty queue;
+  the faculty queue (in a solo team there is no teammate to countersign, so the claim rests on
+  its evidence and the faculty review);
 - marks are entered on the sheet, then locked for good.
 
 GitHub pushes become evidence automatically. Every search and answer runs **as the signed-in
@@ -145,7 +145,7 @@ sequenceDiagram
 ├── supabase/
 │   ├── migrations/            0001 core schema … 0007 strict marks (all applied to the live project)
 │   ├── fixture/               FROZEN graded Test fixture: 01_schema, 02_seed, 03_queries (Q1–Q37)
-│   ├── seed/                  demo.sql (Sanvid, P06 "CD252IA Lab 2026-27", T00, claims, marks), ingest.sql
+│   ├── seed/                  demo.sql (P06 "CD252IA Lab 2026-27", solo team T00, claims, marks), ingest.sql
 │   ├── tests/                 pgTAP: constraints, RLS matrix, RPCs, abuse cases, ingest, worker, strict marks
 │   ├── functions/github-webhook/   Edge Function: HMAC check, then one RPC
 │   └── config.toml            local stack config (sign-ups off, verify_jwt = false for the webhook)
@@ -167,8 +167,10 @@ Requirements:
 - Docker Desktop (option B and most tests);
 - `jq`.
 
-The CLIs run through `npx` (`npx -y supabase@latest`, `npx -y mongosh@latest`), so nothing else
-needs installing.
+The CLIs run through `npx` (`npx -y supabase@latest`, `npx -y mongosh@2.14.1`), so nothing else
+needs installing. Pin mongosh to 2.14.1: the npm release 2.14.2 crashes on start
+(`Cannot find module 'mongodb-redact'`). The test scripts use the same pin (override with
+`MONGOSH_NPX`).
 
 ### A. Web app against the live project (fastest)
 
@@ -239,27 +241,27 @@ accounts.
 
 | Login | Role | Identity | Use it to show |
 |:--|:--|:--|:--|
-| `arun@example.edu` | student | S Arun Sanjay, 1RV24CY047, lead of T00 *Countersign* | hub, team finder, filing a claim, private notes, "what my faculty sees" |
-| `sanvid@example.edu` | student | Sanvid Razdan, 1RV24CY051, T00 | countersigning Arun's claim (confirm or dispute) |
+| `arun@example.edu` | student | S Arun Sanjay, 1RV24CY047, lead of the solo team T00 *Countersign* | hub, team finder, filing a claim (his C1/C3/C4 claims stay pending: no teammate to countersign, so they rest on their evidence), private notes and the private artifact A18 only he can see, "what my faculty sees" |
 | `nikhil@example.edu` | student | Nikhil Bhat, 1RV24CY077, no team in P01 | joining Team Beta (T02, 3 of 4); the "team is full" and "enrollment required" refusals. Not the teammate finder: he already holds every skill P01 requires, so his finder lists nobody |
-| `meera@example.edu` | student | Meera Iyer, 1RV24CY033, in T01, T03 and T06 | "no recorded evidence yet"; team-only live activity |
+| `meera@example.edu` | student | Meera Iyer, 1RV24CY033, in T01, T03 and T06 | countersigning a teammate's claim: Aditi Rao's (1RV24CY011) pending C4 claim on T06 waits in her queue (confirm or dispute); she can still file her own claims; team-only live activity |
 | `ramesh@example.edu` | faculty | Dr. Ramesh Babu, F01, teaches CD252IA (P01, P06) | rubric sheet, contested queue, marks and locking, live toasts |
 | `lakshmi@example.edu` | faculty | Dr. Lakshmi Prasad, F02, teaches AIML (P02), not CD252IA | RLS: P06 is invisible to her, and search finds nothing there |
 | `admin@example.edu` | admin | college admin | the Directory page (`/admin`) with its Ingestion panel: inbox and consistency. **Sync now** works only if the API was started with the service key (otherwise 503 `worker_unconfigured`; run the worker instead) |
 
-All names except S Arun Sanjay and Sanvid Razdan are fictional (fixture data). The persona
+All names except S Arun Sanjay are fictional (fixture data). The unlinked GitHub login
+`outside-dev` in the replay fixtures is a placeholder too. The persona
 password is public by design. Read [`docs/RUNBOOK.md`](docs/RUNBOOK.md) §7 before deploying the
 web app anywhere public.
 
 ## Tests
 
-| Suite | Command | Where it runs | Result (5 Nov 2026) |
+| Suite | Command | Where it runs | Result (19 Nov 2026) |
 |:--|:--|:--|:--|
-| pgTAP: constraint gallery, RLS matrix, RPCs, abuse cases, ingest, worker, strict marks | `npx -y supabase@latest test db` | local Supabase stack, freshly reset (`scripts/reset_local.sh`) | **701** assertions pass (46 + 298 + 126 + 53 + 119 + 16 + 43) |
+| pgTAP: constraint gallery, RLS matrix, RPCs, abuse cases, ingest, worker, strict marks | `npx -y supabase@latest test db` | local Supabase stack, freshly reset (`scripts/reset_local.sh`) | **710** assertions pass (48 + 301 + 129 + 53 + 120 + 16 + 43) |
 | Fixture regression, SQL (gate G1) | `scripts/test_fixture.sh [-v]` | throwaway `postgres:17` container, port 55432 | **37/37** Q1–Q37 match Appendix H |
 | Fixture regression, MongoDB (gate G1) | `scripts/test_mongo_fixture.sh [-v]` | throwaway `mongo:8` container, port 57017 | **25/25** M1–M25 match Appendix H |
 | Mongo validators | `scripts/check_mongo_validators.sh --local` | scratch database in `elp-mongo-local` | fixture writes accepted, 6 malformed writes rejected |
-| API + worker | `cd api && MONGO_TARGET=local uv run pytest -q` | local stack + personas + `elp-mongo-local` | **60** pass (`test_api.py` 24, `test_worker.py` 25, `test_race.py` 11) |
+| API + worker | `cd api && SUPABASE_TARGET=local MONGO_TARGET=local uv run pytest -q` | local stack + personas + `elp-mongo-local` + race lab `elp-race-pg` (`experiments/race/setup.sh`) | **66** pass (`test_api.py` 24, `test_worker.py` 29, `test_race.py` 13); without the race lab, 65 pass and 1 is skipped |
 | Web static checks | `cd web && npm run typecheck && npm run lint && npm run build` | local | clean |
 | Web end-to-end (Playwright, installed Chrome) | `cd web && npm run e2e` | **local only** (resets the local DB first) | **44** pass across `e2e/01`–`11` |
 | Race harness (Component 10) | see below | throwaway `elp-race-pg` container, port 55433 | 72,000 races; findings in `experiments/race/` |
@@ -326,7 +328,8 @@ What the replay covers:
   - a redelivery and a replayed capture, both answered `duplicate: true`;
   - a wrong-secret signature and a tampered body, both answered 401;
   - a feature-branch push, which is ignored;
-  - a commit by an unknown author;
+  - a commit by `outside-dev`, a GitHub login with no `student_identity` row: it is logged in
+    Mongo but credits nobody (an "unknown author" warning);
   - a teammate's commit pushed by someone else, which is logged but not credited.
 
 Then check the result:
@@ -371,15 +374,15 @@ also needs Times New Roman from macOS; C3 needs a folder of DejaVu fonts.
 
 ## Status
 
-As of 5 November 2026.
+As of 19 November 2026.
 
 | Area | State |
 |:--|:--|
-| Live Supabase project `countersign-dbms` (ap-south-1, PG 17.11) | **Built.** Migrations 0001–0007 applied; fixture, demo and ingest seeds loaded; 7 personas; sign-ups disabled; github-webhook function deployed |
-| Relational core, RLS, RPCs, triggers, views | **Built and tested** (pgTAP 701) |
+| Live Supabase project `countersign-dbms` (ap-south-1, PG 17.11) | **Built.** Migrations 0001–0007 applied (verified 19 Nov 2026); fixture, demo and ingest seeds loaded; 6 personas; sign-ups disabled; github-webhook function deployed |
+| Relational core, RLS, RPCs, triggers, views | **Built and tested** (pgTAP 710) |
 | Frozen graded fixture | **Green.** Q1–Q37 37/37, M1–M25 25/25 |
 | Web app (student, faculty, admin) | **Built** (e2e 44). Runs on localhost against either stack; no hosted deployment yet (needs `npx vercel login`) |
-| FastAPI (notes with immutable versions, consistency, ingest drain/trace/status) | **Built** (pytest 60). Runs on a laptop; not hosted |
+| FastAPI (notes with immutable versions, consistency, ingest drain/trace/status) | **Built** (pytest 66). Runs on a laptop; not hosted. The worker's `--loop` retries with backoff when Postgres or Mongo is down |
 | GitHub ingestion: Edge Function, pgmq, worker, Mongo log, projection, Realtime | **Built and deployed.** 16 replayed deliveries → 9 projected, 29 contributions, 58 chunks on the live project |
 | Real repository webhook on GitHub | **Pending.** No hook is configured on `Arun-Sanjay/countersign-dbms` yet (`ingest/README.md`, cloud setup step 4) |
 | File text for real pushes (`GITHUB_FETCH_CONTENTS=1`) | **Built, untested against GitHub** (needs a `GITHUB_TOKEN`; the repository is private) |
@@ -387,13 +390,13 @@ As of 5 November 2026.
 | Embeddings (Voyage `voyage-4`, 1024 dims, HNSW) | **Built, unused.** Pending `VOYAGE_API_KEY`; 0 of 58 chunks embedded |
 | `/ask` | **Extractive with citations** today. Generative answers with server-checked citations are built and unit-tested with stubs. Pending `ANTHROPIC_API_KEY` |
 | Innovative Experiment (race harness, 72,000 races, precedence graphs in SQL) | **Done** (local Docker) |
-| Race arena page `/race` (the experiment in the app: matrix, latency, strategies + SQL, precedence graphs, live race via `POST /race/run`) | **Built** (e2e `11-race`, pytest `test_race.py`). The live panel needs the local race lab (`experiments/race/setup.sh`) |
+| Race arena page `/race` (the experiment in the app: matrix, latency, strategies + SQL, precedence graphs, live race via `POST /race/run`) | **Built** (e2e `11-race`, pytest `test_race.py`). It replays the 72,000 recorded races and runs single live races; the live panel needs the local race lab (`experiments/race/setup.sh`). A request refused as busy (409) never resets the lab |
 | CI (`fixture.yml`) | **Written, not pushed** (needs the `workflow` scope) |
 | Keep-alive for the free project | **Manual** (`docs/RUNBOOK.md` §3); no scheduled job yet |
 | GitHub OAuth identity binding, limited Atlas app user | **Pending.** Identities are verified by an admin seed; the API uses the Atlas admin URI, locally only |
 | Viva practice, audit hash chain, consent ledger, Yjs co-editing | **Planned** (`docs/PLAN.md` §3, phases P4–P5) |
 
-App issues found in the demo rehearsal, with repro and the fix made for each (all seven fixed, 5 November 2026): [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md).
+App issues found in the demo rehearsal, with repro and the fix made for each (all nine fixed, 19 November 2026): [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md).
 
 ## Safety rules
 
@@ -411,9 +414,8 @@ App issues found in the demo rehearsal, with repro and the fix made for each (al
 
 ## Credits
 
-- **S Arun Sanjay** (1RV24CY047): product, database, backend, web app.
-- **Sanvid Razdan** (1RV24CY051): documentation, diagrams and test runs; the viva owner of the
-  RLS policies, the MongoDB validators and the experiment analysis (C7 §12, `docs/PLAN.md` §3).
+- **S Arun Sanjay** (1RV24CY047): sole author. Product, database, backend, web app,
+  documentation, diagrams and tests, and the viva owner of every component.
 
 Built for the Database Management Systems lab (CD252IA), Department of Computer Science and
 Engineering, RV College of Engineering®, Bengaluru, 2026-27.

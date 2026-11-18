@@ -1,8 +1,8 @@
 # Viva preparation: Countersign (CD252IA, RVCE)
 
 **Unified Experiential Learning and Project Intelligence Platform**, product name **Countersign**.
-Team: S Arun Sanjay (1RV24CY047), Sanvid Razdan (1RV24CY051). State described: 5 November 2026
-(migrations 0001–0006 live on `countersign-dbms`, ap-south-1).
+Author: S Arun Sanjay (1RV24CY047), a solo project; he owns and answers for every component.
+State described: 19 November 2026 (migrations 0001–0007 live on `countersign-dbms`, ap-south-1).
 
 How to use this file: read the answer aloud once, then answer from memory. Every answer is short
 on purpose; the "where" pointer tells you which file to open if the examiner asks for proof.
@@ -450,10 +450,12 @@ whole rows.
 
 **B25. What will you demo live?** The C9 run-of-show (C9 §3, the authoritative script): the paper
 sheet; Ramesh's rubric sheet and its SQL drawer (normalization); Arun files a C3 claim with
-evidence; Arun countersigns Sanvid's claim #5 and Ramesh reloads the sheet; Aditi's contested C1
+evidence (it stays pending: T00 is a solo team, so there is no teammate to countersign); Meera, on
+T06, confirms Aditi's (1RV24CY011) pending C4 claim #8 from her countersign queue, and Ramesh's
+open sheet updates when its window regains focus (no reload); Aditi's contested C1
 cell; a fresh signed push to the cloud Edge Function → toast within about a second → trace sheet
 (Mongo raw event beside the Postgres rows) → search and a cited answer; "try to break it" in the
-terminal and Lakshmi's empty sheet; the race (`demo_locks.sh S2 RR`, then `S7 RR`). The admin
+terminal and Lakshmi's empty sheet; the race (`demo_locks.sh S2 RR`, then `S7 RR`, or the Race arena page `/race`, which replays the 72,000 recorded races and runs a single live race). The admin
 consistency panel is a backup, not in the main run.
 
 **B26. What if the live push fails?** C9 §5: a wrong secret → rerun the ping check; no toast →
@@ -465,21 +467,36 @@ local worker; the replay fixtures (`scripts/replay_webhooks.py`) rebuild the his
 our own earlier trigger, measured it at scale (2,556,000 attempts), verified schedules with
 precedence graphs in SQL, and shipped the fix with a client retry contract.
 
-**B28. The consistency row for T00 / 1RV24CY047 reads "6 · 6 · matched 5" and still says
+**B28. The consistency row for T00 / 1RV24CY047 reads "6 · 7 · matched 5" and still says
 "consistent". Why?** The two counts are different things. Mongo: 6 commits in the raw log that
 the pipeline credits to Arun; one of them (13a1b9c…) touched only untracked paths, so it
 produced no contribution row by design (`not_projected`). Postgres: 5 distinct full SHAs from
-the pipeline plus 1 GitHub `contribution` row whose `source_ref` is not a full 40-hex SHA (a
-seeded demo row), which `/consistency` counts as `outside_pipeline` (`api/app/consistency.py`).
+the pipeline plus 2 GitHub `contribution` rows whose `source_ref` is not a full 40-hex SHA
+(the seeded demo rows `3f9c2ab` and `8d41e07`), which `/consistency` counts as
+`outside_pipeline` (`api/app/consistency.py`).
 5 commits match by SHA on both sides, and neither remainder is a pipeline loss
-(`only_in_mongo` / `only_in_postgres` are empty), which is the only thing the status flags. The table does not show
-the two remainders; that is a known UI gap (`docs/KNOWN_ISSUES.md`).
+(`only_in_mongo` / `only_in_postgres` are empty), which is the only thing the status flags. The table shows
+both remainders under the counts ("1 not projected", "2 outside pipeline"; `docs/KNOWN_ISSUES.md` #4, fixed).
 
 **B29. Break-it attempt 7 (anonymous read) shows the hint "GRANT SELECT ON public.assessment TO
 anon". Is that a hole?** No. 42501 is "insufficient privilege": `anon` has no privilege on any
 table, by design (C8 B.5). The hint is PostgREST's generic advice for that error, telling an
 administrator how they *could* grant access. We deliberately did not; the hint describes the
 fix we refused.
+
+**B30. Your own team T00 has one member. Who countersigns your claims?** Nobody: a countersign
+must come from a teammate who is not the claimant (the `countersign` trigger), and a solo team has
+none. With no countersign row, the claim-status trigger keeps the claim `pending`; no schema
+change was made for solo teams. The claim then rests on its evidence (A17 v1 and contribution
+A17@v1 for the C3 ER diagram v2 claim; commits 3f9c2ab and 8d41e07 for C4) and on the faculty
+review, and the UI says so: "Solo team: no teammate to countersign. This claim rests on its
+evidence and faculty review." The countersign flow itself is shown on T06 (Meera confirms Aditi's
+C4 claim). Countersigning is the product concept for teams of any size.
+
+**B31. Why does a push by `outside-dev` credit nobody?** Credit goes only through a verified
+`student_identity` row, and the GitHub login `outside-dev` has none. Its commit (`a4c0452` in
+Meera's T01 push) is still logged in Mongo `github_events`, gets an "unknown author" warning and
+produces no `contribution` row.
 
 ---
 
@@ -785,7 +802,8 @@ Follow-up: `$merge … on: "usn"` needs a unique index on `portfolios.usn` (we c
 |:--|:--|
 | Fixture | 13 tables; 12 students, 5 teams, 28 contributions; 37 SQL (Q1–Q37) and 25 Mongo (M1–M25) queries, frozen |
 | Schema now | 29 public tables + `private.note`; 6 `security_invoker` views; 16 RPCs + `search_chunks()`; 5 service-role-only pipeline RPCs; 58 FKs (54 as of 0004, counted in C3; 0005 adds 4) |
-| Tests | pgTAP 657 assertions (45 + 298 + 126 + 53 + 119 + 16); fixture 37/37 and 25/25; API pytest 47; web e2e 38 |
+| Tests (19 Nov) | pgTAP 710 assertions in 7 files (48 + 301 + 129 + 53 + 120 + 16 + 43); fixture 37/37 and 25/25; API pytest 66; web e2e 44; webhook replay 16/16 |
+| Demo seed | 12 students; T00 solo (1RV24CY047); 8 claims (3 pending on T00, 5 on T06), 15 evidence rows, 4 countersigns (all T06), 39 contributions, 8 marks, 2 private notes (both Arun's); 6 persona logins |
 | Race experiment | 6 strategies × 3 levels × 4 N × 1000 = 72,000 races, 2,556,000 attempts, 0 deadlocks; fixture trigger at RR: 100% over-admission, worst 103/4; capacity v2: 0% |
 | Latency (N = 100) | capacity v2 p95 6.0 ms at RR, 12.1 ms at RC |
 | Live replay | 16 deliveries → 9 projected, 1 ignored (feature branch), 1 ping, 1 `issues` event, 2 signature failures (401), 2 duplicates → 29 GitHub contributions, 58 chunks, 0 embeddings |
@@ -795,6 +813,8 @@ Follow-up: `$merge … on: "usn"` needs a unique index on `portfolios.usn` (we c
 **Honest gaps to admit if asked.** No AI keys yet (answers are extractive; embeddings unused);
 CI workflow written but not pushed (needs a `workflow`-scoped token); identity verification is
 administrative (GitHub OAuth planned); the student-facing portfolio export and verified-skill
-derivation are not built; leaked-password protection is off in the cloud Auth settings; migration
-0007 (C2 defects D1, D2, D4) was scheduled for C8 and is deferred; the open UI issues are in
-`docs/KNOWN_ISSUES.md`.
+derivation are not built; leaked-password protection is off in the cloud Auth settings; the C2
+defects D1, D2 and D4 are still open (migration 0007 went to strict marks instead: a mark with a
+second decimal is now refused, closing the NUMERIC(4,1) rounding gap); viva practice, the
+hash-chained audit log, the consent ledger, the EXPLAIN bench and hosting are not built. The
+issues found in the rehearsal are all fixed (`docs/KNOWN_ISSUES.md`).

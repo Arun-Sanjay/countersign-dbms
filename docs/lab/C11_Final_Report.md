@@ -1,6 +1,6 @@
 ---
 title-meta: "Final Report: Unified Experiential Learning and Project Intelligence Platform (Countersign)"
-author-meta: "S Arun Sanjay (1RV24CY047); Sanvid Razdan (1RV24CY051)"
+author-meta: "S Arun Sanjay (1RV24CY047)"
 subject: "CD252IA Database Management Systems, Lab Component 11"
 lang: en-GB
 ---
@@ -27,13 +27,12 @@ lang: en-GB
 | USN | Name |
 |:--|:--|
 | 1RV24CY047 | S Arun Sanjay |
-| 1RV24CY051 | Sanvid Razdan |
 
 &nbsp;
 
 Semester V, 2026-27
 
-Skeleton 0.95, 5 November 2026
+Skeleton 1.0, 19 November 2026
 :::
 
 ::: toc
@@ -44,16 +43,16 @@ Skeleton 0.95, 5 November 2026
 | Item | Value |
 |:--|:--|
 | Component | 11, CIE Project Demo and Final Report Submission (10 marks, not reduced) |
-| Version | Skeleton 0.95, 5 November 2026: corrected after the read-only rehearsal and the lab panel's review (abstract, §4, §7.1, §7.2, §8.4, Appendices B.4 and C, references) |
-| Authors | S Arun Sanjay (1RV24CY047), Sanvid Razdan (1RV24CY051) |
+| Version | Skeleton 1.0, 19 November 2026: a solo project (one author; team T00 has one member, and the countersign is shown on T06), migration 0007, the Race arena page and the test counts of 19 November 2026. Skeleton 0.95 (5 November 2026) was corrected after the read-only rehearsal and the lab panel's review |
+| Author | S Arun Sanjay (1RV24CY047) |
 | Extends | C9 Demo and Draft Report (`C9_Demo_and_Draft_Report.md`): the demo script, the architecture and the description of every module |
 | Adds | evaluation against the SRS, limitations, future work, conclusion; Appendix A (full schema listing generated from the database catalog), Appendix B (test inventory), Appendix C (user manual), Appendix D (rebuilding this report) |
 
-**How to read this skeleton.** Every section is written from the system as it stands on 5 November 2026, with measured numbers. Text in a box marked **To complete** is a placeholder for facts that only exist after the demo (the evaluators' questions, the live timings on the cloud, the final marks). Chapters 4 and 5 summarise C9 Part II and point to it for detail; the final submission merges the two.
+**How to read this skeleton.** Every section is written from the system as it stands on 19 November 2026, with measured numbers. Text in a box marked **To complete** is a placeholder for facts that only exist after the demo (the evaluators' questions, the live timings on the cloud, the final marks). Chapters 4 and 5 summarise C9 Part II and point to it for detail; the final submission merges the two.
 
 # Abstract
 
-Countersign is a database-driven experiential-learning platform for RVCE course projects. Its thesis is "every mark has a receipt": the lab's paper evaluation sheet is normalized into the schema, and every rubric cell links to student claims, the evidence behind each claim and the teammates who countersigned it. The system of record is PostgreSQL 17 on Supabase: 30 tables with row-level security on every one, six `security_invoker` views and 22 RPCs. Fourteen of the RPCs are SECURITY INVOKER and run as the caller; three private-note RPCs are SECURITY DEFINER with an explicit owner check; and five pipeline RPCs are SECURITY DEFINER and executable by the service role only (C2 NFR-SEC-5). So the browser and the API never bypass the access rules for a user request. MongoDB 8 on Atlas keeps the raw GitHub push log, immutable note versions and student portfolios; an inbox → log → projection pipeline with idempotent steps keeps the two databases consistent and is checked by a consistency report. Search fuses a rarity-weighted keyword list and an optional vector list by reciprocal rank fusion in one SQL statement under RLS. The Innovative Experiment measured six ways of enforcing a team's capacity under concurrency over 72,000 races and showed that the fixture's lock-then-count trigger over-admits in every race at REPEATABLE READ, while the product's write-the-parent trigger and a declarative seat-key design never do. The build is verified by 657 pgTAP tests, the unchanged graded Test fixture (37/37 SQL, 25/25 MongoDB), 47 API tests and 38 browser tests.
+Countersign is a database-driven experiential-learning platform for RVCE course projects. Its thesis is "every mark has a receipt": the lab's paper evaluation sheet is normalized into the schema, and every rubric cell links to student claims, the evidence behind each claim and the teammates who countersigned it; in a solo team there is no teammate to countersign, so the claim rests on its evidence and the faculty review. The system of record is PostgreSQL 17 on Supabase: 30 tables with row-level security on every one, six `security_invoker` views and 22 RPCs. Fourteen of the RPCs are SECURITY INVOKER and run as the caller; three private-note RPCs are SECURITY DEFINER with an explicit owner check; and five pipeline RPCs are SECURITY DEFINER and executable by the service role only (C2 NFR-SEC-5). So the browser and the API never bypass the access rules for a user request. MongoDB 8 on Atlas keeps the raw GitHub push log, immutable note versions and student portfolios; an inbox → log → projection pipeline with idempotent steps keeps the two databases consistent and is checked by a consistency report. Search fuses a rarity-weighted keyword list and an optional vector list by reciprocal rank fusion in one SQL statement under RLS. The Innovative Experiment measured six ways of enforcing a team's capacity under concurrency over 72,000 races and showed that the fixture's lock-then-count trigger over-admits in every race at REPEATABLE READ, while the product's write-the-parent trigger and a declarative seat-key design never do. The Race arena page brings the experiment into the product: it replays the recorded races and runs single live races in a separate container. The build is verified by 710 pgTAP tests, the unchanged graded Test fixture (37/37 SQL, 25/25 MongoDB), 66 API tests and 44 browser tests.
 
 # 1. Introduction
 
@@ -101,18 +100,18 @@ Functional requirements FR1–FR11 and the non-functional requirements are speci
 
 The modules are described in C9 §10: core schema (10.1), security (10.2), RPCs (10.3), claims and countersign (10.4), rubric sheet and Lab CIE marks (10.5), teams and skills (10.6), ingestion (10.7), search and Ask (10.8), MongoDB (10.9), the web application (10.10) and the experiment harness (10.11). The complete schema, as the database itself reports it, is Appendix A.
 
-| Layer | Size on 5 Nov 2026 |
+| Layer | Size on 19 Nov 2026 |
 |:--|:--|
-| SQL migrations 0001–0006 | 3,966 lines; 30 tables, 6 views, 73 functions, 102 policies, 28 triggers |
-| pgTAP tests | 6 files, 657 assertions |
-| Web application | 14 pages; a "Show the SQL" registry of 43 panels |
-| API and worker | 9 endpoints; 47 tests |
+| SQL migrations 0001–0007 | 4,133 lines; 30 tables, 6 views, 74 functions, 102 policies, 29 triggers |
+| pgTAP tests | 7 files, 710 assertions |
+| Web application | 15 pages (including the Race arena, `/race`); a "Show the SQL" registry of 46 panels |
+| API and worker | 10 endpoints (including `POST /race/run`); 66 tests |
 | MongoDB | 4 collections with `$jsonSchema` validators |
-| Experiment | 6 strategies × 3 isolation levels × 4 values of N × 1000 trials |
+| Experiment | 6 strategies × 3 isolation levels × 4 values of N × 1000 trials; single live races from the Race arena |
 
 # 6. Testing
 
-C9 §11 gives the counts per suite; Appendix B lists what each test file covers. All suites pass on the local stack after `scripts/reset_local.sh`: pgTAP 657, fixture Q1–Q37 37/37 and M1–M25 25/25, API 47, web e2e 38 (10 specs).
+C9 §11 gives the counts per suite; Appendix B lists what each test file covers. All suites pass on the local stack after `scripts/reset_local.sh` (verified 19 November 2026): pgTAP 710 (7 files), fixture Q1–Q37 37/37 and M1–M25 25/25, API 66 (with the race lab `elp-race-pg` running), web e2e 44 (11 specs), and the webhook replay 16 of 16 deliveries as expected.
 
 # 7. Evaluation
 
@@ -136,8 +135,8 @@ C9 §11 gives the counts per suite; Appendix B lists what each test file covers.
 
 | NFR | Result | How it was measured |
 |:--|:--|:--|
-| Security | Met: RLS on every table; anon reads nothing; faculty see only the projects they oversee: there they read contribution metadata, claim statements, evidence, dispute comments and *submitted* text, but never drafts, private artifacts or private notes (C2 §3.4.1, C8 B.2); the API never uses the service key for a user | 298-assertion RLS matrix; 53 abuse cases; C9 §3.6 live attempts |
-| Integrity | Met: every cross-row rule is a trigger with a failing test | 45-assertion constraint gallery; 126 RPC assertions |
+| Security | Met: RLS on every table; anon reads nothing; faculty see only the projects they oversee: there they read contribution metadata, claim statements, evidence, dispute comments and *submitted* text, but never drafts, private artifacts or private notes (C2 §3.4.1, C8 B.2); the API never uses the service key for a user | 301-assertion RLS matrix; 53 abuse cases; C9 §3.6 live attempts |
+| Integrity | Met: every cross-row rule is a trigger with a failing test; since migration 0007 a mark with a second decimal is refused on every write path, never rounded | 48-assertion constraint gallery; 129 RPC assertions; 43 strict-marks assertions (`07_strict_marks.sql`) |
 | Concurrency | Met for capacity, one-team-per-project, membership and countersign revisions at RC, RR and SERIALIZABLE | C10 (72,000 races); `membership_skew_check.sh` |
 | Reliability | Met for ingestion: at-least-once delivery, idempotent steps, dead letters, repair from the log | `06_ingest_worker.sql`; `test_worker.py` |
 | Privacy | Met: private notes in a non-exposed schema; Realtime payloads carry ids only; e-mails hashed in the raw log | `02_rls_matrix.sql` §C; `05_ingest.sql` §G |
@@ -157,11 +156,11 @@ C9 §11 gives the counts per suite; Appendix B lists what each test file covers.
 | S6 declarative seat keys | 0 % | 0 % | 0 % |
 | S7 write-the-parent (product) | 0 % | 0 % | 0 % |
 
-Over-admission rate, 1000 races per cell and N. The lesson for the design: a rule that counts rows is safe only if the conflict becomes a write on one row (S3, S7) or a key (S6); SERIALIZABLE fixes even the naive strategy, but only with a retry loop does a loser get a clean refusal. The precedence graphs built in SQL agree with the outcomes (a cycle T1 → T2 → T1 in exactly the over-admitting two-client races); this is a consistency check of the model, not independent evidence (`experiments/race/README.md`).
+Over-admission rate, 1000 races per cell and N. The lesson for the design: a rule that counts rows is safe only if the conflict becomes a write on one row (S3, S7) or a key (S6); SERIALIZABLE fixes even the naive strategy, but only with a retry loop does a loser get a clean refusal. The precedence graphs built in SQL agree with the outcomes (a cycle T1 → T2 → T1 in exactly the over-admitting two-client races); this is a consistency check of the model, not independent evidence (`experiments/race/README.md`). The Race arena page (`/race`, C10 §12.4) shows these results in the product and lets faculty and admins run one live race in the throwaway container.
 
 ## 7.4 The demo
 
-> **To complete after the demo:** date, which live moments ran on the cloud and which on the fallback; measured toast latency of the live push on the cloud; the evaluators' questions and our answers; anything that failed and why.
+> **To complete after the demo:** date, which live moments ran on the cloud and which on the fallback; measured toast latency of the live push on the cloud; the evaluators' questions and the answers given; anything that failed and why.
 
 # 8. Limitations
 
@@ -174,7 +173,7 @@ No `ANTHROPIC_API_KEY` or `VOYAGE_API_KEY` is set. `/ask` therefore answers extr
 The design dropped the GitHub App for a plain repository webhook (PLAN §2 item 9). Consequences:
 
 * The evidence in the demo comes from signed replays of captured and generated payloads, not from a live repository push. A real push gives versions and contributions, but searchable text only with `GITHUB_FETCH_CONTENTS=1` and a token, which was tested against a mocked API only.
-* Identity verification (`student_identity.verified_at`) is stamped by an admin; GitHub OAuth would stamp it for real. Sanvid's identity is a placeholder and is unverified, so his pushes would not be credited.
+* Identity verification (`student_identity.verified_at`) is stamped by an admin; GitHub OAuth would stamp it for real. A GitHub login with no `student_identity` row is logged but never credited: in the replay fixtures, commit a4c0452 by the unlinked login `outside-dev` inside a T01 push gets no contribution row.
 * A teammate who merges someone else's branch gives and gets no credit for it: credit follows the authenticated pusher.
 
 ## 8.3 Single-college tenancy
@@ -186,8 +185,9 @@ There is no `college` entity and no college key on any table: the schema, the RL
 * **Deployment:** the web app and the API run locally against the cloud database; the Vercel deployment needs an interactive login and has not been done. The Supabase free tier pauses idle projects.
 * **CI:** the workflow file exists but is not pushed (the token lacks the `workflow` scope), so the fixture regression runs by hand.
 * **MongoDB access:** the prototype connects with the Atlas admin user, locally only; a least-privilege user with insert-only rights on `note_versions` is still to be created.
-* **Data:** the marks and T06's work are illustrative; the 120 → 30 rounding rule is our assumption until the course faculty confirms it.
-* **Not built from the plan:** the Race Arena page promised in C7 §11 (the live lock graph runs in the terminal instead, C10 §12.4), viva practice, the hash-chained audit log and consent ledger, the EXPLAIN before/after benchmark, migration 0007 (C2 defects D1, D2, D4; deferred, C8 B.10), Realtime for events other than contributions, live co-editing.
+* **Data:** the marks and T06's work are illustrative; the 120 → 30 rounding rule is an assumption until the course faculty confirms it.
+* **Solo teams:** the project's own team T00 has one member, so its claims cannot be countersigned and stay *pending*; they rest on their evidence and the faculty review. This is the existing rule, not a schema change, and the UI says so; the countersign is demonstrated on T06.
+* **Not built from the plan:** viva practice, the hash-chained audit log and consent ledger, the EXPLAIN before/after benchmark, embeddings against the real service (§8.1), hosting, Realtime for events other than contributions (the rubric sheet refetches on window focus instead), live co-editing. The Race arena page promised in C7 §11 is built (C10 §12.4); it shows the precedence graph of a live race, while PostgreSQL's wait-for graph is still printed in the terminal by `demo_locks.sh`. Migration 0007 (strict marks) is built: `assessment.marks` is NUMERIC with a one-decimal CHECK, which closes the NUMERIC(4,1) rounding gap of C8 B.10. The C2 defects D1 (duplicate `commit`, `url` or `file` evidence in one claim), D2 (an admin's direct `assessment` write may name any `assessed_by`) and D4 (`v_semester_hub` may show a locked component as next) are not part of 0007 and stay open.
 * **Measurement:** the race results come from one machine with client and server sharing the CPU; latencies are relative.
 
 # 9. Future work
@@ -231,7 +231,7 @@ GitHub OAuth for identity, viva practice generated from a student's confirmed cl
 <!-- BEGIN generated: c11/schema_listing.md -->
 <!-- generated by docs/lab/c11/gen_schema_listing.py from the local database catalog; do not edit -->
 
-Generated from the catalog of the local Supabase database (PostgreSQL 17.11), migrations 20261104000001, 20261104000002, 20261104000003, 20261104000004, 20261105000005, 20261105000006, the same set that is applied to the cloud project. 30 base tables, 6 views and 73 functions in the schemas `public`, `private` and `app`. Per table: the columns, then every constraint, extra index, trigger and RLS policy, as PostgreSQL prints them (`pg_get_constraintdef`, `pg_get_indexdef`, `pg_get_triggerdef`, `pg_policies`). Long column defaults are shortened with an ellipsis in the column table.
+Generated from the catalog of the local Supabase database (PostgreSQL 17.11), migrations 20261104000001, 20261104000002, 20261104000003, 20261104000004, 20261105000005, 20261105000006, 20261105000007, the same set that is applied to the cloud project. 30 base tables, 6 views and 74 functions in the schemas `public`, `private` and `app`. Per table: the columns, then every constraint, extra index, trigger and RLS policy, as PostgreSQL prints them (`pg_get_constraintdef`, `pg_get_indexdef`, `pg_get_triggerdef`, `pg_policies`). Long column defaults are shortened with an ellipsis in the column table.
 
 ### A.1 `public.academic_term`
 
@@ -436,14 +436,14 @@ POLICY artifact_version_select: FOR SELECT TO authenticated
 
 ### A.6 `public.assessment`
 
-Row-level security on; 7 columns; 5 constraints; 4 policies; 1 trigger.
+Row-level security on; 7 columns; 7 constraints; 4 policies; 2 triggers.
 
 | Column | Type | Nullable | Default |
 |:--|:--|:-:|:--|
 | usn | character varying(10) | no |  |
 | project\_id | character varying(5) | no |  |
 | milestone\_no | integer | no |  |
-| marks | numeric(4,1) | no |  |
+| marks | numeric | no |  |
 | assessed\_by | character varying(6) | no |  |
 | assessed\_at | timestamp with time zone | no | now() |
 | remarks | character varying(200) | yes |  |
@@ -458,8 +458,12 @@ FOREIGN KEY assessment_project_id_milestone_no_fkey: FOREIGN KEY (project_id,
 FOREIGN KEY assessment_usn_fkey: FOREIGN KEY (usn) REFERENCES student(usn) ON DELETE
       RESTRICT
 CHECK assessment_marks_check: CHECK (marks >= 0::numeric)
+CHECK assessment_marks_one_decimal: CHECK (marks = round(marks, 1))
+CHECK assessment_marks_precision: CHECK (marks < 1000::numeric)
 INDEX assessment_assessed_by_idx: USING btree (assessed_by)
 INDEX assessment_milestone_idx: USING btree (project_id, milestone_no)
+TRIGGER trg_assessment_canonical_marks: BEFORE INSERT OR UPDATE OF marks ON
+      assessment FOR EACH ROW EXECUTE FUNCTION private.canonical_marks()
 TRIGGER trg_assessment_check: BEFORE INSERT OR DELETE OR UPDATE ON assessment FOR
       EACH ROW EXECUTE FUNCTION private.check_assessment()
 POLICY assessment_delete: FOR DELETE TO authenticated
@@ -1301,6 +1305,7 @@ private.assert_team_member(p_team_id character varying, p_usn character varying,
       p_rule text) -> void  [plpgsql, volatile, DEFINER]
 private.broadcast_contribution() -> trigger  [plpgsql, volatile, DEFINER]
 private.bump_claim_revision() -> trigger  [plpgsql, volatile, DEFINER]
+private.canonical_marks() -> trigger  [plpgsql, volatile, invoker]
 private.check_assessment() -> trigger  [plpgsql, volatile, DEFINER]
 private.check_claim_evidence() -> trigger  [plpgsql, volatile, DEFINER]
 private.check_countersign() -> trigger  [plpgsql, volatile, DEFINER]
@@ -1414,13 +1419,14 @@ Files in `supabase/tests/`; run with `npx -y supabase@latest test db` on a fresh
 
 | File | Assertions | Sections |
 |:--|--:|:--|
-| `01_constraints.sql` | 45 | A. declarative CHECK constraints; B. foreign keys and delete actions; C. uniqueness and idempotency; D. trigger rules (cross-row, cross-table); E. happy paths. Each violating statement must fail with the expected SQLSTATE (23514, 23503, 23505, 23P01, 55000). |
-| `02_rls_matrix.sql` | 298 | A. the matrix: persona × relation → visible rows, or `denied` (42501); B. catalog guarantees (RLS on, no default privileges); C. privacy: private artifacts, private notes, other students' marks; D. write permissions. |
-| `03_rpc.sql` | 126 | A. who may call what; B. not signed in; C. `semester_hub`; D. skills RPCs; E. `join_team` and `leave_team`; F. `submit_milestone`; G. claims, evidence, countersign; H. `record_assessment`, `lock_milestone`; I. private notes; J. `skill_subtree` survives a cycle. |
+| `01_constraints.sql` | 48 | A. declarative CHECK constraints; B. foreign keys and delete actions; C. uniqueness and idempotency; D. trigger rules (cross-row, cross-table); E. happy paths. Each violating statement must fail with the expected SQLSTATE (23514, 23503, 23505, 23P01, 55000). |
+| `02_rls_matrix.sql` | 301 | A. the matrix: persona × relation → visible rows, or `denied` (42501); B. catalog guarantees (RLS on, no default privileges); C. privacy: private artifacts, private notes, other students' marks; D. write permissions. |
+| `03_rpc.sql` | 129 | A. who may call what; B. not signed in; C. `semester_hub`; D. skills RPCs; E. `join_team` and `leave_team`; F. `submit_milestone`; G. claims, evidence, countersign; H. `record_assessment`, `lock_milestone`; I. private notes; J. `skill_subtree` survives a cycle. |
 | `04_abuse_cases.sql` | 53 | review findings replayed as direct table writes: 1. team membership; 2. locked components; 3. countersign bound to the revision read; 4. evidence ownership; 5. artifact hijacking and un-submitting; 6. frozen and never-backdated submissions; 7. directory, default privileges, CIE layout, history FKs. |
-| `05_ingest.sql` | 119 | A. catalog; B. inbox idempotency per delivery id and per push; C. projection of a sample push; D. projection idempotency; E. unknown-author push and failure atomicity; F. `search_chunks` under RLS (latest version, rarity weighting, RRF); G. Realtime topics and their policy; H. RLS on the new tables. |
+| `05_ingest.sql` | 120 | A. catalog; B. inbox idempotency per delivery id and per push; C. projection of a sample push; D. projection idempotency; E. unknown-author push and failure atomicity; F. `search_chunks` under RLS (latest version, rarity weighting, RRF); G. Realtime topics and their policy; H. RLS on the new tables. |
 | `06_ingest_worker.sql` | 16 | `ingest_fail`: privileges, an attempt that failed before the projection, retry success, dead letter after the limit. |
-| **Total** | **657** | |
+| `07_strict_marks.sql` | 43 | migration 0007: A. schema; B. the table owner (the path that used to round); C. the CHECKs alone with the triggers off; D. teaching faculty under RLS (direct table, upsert, RPC); E. the admin; F. the re-created views (same options, grants and output). A mark with a second decimal is refused on every path, never rounded. |
+| **Total** | **710** | 7 files |
 
 ## B.2 Graded Test fixture
 
@@ -1432,11 +1438,13 @@ Files in `supabase/tests/`; run with `npx -y supabase@latest test db` on a fresh
 
 ## B.3 API and worker
 
-Files in `api/tests/`; run with `cd api && MONGO_TARGET=local uv run pytest -q`.
+Files in `api/tests/`; run with `cd api && SUPABASE_TARGET=local MONGO_TARGET=local uv run pytest -q` (66 tests). Start the local stack, `scripts/mongo_local.sh` and the race lab (`experiments/race/setup.sh`) first; without the race lab 65 pass and 1 is skipped. The tests start `mongosh@2.14.1` through npx (override with `MONGOSH_NPX`), because the npm release 2.14.2 fails at start.
 
 **`test_api.py` (24):** health; CORS for the web app; notes require a token; garbage and tampered tokens rejected; HS256 token with a wrong secret rejected; every endpoint needs auth; a student without a team, a student of another team and a faculty member of another course are forbidden; unknown and malformed team ids; versions of an invisible note look missing; a member sees final notes and their own drafts; a teammate does not see others' drafts; faculty see metadata only; another faculty member sees their own course; the versions endpoint; create, update and history; a new note gets an id; writes forbidden outside the team and for faculty; payload validation; consistency for a student, for faculty and the teamless; consistency never returns commit messages; concurrent saves from one base have one winner.
 
-**`test_worker.py` (23):** the Python path rule matches the SQL rule; processing a message twice changes nothing; a Mongo failure is counted and retried; a projection failure is retried, then dead-lettered; consistency classification; `/ingest/drain` requires an admin, and drains as admin; `/ask` requires auth and team access; another course's faculty gets no P06 chunks; teaching faculty see only submitted text; student answers are scoped and cited; extractive answers quote whole sentences; generative citations are checked against the retrieved chunks; uncited generative text is dropped; bracketed numbers in quoted text are not citations; e-mails are hashed and no-reply addresses kept; markdown contents are fetched from the GitHub API (mocked); a crash after the projection is repaired by the follow-up pass; a message read too often is dead-lettered before any work; a team's pushes stay in order after a failure; a late older commit never becomes the current note; `--reproject-from-log` rebuilds the projection; the trace is staff-only and RLS-scoped.
+**`test_worker.py` (29):** the Python path rule matches the SQL rule; processing a message twice changes nothing; a Mongo failure is counted and retried; a projection failure is retried, then dead-lettered; consistency classification; `/ingest/drain` requires an admin, and drains as admin; `/ask` requires auth and team access; another course's faculty gets no P06 chunks; teaching faculty see only submitted text; student answers are scoped and cited; extractive answers quote whole sentences; generative citations are checked against the retrieved chunks; uncited generative text is dropped; bracketed numbers in quoted text are not citations; e-mails are hashed and no-reply addresses kept; markdown contents are fetched from the GitHub API (mocked); a crash after the projection is repaired by the follow-up pass; a message read too often is dead-lettered before any work; a team's pushes stay in order after a failure; a late older commit never becomes the current note; `--reproject-from-log` rebuilds the projection; the trace is staff-only and RLS-scoped; `make_store` and `/ingest/drain` without credentials name both settings; `--loop` backs off on Postgres and MongoDB outages and keeps going, but does not hide bugs; `recover_followups` stops quietly when MongoDB is down; a `SqlStore` reopens a connection lost in an outage.
+
+**`test_race.py` (13, with parametrised cases):** `/race/run` requires a token and is staff-only (arun and meera refused, ramesh and admin allowed); the body is validated; an offline race lab gives 503 with the command that starts it; the DSN target never shows credentials; the counts of a live race add up; a busy request never resets the lab; the owner resets the lab before and after the race.
 
 ## B.4 Web end-to-end
 
@@ -1444,29 +1452,30 @@ Specs in `web/e2e/` (Playwright with the installed Chrome); run with `cd web && 
 
 | Spec | Tests | What it checks |
 |:--|--:|:--|
-| `01-login` | 10 | product page; a wrong password gives a friendly error; each of the 7 personas signs in and lands on their home; signed-out visitors are redirected with a return link |
-| `02-arun-claim` | 2 | the hub shows CD252IA; arun files a C3 claim with two pieces of evidence, and the database agrees |
-| `03-sanvid-countersign` | 2 | sanvid confirms arun's claim (status derived by trigger); arun sees it confirmed and frozen |
+| `01-login` | 9 | product page; a wrong password gives a friendly error; each of the 6 personas signs in and lands on their home; signed-out visitors are redirected with a return link |
+| `02-arun-claim` | 2 | the hub shows CD252IA; arun files a C3 claim with two pieces of evidence, the database agrees, and the card stays pending with the solo-team note |
+| `03-meera-countersign` | 3 | meera confirms Aditi Rao's seeded pending C4 claim on T06 (status derived by trigger) and ramesh's open sheet updates on window focus without a reload; arun's solo team T00 has one member, his P06 claims are all pending with the solo-team note, and his queue shows the solo empty state; ramesh's drawer on arun's C3 cell shows the solo-team note |
 | `04-nikhil-team` | 3 | a full team gives "team full"; nikhil joins T02; joining a project he is not enrolled for gives the enrolment error |
-| `05-ramesh-sheet` | 5 | the sheet with every student, the totals and "No recorded evidence yet"; marks within and above the max (form, entry mode and the database); locking C2 shades the column |
+| `05-ramesh-sheet` | 5 | the sheet with every student, the totals and "No recorded evidence yet"; at 1440 × 1000 the grid does not overflow and the header chip is visible; marks within and above the max (form, entry mode and the database); locking C2 shades the column |
 | `06-lakshmi-rls` | 3 | `/sheet/P06` shows no rows; her landing lists only P02; RLS returns nothing for P06 |
-| `07-privacy` | 6 | arun's private note is not on `/faculty-view` (1); arun cannot reach each of four faculty routes (4, one test per route in a loop); arun cannot reach `/admin` (1) |
+| `07-privacy` | 6 | arun's two private notes and his private artifact A18 are not on `/faculty-view` and are listed under "Never shown to faculty" (1); arun cannot reach each of four faculty routes (4, one test per route in a loop); arun cannot reach `/admin` (1) |
 | `08-sql-drawer` | 2 | the drawer shows real SQL on student and faculty panels |
 | `09-notes` | 2 | team notes from the API, and the offline state |
-| `10-ingest-live` | 3 | a signed push through the Edge Function and the worker gives a live toast, feed entry and trace sheet; search and the Activity tab find it; lakshmi finds nothing in P06 |
-| **Total** | **38** | |
+| `10-ingest-live` | 4 | a signed push through the Edge Function and the worker gives a live toast, feed entry and trace sheet; search and the Activity tab find it; lakshmi finds nothing in P06; the admin consistency table explains why unequal counts can be consistent |
+| `11-race` | 5 | the Race arena as faculty (matrix, latency, strategies, precedence graphs, SQL drawer); the live panel against a mocked API: race lab offline (503), API offline, and one result with its live precedence graph; a student sees the page but cannot run a race |
+| **Total** | **44** | 11 specs, all passing on 19 November 2026 |
 
 ## B.5 Experiment checks
 
 Scripts in `experiments/race/`:
 
-`rr_trigger_check.sh` (day-1 finding), `capacity_v2_check.sh` (v2 never above max at RC/RR/SER), `membership_skew_check.sh` (membership and countersign races), `harness.py` (72,000 races), `analysis_selftest.sql` (precedence-graph SQL on six hand-solved schedules, all PASS).
+`rr_trigger_check.sh` (day-1 finding), `capacity_v2_check.sh` (v2 never above max at RC/RR/SER), `membership_skew_check.sh` (membership and countersign races; the countersign race uses a T06 claim by 1RV24CY011 countersigned by 1RV24CY033), `harness.py` (72,000 races), `analysis_selftest.sql` (precedence-graph SQL on six hand-solved schedules, all PASS).
 
 # Appendix C. User manual
 
 ## C.1 Signing in
 
-Open the web app (`http://localhost:5173` when run locally). On the login page, either type an e-mail and password or click a persona button. Demo accounts (password `Countersign@2026`): students `arun`, `sanvid`, `nikhil`, `meera`; faculty `ramesh` (teaches CD252IA) and `lakshmi` (teaches the AIML course); `admin`; all `@example.edu`. Sign-ups are disabled: accounts are created by the administrator. To sign out, open the menu under your name at the bottom of the sidebar and choose **Sign out**. The badge in the top bar says whether the app talks to the local database (*Local*) or the cloud project (*Cloud*).
+Open the web app (`http://localhost:5173` when run locally). On the login page, either type an e-mail and password or click a persona button. Demo accounts (password `Countersign@2026`): students `arun` (lead of the solo team T00), `nikhil`, `meera` (T06, the teammate-countersign persona); faculty `ramesh` (teaches CD252IA) and `lakshmi` (teaches the AIML course); `admin`; all `@example.edu`. Sign-ups are disabled: accounts are created by the administrator. To sign out, open the menu under your name at the bottom of the sidebar and choose **Sign out**. The badge in the top bar says whether the app talks to the local database (*Local*) or the cloud project (*Cloud*).
 
 ## C.2 Students
 
@@ -1478,7 +1487,8 @@ Open the web app (`http://localhost:5173` when run locally). On the login page, 
 | See your skill gap | **Team & skills** → Skill gap | *Declared* is what you said; *Verified* is the highest level recorded for you in `skill_evidence` (seeded rows today; derivation from confirmed claims is planned, FR8) |
 | File a claim | project page → **File a claim** | choose the component and kind of work, describe what you did (at least 10 characters), declare AI assistance, cite an artifact and add more evidence (links, files, commits); **File claim** |
 | Add evidence later | project page → **My claims** → Add evidence | only while the claim is pending |
-| Countersign | project page → **Countersign queue** tab | read the claim and its evidence; **Confirm**, or **Dispute** with a reason. You sign the revision shown; if it changes first, the database refuses and you read it again. |
+| Countersign | project page → **Countersign queue** tab | read the claim and its evidence; **Confirm**, or **Dispute** with a reason. You sign the revision shown; if it changes first, the database refuses and you read it again. In a solo team the queue is always empty, and your own claims stay pending: with no teammate to countersign, they rest on their evidence and the faculty review |
+| See the Innovative Experiment | **Race arena** (`/race`) | the recorded results of the 72,000 races: matrix, latency, each strategy's SQL and worked precedence graphs; running a live race is for faculty and admins |
 | Submit a component | project page → **Components** → **Submit** on the component | choose the artifacts; their current versions are frozen into the submission |
 | Watch activity | project page → **Activity** | new evidence from your team's pushes appears live |
 | Search and ask | **Search** (`/search`) | type words, filter by team, author or date; **Ask** answers with citations to the result cards |
@@ -1490,13 +1500,14 @@ Open the web app (`http://localhost:5173` when run locally). On the login page, 
 | Task | Where | Steps |
 |:--|:--|:--|
 | Open your projects | **My projects** (`/teaching`) | the projects you teach, with counts of teams, pending and contested claims |
-| Read the rubric sheet | **Rubric sheet** (`/sheet/:project`) | one row per student, one column per component; under each mark a tick (confirmed claim), a clock (pending countersign) or a triangle (contested), or a red "no claim" marker; hatched columns are locked. The grid is wider than a 1440-pixel screen: scroll it sideways for C10, C11 and Lab CIE |
-| See the receipts behind a mark | click a cell | the drawer shows the mark, who signed it, and the claims, evidence and countersigns |
+| Read the rubric sheet | **Rubric sheet** (`/sheet/:project`) | one row per student, one column per component; under each mark a tick (confirmed claim), a clock (pending countersign) or a triangle (contested), or a red "no claim" marker; hatched columns are locked. At 100 % zoom the grid fits a 1440-pixel window. The sheet refetches when its window gets focus, so a countersign given elsewhere shows without a reload |
+| See the receipts behind a mark | click a cell | the drawer shows the mark, who signed it, and the claims, evidence and countersigns; for a solo team it says that no teammate could countersign, so the claim rests on its evidence and your review |
 | Enter marks | **Enter marks** on the sheet | type marks per cell; above the component's maximum is refused by the form and by the database |
 | Lock a component | the lock control of the component on the sheet, then confirm | marks become final; only an admin can unlock |
 | Review disputes | **Contested claims** (`/contested`) | claims a teammate disputed, with counts and reasons |
 | Lab CIE totals | **Lab CIE marks** (`/marks/:project`) | the /50 total, derived on every read; **Export CSV** |
-| Follow live evidence | the sheet's **Live activity** panel (below the sheet; its chip says *Live* when connected) | a toast and a feed row per new contribution; click the **underlined file name** of a GitHub item to open the trace sheet (the rest of the row is not a link) |
+| Run a live race | **Race arena** (`/race`) → **Run a live race** | choose a strategy, an isolation level and N, then **Run**: one race in the local race lab `elp-race-pg`, never the product database. One race at a time; if the lab is not running the panel says how to start it |
+| Follow live evidence | the sheet's **Live activity** panel (below the sheet; the chip in the page header and on the panel says *Live* when connected; click the header chip to jump to the panel) | a toast and a feed row per new contribution; click the **underlined file name** of a GitHub item to open the trace sheet (the rest of the row is not a link) |
 
 For the projects they teach, faculty see contribution metadata, claim statements, evidence, dispute comments and *submitted* text; never drafts, private artifacts or private notes. Every panel has an **SQL** button that shows the query, its relational algebra and the row-level-security policies that applied.
 
@@ -1511,7 +1522,8 @@ For the projects they teach, faculty see contribution metadata, claim statements
 | Local database, personas, local Mongo | `npx -y supabase@latest start`; `scripts/reset_local.sh`; `scripts/mongo_local.sh` |
 | Webhook function (local) | `npx -y supabase@latest functions serve` |
 | API, local stack | `cd api && SUPABASE_TARGET=local MONGO_TARGET=local uv run uvicorn app.main:app --port 8000` |
-| Worker, local stack | `cd api && SUPABASE_TARGET=local MONGO_TARGET=local uv run python -m app.worker --loop --interval 1` (the service key comes from `supabase status`) |
+| Worker, local stack | `cd api && SUPABASE_TARGET=local MONGO_TARGET=local uv run python -m app.worker --loop --interval 1` (the service key comes from `supabase status`); the loop logs `drain_failed` and retries with a backoff of 1 s to 30 s when Postgres or MongoDB is down |
+| Race lab for the Race arena | `experiments/race/setup.sh` (container `elp-race-pg`, port 55433, about 5 s); the API reaches it through `RACE_DSN` (default `localhost:55433/race`) |
 | API, cloud | `cd api && SUPABASE_TARGET=remote MONGO_TARGET=atlas uv run uvicorn app.main:app --port 8000` (no service key; user requests run as the caller) |
 | Worker, cloud | in its own shell, first load the service key without writing or printing it (`docs/RUNBOOK.md` §1.2), then `cd api && SUPABASE_TARGET=remote MONGO_TARGET=atlas uv run python -m app.worker --loop --interval 1` |
 | Web | `cd web && npm run dev` (local) or `npm run dev:remote` (cloud) |

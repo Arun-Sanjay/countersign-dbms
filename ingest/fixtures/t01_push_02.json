@@ -77,14 +77,14 @@
       "timestamp": "2026-11-04T10:20:00+05:30",
       "url": "https://github.com/rvce-el/team-alpha/commit/a4c0452b38b7fc687ef2cbdfbda61bd35d697ce2",
       "author": {
-        "name": "Ext Contributor",
-        "email": "ext.contributor@example.com",
-        "username": "ext-contributor"
+        "name": "Outside Dev",
+        "email": "outside-dev@example.com",
+        "username": "outside-dev"
       },
       "committer": {
-        "name": "Ext Contributor",
-        "email": "ext.contributor@example.com",
-        "username": "ext-contributor"
+        "name": "Outside Dev",
+        "email": "outside-dev@example.com",
+        "username": "outside-dev"
       },
       "added": [],
       "removed": [],

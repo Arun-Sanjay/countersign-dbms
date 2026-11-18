@@ -74,6 +74,7 @@ an unregistered repository, a non-default branch, a branch deletion, no commits)
 | The worker dies after `project_push` committed (or its response is lost) | `followups_at` stays NULL; the next drain re-runs the follow-ups from the Mongo raw log |
 | A team's push fails | that team's later pushes in the same drain wait (`deferred`), so a team's pushes are projected in order |
 | Pushes arrive out of order anyway | `version_no` counts receipts; the *current* text is the version with the newest commit time (search and the Mongo note both use it), so late older text never becomes current |
+| Postgres or Mongo is down while `--loop` runs | the pass logs one JSON `drain_failed` line to stderr and retries after a backoff (1 s doubling to 30 s); the first good pass logs `drain_recovered`. Other exceptions still end the worker. If Postgres is unreachable at startup, the worker exits with code 2 |
 | A push arrived before its repository was registered, or was dead-lettered | GitHub **Redeliver** (same delivery id) queues it again in the same transaction (`requeued: true`) |
 
 ## 2. Trust model: who gets credit
@@ -202,16 +203,18 @@ uv run --python 3.12 python scripts/replay_webhooks.py    # 16 of 16 deliveries 
 What to expect after the replay:
 
 - 9 deliveries projected, 1 ignored (feature branch), 27 contributions, 2 Mongo notes;
-- warnings: an unknown author (T01), and Rohan's commit pushed by Priya, unverified (T03);
+- warnings: an unknown author (T01: commit `a4c0452` by the unlinked login `outside-dev` inside
+  Meera's push, logged in Mongo `github_events` with 0 contribution rows), and Rohan's commit
+  pushed by Priya, unverified (T03);
 - T00 has 18 artifacts: `docs/`, `supabase/`, `mongo/`, not the `web/` source tree;
 - `/consistency` reports `all_consistent: true`.
 
 Tests:
 
 ```bash
-npx -y supabase@latest test db                            # pgTAP (on a freshly reset DB; 657 tests)
+npx -y supabase@latest test db                            # pgTAP (on a freshly reset DB; 710 assertions)
 scripts/test_fixture.sh                                   # Q1–Q37 vs Appendix H
-(cd api && MONGO_TARGET=local uv run pytest -q)           # API + worker (with an empty queue)
+(cd api && SUPABASE_TARGET=local MONGO_TARGET=local uv run pytest -q)   # API + worker, 66 tests (empty queue; race lab up)
 (cd web && npm run typecheck && npm run lint && npm run build && npm run e2e)
 ```
 
@@ -283,8 +286,9 @@ reset before a gate run, with no e2e and no worker running at the same time.
   answers) were never exercised against the real services; both paths are unit-tested with stubs.
   Without them everything works: keyword search and extractive, cited answers.
 - **Identity verification is administrative.** `verified_at` is stamped by an admin (seeded for
-  the demo); GitHub OAuth would stamp it for real. Sanvid's login is a placeholder and stays
-  unverified.
+  the demo); GitHub OAuth would stamp it for real. The replay fixtures' `outside-dev` login
+  (Outside Dev, `outside-dev@example.com`) deliberately has no `student_identity` row: its commit
+  is logged in Mongo and credits nobody.
 - **Version numbers are receipt numbers.** `version_no` follows projection order; "latest" means
   newest commit time. A commit time is self-declared, so an author can reorder their *own*
   versions, but not move them across milestones.

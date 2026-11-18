@@ -6,7 +6,6 @@ export const PASSWORD = 'Countersign@2026'
 
 export const PERSONAS = {
   arun: { email: 'arun@example.edu', name: 'S Arun Sanjay', usn: '1RV24CY047', home: '/hub' },
-  sanvid: { email: 'sanvid@example.edu', name: 'Sanvid Razdan', usn: '1RV24CY051', home: '/hub' },
   nikhil: { email: 'nikhil@example.edu', name: 'Nikhil Bhat', usn: '1RV24CY077', home: '/hub' },
   meera: { email: 'meera@example.edu', name: 'Meera Iyer', usn: '1RV24CY033', home: '/hub' },
   ramesh: { email: 'ramesh@example.edu', name: 'Dr. Ramesh Babu', usn: null, home: '/teaching' },
@@ -15,8 +14,14 @@ export const PERSONAS = {
 } as const
 export type PersonaKey = keyof typeof PERSONAS
 
-/** The claim statement arun files in 02 and sanvid countersigns in 03. */
+/** The claim statement arun files in 02. T00 is a solo team, so it stays pending (03 checks that). */
 export const ARUN_C3_STATEMENT = 'Reviewed ER diagram v2 and added the cardinality and participation constraints for TEAM_MEMBER (e2e).'
+
+/** Aditi Rao, T06 lead (fixture student, no login): her seeded pending C4 claim waits in meera's queue (03). */
+export const ADITI = { name: 'Aditi Rao', usn: '1RV24CY011' } as const
+
+/** What the claim UI says when the claimant's team has one member (web/src/lib/course.ts). */
+export const SOLO_TEAM_NOTE = 'Solo team: no teammate to countersign. This claim rests on its evidence and faculty review.'
 
 // ---- fixtures: every test fails on an uncaught page exception -------------------------------------
 export const test = base.extend<{ pageErrors: string[] }>({

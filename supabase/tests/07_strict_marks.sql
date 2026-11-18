@@ -100,14 +100,14 @@ SELECT lives_ok($$UPDATE assessment SET marks = 8.50
                 'owner UPDATE 8.50 (one significant decimal) is accepted');
 SELECT is(pg_temp.mark('1RV24CY047', 3), '8.5', '...and stored as 8.5');
 SELECT throws_ok($$INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by)
-                   VALUES ('1RV24CY051', 'P06', 3, 11, 'F01')$$,
+                   VALUES ('1RV24CY024', 'P06', 3, 11, 'F01')$$,
                  '23514', 'Marks 11.0 exceed the maximum 10 for milestone P06/3',
                  'the bound check still reports the canonical value (11.0)');
 SELECT is(pg_temp.err($$INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by)
-                        VALUES ('1RV24CY051', 'P06', 3, 10.05, 'F01')$$),
+                        VALUES ('1RV24CY024', 'P06', 3, 10.05, 'F01')$$),
           '23514:assessment_marks_le_max', 'over the max AND two decimals: refused (the bound trigger speaks first)');
 SELECT is(pg_temp.err($$INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by)
-                        VALUES ('1RV24CY051', 'P06', 3, 'NaN', 'F01')$$),
+                        VALUES ('1RV24CY024', 'P06', 3, 'NaN', 'F01')$$),
           '23514:assessment_marks_le_max', 'NaN is refused');
 
 -- ---------------------------------------------------------------------
@@ -116,19 +116,19 @@ SELECT is(pg_temp.err($$INSERT INTO assessment (usn, project_id, milestone_no, m
 ALTER TABLE assessment DISABLE TRIGGER trg_assessment_check;
 ALTER TABLE assessment DISABLE TRIGGER trg_assessment_canonical_marks;
 SELECT is(pg_temp.err($$INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by)
-                        VALUES ('1RV24CY051', 'P06', 3, 4.25, 'F01')$$),
+                        VALUES ('1RV24CY024', 'P06', 3, 4.25, 'F01')$$),
           '23514:assessment_marks_one_decimal', 'CHECK alone: 4.25 is refused');
 SELECT is(pg_temp.err($$INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by)
-                        VALUES ('1RV24CY051', 'P06', 3, 1000, 'F01')$$),
+                        VALUES ('1RV24CY024', 'P06', 3, 1000, 'F01')$$),
           '23514:assessment_marks_precision', 'CHECK alone: 1000 is out of range');
 SELECT is(pg_temp.err($$INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by)
-                        VALUES ('1RV24CY051', 'P06', 3, 'NaN', 'F01')$$),
+                        VALUES ('1RV24CY024', 'P06', 3, 'NaN', 'F01')$$),
           '23514:assessment_marks_precision', 'CHECK alone: NaN is refused');
 SELECT is(pg_temp.err($$INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by)
-                        VALUES ('1RV24CY051', 'P06', 3, 'Infinity', 'F01')$$),
+                        VALUES ('1RV24CY024', 'P06', 3, 'Infinity', 'F01')$$),
           '23514:assessment_marks_precision', 'CHECK alone: Infinity is refused');
 SELECT is(pg_temp.err($$INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by)
-                        VALUES ('1RV24CY051', 'P06', 3, -0.5, 'F01')$$),
+                        VALUES ('1RV24CY024', 'P06', 3, -0.5, 'F01')$$),
           '23514:assessment_marks_check', 'CHECK alone: a negative mark is still refused');
 ALTER TABLE assessment ENABLE TRIGGER trg_assessment_check;
 ALTER TABLE assessment ENABLE TRIGGER trg_assessment_canonical_marks;
@@ -138,36 +138,36 @@ ALTER TABLE assessment ENABLE TRIGGER trg_assessment_canonical_marks;
 -- ---------------------------------------------------------------------
 SELECT pg_temp.become('f01');
 SELECT is(pg_temp.err($$INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by)
-                        VALUES ('1RV24CY051', 'P06', 5, 4.25, 'F01')$$),
+                        VALUES ('1RV24CY024', 'P06', 5, 4.25, 'F01')$$),
           '23514:assessment_marks_one_decimal', 'f01 direct INSERT 4.25 is refused');
 SELECT is(pg_temp.err($$INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by)
-                        VALUES ('1RV24CY051', 'P06', 4, 17.25, 'F01')
+                        VALUES ('1RV24CY024', 'P06', 4, 17.25, 'F01')
                         ON CONFLICT (usn, project_id, milestone_no) DO UPDATE SET marks = EXCLUDED.marks$$),
           '23514:assessment_marks_one_decimal', 'f01 upsert (PostgREST Prefer: resolution=merge-duplicates) 17.25 is refused');
 SELECT is(pg_temp.err($$UPDATE assessment SET marks = 17.75
-                        WHERE usn = '1RV24CY051' AND project_id = 'P06' AND milestone_no = 4$$),
+                        WHERE usn = '1RV24CY024' AND project_id = 'P06' AND milestone_no = 4$$),
           '23514:assessment_marks_one_decimal', 'f01 direct UPDATE 17.75 is refused');
-SELECT is(pg_temp.err($$SELECT record_assessment('1RV24CY051', 'P06', 5, 4.25)$$),
+SELECT is(pg_temp.err($$SELECT record_assessment('1RV24CY024', 'P06', 5, 4.25)$$),
           '22023:marks', 'f01 record_assessment 4.25: refused by the RPC''s own pre-check, as before');
-SELECT is(pg_temp.err($$SELECT record_assessment('1RV24CY051', 'P06', 5, 4.001)$$),
+SELECT is(pg_temp.err($$SELECT record_assessment('1RV24CY024', 'P06', 5, 4.001)$$),
           '22023:marks', 'f01 record_assessment 4.001 is refused');
 SELECT is(pg_temp.err($$INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by)
-                        VALUES ('1RV24CY051', 'P06', 5, 4.2, 'F01')$$),
+                        VALUES ('1RV24CY024', 'P06', 5, 4.2, 'F01')$$),
           'ok', 'f01 direct INSERT 4.2 is accepted');
-SELECT is(record_assessment('1RV24CY051', 'P06', 6, 7) ->> 'inserted', 'true', 'f01 record_assessment 7 is accepted');
+SELECT is(record_assessment('1RV24CY024', 'P06', 6, 7) ->> 'inserted', 'true', 'f01 record_assessment 7 is accepted');
 RESET ROLE;
-SELECT is(pg_temp.mark('1RV24CY051', 6), '7.0', '...and stored as 7.0');
-SELECT is(pg_temp.mark('1RV24CY051', 4), '18.0', 'the refused upsert and update left 18.0 alone');
+SELECT is(pg_temp.mark('1RV24CY024', 6), '7.0', '...and stored as 7.0');
+SELECT is(pg_temp.mark('1RV24CY024', 4), '17.0', 'the refused upsert and update left 17.0 alone');
 
 -- ---------------------------------------------------------------------
 -- E. The admin (direct corrections under the assessment policies)
 -- ---------------------------------------------------------------------
 SELECT pg_temp.become('admin');
 SELECT is(pg_temp.err($$UPDATE assessment SET marks = 4.05
-                        WHERE usn = '1RV24CY051' AND project_id = 'P06' AND milestone_no = 5$$),
+                        WHERE usn = '1RV24CY024' AND project_id = 'P06' AND milestone_no = 5$$),
           '23514:assessment_marks_one_decimal', 'admin UPDATE 4.05 is refused');
 SELECT is(pg_temp.err($$UPDATE assessment SET marks = 4.1
-                        WHERE usn = '1RV24CY051' AND project_id = 'P06' AND milestone_no = 5$$),
+                        WHERE usn = '1RV24CY024' AND project_id = 'P06' AND milestone_no = 5$$),
           'ok', 'admin UPDATE 4.1 is accepted');
 RESET ROLE;
 
@@ -187,10 +187,10 @@ SELECT is((SELECT count(*)::int FROM unnest(ARRAY['v_lab_cie_marks', 'v_rubric_s
           3, 'grants as in 0003: authenticated may SELECT (only), anon nothing');
 
 SELECT pg_temp.become('f01');
-SELECT is((SELECT marks::text FROM v_rubric_sheet WHERE usn = '1RV24CY051' AND milestone_no = 6), '7.0',
+SELECT is((SELECT marks::text FROM v_rubric_sheet WHERE usn = '1RV24CY024' AND milestone_no = 6), '7.0',
           'v_rubric_sheet shows the new mark to the teaching faculty');
-SELECT is((SELECT raw_total::text FROM v_lab_cie_marks WHERE usn = '1RV24CY051'), '33.6',
-          'v_lab_cie_marks adds up C1 4.5 + C4 18.0 + C5 4.1 + C6 7.0 = 33.6');
+SELECT is((SELECT raw_total::text FROM v_lab_cie_marks WHERE usn = '1RV24CY024'), '32.6',
+          'v_lab_cie_marks adds up C1 4.5 + C4 17.0 + C5 4.1 + C6 7.0 = 32.6');
 RESET ROLE;
 
 SELECT pg_temp.become('arun');

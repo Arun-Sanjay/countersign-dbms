@@ -15,6 +15,7 @@ import type { ReactNode } from 'react'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { CountersignRow, EvidenceRow } from '@/data/projects'
+import { SOLO_TEAM_NOTE } from '@/lib/course'
 import { formatDate, formatDateTime } from '@/lib/format'
 import type { EvidenceKind } from '@/lib/rules'
 import { cn } from '@/lib/utils'
@@ -212,9 +213,24 @@ export function EvidenceList({ evidence, lookups }: { evidence: EvidenceRow[]; l
 }
 
 // ---- countersigns --------------------------------------------------------------------------------------------
-export function CountersignList({ countersigns, currentRevision }: { countersigns: CountersignRow[]; currentRevision: number }) {
+export function CountersignList({
+  countersigns,
+  currentRevision,
+  solo = false,
+}: {
+  countersigns: CountersignRow[]
+  currentRevision: number
+  /** The claimant's team has one member: nobody can countersign. */
+  solo?: boolean
+}) {
   if (countersigns.length === 0) {
-    return <p className="text-xs text-muted-foreground">No teammate has countersigned yet.</p>
+    return solo ? (
+      <p className="text-xs text-muted-foreground" data-testid="solo-team-note">
+        {SOLO_TEAM_NOTE}
+      </p>
+    ) : (
+      <p className="text-xs text-muted-foreground">No teammate has countersigned yet.</p>
+    )
   }
   return (
     <ul className="space-y-1.5">

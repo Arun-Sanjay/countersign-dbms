@@ -10,6 +10,7 @@ deleted at the end of each test. /ask and /ingest/drain run through the real API
 from __future__ import annotations
 
 import hashlib
+import json
 import dataclasses
 import time
 import uuid
@@ -27,8 +28,9 @@ from app import ask as ask_mod
 from app.config import ConfigError
 from app.consistency import consistency
 from app.ingest_rules import artifact_type
-from app.worker import (MAX_READS, SqlStore, Worker, fetch_contents, log_raw_event, make_store, note_id_for,
-                        raw_event_document, scrub_emails, sync_note_version)
+from app.worker import (LOOP_BACKOFF_MAX, LOOP_BACKOFF_MIN, MAX_READS, SqlStore, StoreError, Worker,
+                        fetch_contents, log_raw_event, make_store, note_id_for, raw_event_document, run_loop,
+                        scrub_emails, sync_note_version)
 
 REPO = "rvce-el/team-gamma"          # team T03 (project of F02 / lakshmi), see supabase/seed/ingest.sql
 NOTE_PATH = "shared/Worker probe.md"
@@ -387,9 +389,14 @@ def test_ask_teaching_faculty_sees_only_submitted_text(client, auth):
 
 
 def test_ask_student_answers_are_scoped_and_cited(client, auth, teamless):
-    body = client.post("/ask", headers=auth("sanvid"), json={"question": QUESTION}).json()
+    body = client.post("/ask", headers=auth("arun"), json={"question": QUESTION}).json()
     _check(body)
-    assert body["citations"] and {x["team_id"] for x in body["citations"]} <= {"T00"}
+    arun_teams = {"T00", "T01", "T03", "T05"}
+    assert body["citations"] and {x["team_id"] for x in body["citations"]} <= arun_teams
+    assert {x["team_id"] for x in body["retrieved"]} <= arun_teams        # never T02 or T06
+    scoped = client.post("/ask", headers=auth("arun"), json={"question": QUESTION, "team_id": "T00"}).json()
+    _check(scoped)
+    assert scoped["citations"] and {x["team_id"] for x in scoped["retrieved"]} == {"T00"}
     empty = client.post("/ask", headers=auth(teamless("nikhil")), json={"question": QUESTION}).json()
     assert empty["citations"] == [] and empty["retrieved"] == []
     assert empty["answer"].startswith("No recorded evidence")
@@ -514,6 +521,113 @@ def test_fetch_contents_fills_markdown_from_the_github_api(settings):
     with httpx.Client(transport=httpx.MockTransport(handler)) as http:     # off unless enabled
         assert fetch_contents(http, dataclasses.replace(s, github_fetch_contents=False), push([c])) == \
             {"fetched": 0, "errors": 0}
+
+
+# ---------------------------------------------------------------- --loop resilience (no network)
+
+def _loop(results, interval=5.0):
+    """Run run_loop over a scripted list of drain outcomes (an exception is raised, a dict is
+    returned); returns (sleeps, stdout lines, stderr lines)."""
+    script = iter(results)
+    sleeps: list[float] = []
+    out: list[str] = []
+    err: list[str] = []
+
+    def drain():
+        r = next(script)
+        if isinstance(r, BaseException):
+            raise r
+        return r
+
+    run_loop(drain, interval, sleep=sleeps.append, out=out.append, err=err.append,
+             max_iterations=len(results))
+    return sleeps, out, err
+
+
+EMPTY = {"processed": 0, "queue_empty": True, "outcomes": []}
+BUSY = {"processed": 3, "queue_empty": False, "projected": 3, "outcomes": [{"x": 1}]}
+
+
+def test_loop_backs_off_on_postgres_and_mongo_outages_and_keeps_going():
+    pg_down = StoreError("Postgres unreachable (OperationalError)")
+    mongo_down = ServerSelectionTimeoutError("mongodb+srv://user:pw@cluster.example/ no servers")
+    sleeps, out, err = _loop([pg_down, pg_down, mongo_down, pg_down, mongo_down, pg_down, pg_down,
+                              BUSY, EMPTY, mongo_down])
+    assert LOOP_BACKOFF_MIN == 1.0 and LOOP_BACKOFF_MAX == 30.0
+    # 1 s doubling, capped at 30 s; a successful drain resets it (the last failure waits 1 s again);
+    # a drain that processed work loops at once, an empty queue sleeps --interval
+    assert sleeps == [1.0, 2.0, 4.0, 8.0, 16.0, 30.0, 30.0, 5.0, 1.0]
+    failed = [json.loads(e) for e in err if '"drain_failed"' in e]
+    assert len(failed) == 8 and [f["retry_in_s"] for f in failed] == [1.0, 2.0, 4.0, 8.0, 16.0, 30.0, 30.0, 1.0]
+    assert failed[0]["error"].startswith("StoreError: Postgres unreachable")
+    assert failed[2]["error"].startswith("ServerSelectionTimeoutError")
+    assert all("pw@" not in e for e in err), "a Mongo URI (with its password) must never be logged"
+    assert sum('"drain_recovered"' in e for e in err) == 1
+    assert len(out) == 1 and json.loads(out[0]) == {"processed": 3, "queue_empty": False, "projected": 3}
+
+
+def test_loop_does_not_hide_bugs():
+    with pytest.raises(KeyError):
+        _loop([StoreError("down"), KeyError("processed")])
+
+
+def test_recover_followups_stops_quietly_when_mongo_is_down():
+    class Store:
+        def pending_followups(self, limit, older_than):
+            return [{"delivery_id": "d1", "team_id": "T03"}, {"delivery_id": "d2", "team_id": "T03"}]
+
+    class Events:
+        calls = 0
+
+        def find_one(self, *_a, **_k):
+            Events.calls += 1
+            raise ServerSelectionTimeoutError("no servers")
+
+    db = SimpleNamespace(github_events=Events())
+    w = Worker(Store(), None, db, SimpleNamespace(voyage_api_key=None), http=SimpleNamespace())  # type: ignore[arg-type]
+    stats = w.recover_followups(min_age=0)
+    assert stats["errors"] == 1 and stats["recovered"] == 0 and Events.calls == 1
+    assert stats["mongo_error"].startswith("ServerSelectionTimeoutError")
+
+
+def test_sql_store_reopens_a_connection_lost_in_an_outage(monkeypatch):
+    from contextlib import nullcontext
+
+    class Cursor:
+        description = None
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def execute(self, sql, params=None):
+            self.description = [("x",)] if "ingest_read" in sql else None
+
+        def fetchall(self):
+            return [{"delivery_id": "d1"}]
+
+    class Conn:
+        def __init__(self, closed):
+            self.closed = closed
+
+        def transaction(self):
+            return nullcontext()
+
+        def cursor(self):
+            return Cursor()
+
+    opened: list[str] = []
+    fresh = Conn(False)
+    monkeypatch.setattr(SqlStore, "_open", staticmethod(lambda url: opened.append(url) or fresh))
+    store = SqlStore(Conn(True), "postgresql://worker@db.invalid/postgres")
+    assert store.read(1, 60) == [{"delivery_id": "d1"}]
+    assert opened == ["postgresql://worker@db.invalid/postgres"] and store.conn is fresh
+    # a store built on a caller's connection (the tests' transaction) is never replaced
+    outer = SqlStore(Conn(False))
+    outer.read(1, 60)
+    assert len(opened) == 1
 
 
 def test_a_crash_after_projection_is_repaired_by_the_followup_pass(harness, mongo_db):

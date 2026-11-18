@@ -1,6 +1,6 @@
 ---
 title-meta: "Design of Forms, Security and Validation: Unified Experiential Learning and Project Intelligence Platform (Countersign)"
-author-meta: "S Arun Sanjay (1RV24CY047); Sanvid Razdan (1RV24CY051)"
+author-meta: "S Arun Sanjay (1RV24CY047)"
 subject: "CD252IA Database Management Systems, Lab Component 8"
 lang: en-GB
 ---
@@ -27,13 +27,12 @@ lang: en-GB
 | USN | Name |
 |:--|:--|
 | 1RV24CY047 | S Arun Sanjay |
-| 1RV24CY051 | Sanvid Razdan |
 
 &nbsp;
 
 Semester V, 2026-27
 
-Revision 1.1, 5 November 2026
+Revision 1.2, 19 November 2026
 :::
 
 ::: toc
@@ -49,18 +48,18 @@ This is the Component 8 submission, *Design of Forms, Security and Validation* (
 
 The lab manual's sub-rubric for C5 to C11 is not in the repository (open item 2 in `docs/PLAN.md` §8), so the three parts follow the master file's own description of this component: "Forms, security (RBAC, RLS, private schema), validation".
 
-**Evidence, and where it comes from.** Every table marked *generated* was produced by `docs/lab/diagrams/c8/gen_c8.py` from the **local** Supabase stack (PostgreSQL 17) on 5 November 2026, directly after `scripts/reset_local.sh` (migrations 0001 to 0006, fixture and demo seed, the seven personas). The generator only reads. Each test file runs in its own `BEGIN ... ROLLBACK`. Every REST call in the worked example is a request that the database refuses. The screenshots were taken the same day with Playwright (installed Chrome) against `npm run dev` on the same local stack. No form was actually submitted while the screenshots were taken: each shows an input being refused, or a dialog before its confirm button. So the seed state was not changed. Full-page screenshots are cropped to the page content (the navigation sidebar is removed) so that they stay legible in print. The live project and MongoDB Atlas were not touched.
+**Evidence, and where it comes from.** Every table marked *generated* was produced by `docs/lab/diagrams/c8/gen_c8.py` from the **local** Supabase stack (PostgreSQL 17) on 19 November 2026, directly after `scripts/reset_local.sh` (migrations 0001 to 0007, fixture and demo seed, the six personas). The generator only reads. Each test file runs in its own `BEGIN ... ROLLBACK`. Every REST call in the worked example is a request that the database refuses. The screenshots were taken on 5 November 2026 with Playwright (installed Chrome) against `npm run dev` on the same local stack. No form was actually submitted while the screenshots were taken: each shows an input being refused, or a dialog before its confirm button. So the seed state was not changed. Full-page screenshots are cropped to the page content (the navigation sidebar is removed) so that they stay legible in print. The live project and MongoDB Atlas were not touched.
 
 | Test suite (where run) | Result |
 |---|---|
-| pgTAP, `supabase/tests/01` to `06` (re-run for this document, local stack) | 657 / 657 pass |
-| of which `01_constraints.sql` (constraint gallery) | 45 / 45 |
-| of which `02_rls_matrix.sql` (persona × relation matrix) | 298 / 298 |
+| pgTAP, `supabase/tests/01` to `07` (re-run for this document, local stack) | 710 / 710 pass |
+| of which `01_constraints.sql` (constraint gallery) | 48 / 48 |
+| of which `02_rls_matrix.sql` (persona × relation matrix) | 301 / 301 |
 | of which `04_abuse_cases.sql` (attacks replayed as direct writes) | 53 / 53 |
-| Graded fixture Q1 to Q37 (plain PG17), M1 to M25 (MongoDB) | 37 / 37, 25 / 25 (latest project run, not re-run here) |
-| API pytest, web end-to-end (Playwright) | 47, 38 (latest project run, not re-run here) |
+| Graded fixture Q1 to Q37 (plain PG17), M1 to M25 (MongoDB) | 37 / 37, 25 / 25 (project run of 19 November 2026) |
+| API pytest, web end-to-end (Playwright) | 66 / 66, 44 / 44 (project run of 19 November 2026; pytest needs the race lab `elp-race-pg` running, otherwise 65 pass and 1 is skipped) |
 
-**Deployment status.** The live Supabase project `countersign-dbms` (ap-south-1) has migrations 0001 to 0006 applied. The seven personas exist (password `Countersign@2026`; demo accounts only), sign-ups are disabled, and the `github-webhook` Edge Function is deployed. Sixteen signed webhook deliveries were replayed: 9 were projected, 1 was ignored (a feature-branch push), and 6 were not stored (one `ping`, one `issues` event, two signature failures answered 401, and two duplicates). The projected deliveries gave 29 GitHub contributions and 58 chunks. Atlas database `elp` has its `$jsonSchema` validators, `notes` and `note_versions`. No Anthropic or Voyage key is configured yet, so `/ask` runs in its extractive mode (quoted sentences with citations) and the embedding path, although built, is unused. A CI workflow exists in `.github/` but has not been pushed, because pushing it needs a GitHub token with the `workflow` scope.
+**Deployment status.** The live Supabase project `countersign-dbms` (ap-south-1) has migrations 0001 to 0007 applied (verified 19 November 2026). The six personas exist (password `Countersign@2026`; demo accounts only), sign-ups are disabled, and the `github-webhook` Edge Function is deployed. Sixteen signed webhook deliveries were replayed: 9 were projected, 1 was ignored (a feature-branch push), and 6 were not stored (one `ping`, one `issues` event, two signature failures answered 401, and two duplicates). The projected deliveries gave 29 GitHub contributions and 58 chunks. Atlas database `elp` has its `$jsonSchema` validators, `notes` and `note_versions`. No Anthropic or Voyage key is configured yet, so `/ask` runs in its extractive mode (quoted sentences with citations) and the embedding path, although built, is unused. A CI workflow exists in `.github/` but has not been pushed, because pushing it needs a GitHub token with the `workflow` scope.
 
 **Terms.** *anon* and *authenticated* are the two PostgreSQL roles that PostgREST switches to for a request without and with a valid user JWT. *service_role* is the role used by the server-side pipeline only. *RLS* is row-level security. *USING* decides which existing rows a command may see or touch. *WITH CHECK* decides which new or changed rows it may write. A *SECURITY DEFINER* function runs with its owner's privileges. A *SECURITY INVOKER* function (or a view with `security_invoker = true`) runs with the caller's privileges, so the caller's RLS applies.
 
@@ -74,7 +73,7 @@ Each form uses the same three pieces, so the behaviour is uniform:
 2. **A zod schema** from `web/src/lib/rules.ts`, attached with `react-hook-form` and `zodResolver`. Each schema mirrors a CHECK constraint or an RPC input check, and its doc comment names that constraint. Zod is only for fast feedback. It is never the guarantee.
 3. **`applyServerError`** (`web/src/lib/notify.ts`) passes any server error through `toAppError` (`web/src/lib/errors.ts`). If the database named the field that was wrong, the message goes under that field. Otherwise it is shown as a toast, with a technical line such as `SQLSTATE 23514 · team_capacity`.
 
-`toAppError` relies on a contract with the database (migrations 0002 to 0004). Every rule raises a real SQLSTATE, which PostgREST returns as `code`. Every trigger and RPC puts a stable **rule key** in DETAIL, which PostgREST returns as `details`. A plain CHECK, UNIQUE or FK violation names its constraint inside `message`. So the lookup order is: **rule key in `details`, then the constraint name in `message`, then the SQLSTATE fallback**. The table `RULES` in `errors.ts` holds 74 rule keys and constraint names, each with a title, a sentence and the form field it belongs to. Supabase Auth errors have their own map (`AUTH_CODES`).
+`toAppError` relies on a contract with the database (migrations 0002 to 0004). Every rule raises a real SQLSTATE, which PostgREST returns as `code`. Every trigger and RPC puts a stable **rule key** in DETAIL, which PostgREST returns as `details`. A plain CHECK, UNIQUE or FK violation names its constraint inside `message`. So the lookup order is: **rule key in `details`, then the constraint name in `message`, then the SQLSTATE fallback**. The table `RULES` in `errors.ts` holds 76 rule keys and constraint names, each with a title, a sentence and the form field it belongs to. Supabase Auth errors have their own map (`AUTH_CODES`).
 
 ## A.2 The forms at a glance
 
@@ -145,7 +144,7 @@ The capacity trigger *writes* the team row before counting ("serialize by writin
 | (whole form) | | at least one receipt: a cited artifact or ≥ 1 evidence row; at most 10 rows | — | "Attach at least one receipt ..." |
 | (who) | | — | RPC: 42501 `student_required`, `project_member_required`; RLS `claim_insert` (`usn = me AND is_team_member(team_id)`); trigger `trg_claim_member_required`; column GRANT (no `claim_id`, `status`, `revision`, `created_at`) | Join a team first |
 
-The team is never sent: `file_claim` derives it from the caller's membership (one team per project). The status is never sent either: `trg_claim_status_derived` sets it to pending, confirmed or contested from the countersigns, and overwrites a hand-written value (gallery happy path 42). A URL such as `javascript:alert(...)` is refused by the CHECK even when the RPC is bypassed (abuse case 29).
+The team is never sent: `file_claim` derives it from the caller's membership (one team per project). The status is never sent either: `trg_claim_status_derived` sets it to pending, confirmed or contested from the countersigns, and overwrites a hand-written value (gallery happy path 43). A URL such as `javascript:alert(...)` is refused by the CHECK even when the RPC is bypassed (abuse case 29).
 
 **Adding evidence later** (`AddEvidenceForm` on a pending claim in *My claims*) uses the same `addEvidenceSchema` and `add_claim_evidence`. The RPC first locks the claim row, so two concurrent adds get evidence numbers n and n+1. Only the claimant may add (`claim_owner_required`, 42501), and only while the claim is pending (`claim_not_pending`, 55000). Each added row raises `claim.revision` (trigger `trg_claim_evidence_revision`). This is what binds a countersign to the text it endorsed (Form 4).
 
@@ -153,7 +152,7 @@ The team is never sent: `file_claim` derives it from the caller's membership (on
 
 ## A.6 Form 4: Countersign, confirm or dispute
 
-A teammate's pending claim appears in the **Countersign queue** tab of the project page, with its revision. **Confirm** opens a confirmation dialog with no fields. **Dispute** opens a form with one field.
+A teammate's pending claim appears in the **Countersign queue** tab of the project page, with its revision. In a solo team (such as T00) there is no teammate to countersign: the queue says so, the student's own claims show the note "Solo team: no teammate to countersign. This claim rests on its evidence and faculty review.", and those claims stay *pending* by the same trigger logic, with no schema change. **Confirm** opens a confirmation dialog with no fields. **Dispute** opens a form with one field.
 
 | Field | Control, type | Client rule | Server / database rule | Message shown |
 |---|---|---|---|---|
@@ -164,7 +163,7 @@ A teammate's pending claim appears in the **Countersign queue** tab of the proje
 
 The claim's status is re-derived by trigger after every countersign: any dispute makes it *contested*, which puts it in the faculty queue `v_contested_claims`. A confirm makes it *confirmed*, and from then on its text and evidence are frozen: RLS `claim_update` allows only pending claims, and `trg_claim_guard` refuses with 55000 `claim_not_pending` even for a superuser (abuse case 27).
 
-![**Figure 6.** The claim as Arun sees it in the **Countersign queue** tab (local stack, recaptured on 5 November 2026 from the current build): statement, evidence, declared AI assistance and the revision he is about to sign.](screenshots/c8_06_countersign_card.png){width=100%}
+![**Figure 6.** The claim as Meera sees it in the **Countersign queue** tab of P06 (local stack, demo seed): her teammate Aditi Rao's pending C4 review claim, with its statement, two pieces of evidence (a contribution and the artifact version A20 v2), declared AI assistance and the revision she is about to sign.](screenshots/c8_06_countersign_card.png){width=100%}
 
 ![**Figure 7.** Confirm dialog. The revision number is sent with the signature; if the claimant edits the claim in the meantime, the database refuses the signature (55000 `countersign_stale_revision`).](screenshots/c8_07_countersign_confirm.png){width=48%}
 
@@ -203,7 +202,7 @@ The faculty rubric sheet `/sheet/:projectId` looks like the paper lab sheet. Cli
 
 | Field | Control, type | Client rule (`marksSchema(max)`) | Server / database rule | Message shown |
 |---|---|---|---|---|
-| marks | number, `NUMERIC(4,1) NOT NULL` | number, `min(0)`, `max(max_marks)`, at most one decimal | RPC: 22023 `marks` (negative or more than one decimal); CHECK `assessment_marks_check` (`marks >= 0`); trigger `trg_assessment_check` → 23514 `assessment_marks_le_max` (`marks <= milestone.max_marks`), 55000 `milestone_locked`, 23514 `assessment_member_required` | "The maximum for this component is 5." / Marks exceed the maximum |
+| marks | number, `NUMERIC NOT NULL` (migration 0007; stored at scale 1) | number, `min(0)`, `max(max_marks)`, at most one decimal | RPC: 22023 `marks` (negative or more than one decimal); CHECK `assessment_marks_check` (`marks >= 0`); CHECK `assessment_marks_one_decimal` (`marks = round(marks, 1)`, 0007) and `assessment_marks_precision` (`marks < 1000`); trigger `trg_assessment_check` → 23514 `assessment_marks_le_max` (`marks <= milestone.max_marks`), 55000 `milestone_locked`, 23514 `assessment_member_required` | "The maximum for this component is 5." / Marks exceed the maximum |
 | remarks | textarea, `VARCHAR(200)` | `trim().max(200)` | column type | "Keep remarks under 200 characters." |
 | (who) | — | — | RPC: 42501 `faculty_required`, `teaches_project_required`; RLS `assessment_insert` / `_update` (`teaches_project AND assessed_by = me`, or admin); `assessed_by` is set by the RPC to `app.current_faculty_id()` | Faculty only / Not your project |
 
@@ -244,7 +243,7 @@ Locking makes a component's marks final. It also freezes the claims, countersign
 ## B.1 Authentication
 
 * **Supabase Auth, email and password.** Sign-ups are disabled (`enable_signup = false` in `supabase/config.toml`; the same switch is off on the live project). Anonymous sign-ins and manual linking are off too. Accounts are created only by an admin, through the Auth Admin API (`scripts/create_personas.py`). In `config.toml`, access tokens expire after 3600 s and refresh-token rotation is on.
-* **Personas** (synthetic `@example.edu` accounts, demo password `Countersign@2026`): students `arun` (1RV24CY047), `sanvid` (1RV24CY051), `nikhil` (1RV24CY077, in no team of P06's offering) and `meera` (1RV24CY033); faculty `ramesh` (F01, teaches CD252IA) and `lakshmi` (F02, teaches only CD253IA); and `admin`. The shared password is acceptable only because these are demo accounts in a sign-up-disabled project. Before real use, each user sets their own password, or GitHub OAuth is used (the planned identity binding, `docs/PLAN.md` §1 item 2).
+* **Personas** (synthetic `@example.edu` accounts, demo password `Countersign@2026`): students `arun` (1RV24CY047, the only member of the solo team T00), `nikhil` (1RV24CY077, in no team of P06's offering) and `meera` (1RV24CY033, a member of T06, where a teammate's claim waits for her countersign); faculty `ramesh` (F01, teaches CD252IA) and `lakshmi` (F02, teaches only CD253IA); and `admin`. The shared password is acceptable only because these are demo accounts in a sign-up-disabled project. Before real use, each user sets their own password, or GitHub OAuth is used (the planned identity binding, `docs/PLAN.md` §1 item 2).
 * **The JWT** carries `sub` (the `auth.users` id) and `role = authenticated`. PostgREST verifies it and then runs the request as `SET ROLE authenticated`, with the claims available to `auth.uid()`. Without a JWT, the request runs as `anon`, which has no privileges (B.5).
 * **The API** (FastAPI) verifies the same token offline against the project's JWKS (asymmetric keys), checking issuer, audience and expiry. It never holds a JWT secret.
 
@@ -368,12 +367,12 @@ Generated from `pg_policies` on the local database: **102 policies on 30 tables*
 Three design points can be read off the table:
 
 1. **Visibility composes.** Child tables reuse the parent's policy by writing `EXISTS (SELECT 1 FROM artifact a WHERE ...)`. That subquery is itself filtered by `artifact`'s RLS, so a version, contribution or chunk of an invisible artifact is invisible too, without repeating the rule.
-2. **Content versus metadata.** Faculty see artifact rows (title, version, time) of the projects they teach, but chunk *text* only when `visibility = 'submitted'`. The text becomes `submitted` only when the team submits it (`trg_artifact_chunk_visibility_sync`). A `private` artifact is visible to its owner alone, and to nobody else, not even an admin (RLS matrix check 298).
+2. **Content versus metadata.** Faculty see artifact rows (title, version, time) of the projects they teach, but chunk *text* only when `visibility = 'submitted'`. The text becomes `submitted` only when the team submits it (`trg_artifact_chunk_visibility_sync`). A `private` artifact is visible to its owner alone, and to nobody else, not even an admin (RLS matrix check 301).
 3. **Deliberately missing policies.** `artifact`, `artifact_version`, `contribution` and `submission` have no DELETE policy, and some have no UPDATE policy: they are history. For an API user, RLS then denies the command outright.
 
 ## B.4 Column-level grants (generated)
 
-RLS decides *which rows* a user may write. Column grants decide *which columns*. On the tables below, `authenticated` has no table-level INSERT or UPDATE, only the listed columns. Identity ids, timestamps and derived columns are therefore server-owned. A client cannot pick an id (squatting the next sequence value so that later inserts fail with 23505), cannot backdate a record (`submitted_at`, `signed_at`, `joined_at`), and cannot set a derived value (`claim.status`, `claim.revision`, `artifact_chunk.visibility`). Abuse cases 6, 37, 44 and 45 try exactly this and get 42501.
+RLS decides *which rows* a user may write. Column grants decide *which columns*. On the tables below, `authenticated` has no table-level INSERT or UPDATE, only the listed columns. Identity ids, timestamps and derived columns are therefore server-owned. A client cannot pick an id (squatting the next sequence value so that later inserts fail with 23505), cannot backdate a record (`submitted_at`, `signed_at`, `joined_at`), and cannot set a derived value (`claim.status`, `claim.revision`, `artifact_chunk.visibility`). Abuse cases 6, 36, 44 and 45 try exactly this and get 42501.
 
 <!-- BEGIN generated: diagrams/c8/generated/column_grants.md -->
 
@@ -427,7 +426,7 @@ Generated from `has_column_privilege('authenticated', ...)`: the tables on which
 <!-- END generated -->
 
 * **`security_invoker` views.** A default PostgreSQL view runs with its *owner's* privileges and bypasses the caller's RLS, which is the classic Supabase data leak. All six views are created `WITH (security_invoker = true)`, so the base tables' policies filter every row they read. Some views also repeat a policy predicate on their driving table, so that, for example, a student does not get an empty mark row for every other student. `v_faculty_team_progress` has no content column at all (counts and timestamps only). `v_what_faculty_sees` lets a student check the privacy promise: it shows the student's own rows filtered by the faculty branch of each policy (Figure 17).
-* **The private schema.** Schema `private` holds `private.note` and every trigger function. It is not in PostgREST's exposed schemas (`[api] schemas = ["public", "graphql_public"]`). `anon` and `authenticated` have no USAGE on it and no privilege on any object in it, including through default privileges. A direct `SELECT` from `private.note` fails with 42501 (RLS matrix check 267).
+* **The private schema.** Schema `private` holds `private.note` and every trigger function. It is not in PostgREST's exposed schemas (`[api] schemas = ["public", "graphql_public"]`). `anon` and `authenticated` have no USAGE on it and no privilege on any object in it, including through default privileges. A direct `SELECT` from `private.note` fails with 42501 (RLS matrix check 268).
 * **Anon.** `anon` has no privilege on any table, view or function in `public`, and no USAGE on `app`, `private` or `pgmq`. The API's `/health` check depends on this: it queries a table as anon and expects 42501.
 
 ## B.6 SECURITY DEFINER inventory, with justification (generated)
@@ -490,21 +489,21 @@ FastAPI forwards the caller's own JWT to PostgREST for every user request (`/not
 | 1 | **D2:** a direct INSERT or UPDATE of `assessment` by an **administrator** may name any faculty member in `assessed_by` (the RPC and the faculty policy pin it to the caller, the admin policy does not) | an admin could record a mark "signed" by someone else | forbid admin INSERT and keep only admin UPDATE/DELETE, or add an `entered_by` audit column | open |
 | 2 | **D6:** leaked-password protection is off in the cloud project's Auth settings (security advisor WARN) | a persona could be given a known-breached password | switch it on in the dashboard | open |
 | 3 | **D1:** one claim can cite the same `commit`, `url` or `file` reference more than once (only contribution and version pointers have partial UNIQUE indexes) | duplicate evidence rows inflate "Evidence (n)" | partial UNIQUE index on `(claim_id, kind, ref) WHERE ref IS NOT NULL` | open |
-| 4 | **Migration 0007**, scheduled for C8 in C7 §12 (D1, D2, D4, and an Atlas role for D7) | – | – | **deferred**: not written for C8; the live project stays at 0001–0006, and C11 carries it as future work |
+| 4 | **Marks rounding** (C.2): `NUMERIC(4,1)` rounded 4.25 to 4.3 on a direct write instead of refusing it | a mark with two decimals could be stored rounded | migration 0007 (strict marks): `marks` becomes `NUMERIC` with CHECK `assessment_marks_one_decimal` | **closed**: 0007 is applied locally and on the live project (19 November 2026); D1, D2 and D4 are not part of it and stay open |
 | 5 | The Atlas connection uses the setup (`atlasAdmin`) user; a least-privilege `elp_app` user (`readWrite@elp`) is planned but not created (`docs/PROTOTYPE_PLAN.md` §5); D7 (`note_versions` append-only by contract, not by role) follows from it | the API could do more in Atlas than it needs | separate Atlas user and role | open |
 | 6 | The demo personas share one public password (B.1) | anyone who reads the repository can sign in to the demo | rotate before any public hosting (`docs/RUNBOOK.md` §7) | accepted for the demo |
 | 7 | The CI workflow is not pushed (D9), so the tests in §0 are run by hand, not on every push | a regression is found only when someone runs the suites | push with a `workflow`-scoped token | open |
-| 8 | The Supabase security and performance advisors were last checked during the database build (gate G7) and on 5 November for C2; they were not re-run for this document | – | re-run after 0007 | – |
+| 8 | The Supabase security and performance advisors were last checked during the database build (gate G7) and on 5 November for C2; they were not re-run after 0007 | – | re-run on the live project | open |
 
 ## B.11 RLS matrix test (`supabase/tests/02_rls_matrix.sql`)
 
-The test creates seven test personas inside its transaction (four students, two faculty, one admin); the eighth column of the matrix is `anon`, which has no user. For each of 32 relations (26 tables and 6 views) it runs `count(*)` *as* each persona (`SET role authenticated` with that persona's JWT claims, or `anon`), and compares the count with the expected value from the seed. The expected values are what the policies should let each persona see. For example, Arun sees 14 artifacts but not Sanvid's private A18; F02 (Lakshmi) sees none of P06's claims; and only the admin sees all 7 `app_user` rows. Rows that the GitHub pipeline adds are left out of the counts, so the test holds after a webhook replay too.
+The test creates seven test personas inside its transaction (four students, two faculty, one admin); the eighth column of the matrix is `anon`, which has no user. For each of 32 relations (26 tables and 6 views) it runs `count(*)` *as* each persona (`SET role authenticated` with that persona's JWT claims, or `anon`), and compares the count with the expected value from the seed. The expected values are what the policies should let each persona see. For example, Arun sees 15 artifacts, including his own private A18 (his team T00 is a solo team), while F01, who teaches P06, sees 14 and never A18; Meera does not see Aditi's private T06 draft A92, which the test makes after the matrix; F02 (Lakshmi) sees none of P06's claims; and only the admin sees all 7 `app_user` rows. Rows that the GitHub pipeline adds are left out of the counts, so the test holds after a webhook replay too.
 
 ![**Figure 15.** RLS matrix, generated from this run's TAP output: 256 of 256 cells green. Grey cells are the expected permission-denied (42501) for anon.](diagrams/c8/c8_rls_matrix.png){width=95%}
 
 <!-- BEGIN generated: diagrams/c8/generated/rls_other.md -->
 
-Run of `supabase/tests/02_rls_matrix.sql` on the local stack: **298 / 298 pass** (256 matrix cells + 42 targeted checks).
+Run of `supabase/tests/02_rls_matrix.sql` on the local stack: **301 / 301 pass** (256 matrix cells + 45 targeted checks).
 
 | # | Targeted check (test description) | Result |
 |--:|:--------------------------------|:--|
@@ -514,42 +513,45 @@ Run of `supabase/tests/02_rls_matrix.sql` on the local stack: **298 / 298 pass**
 | 260 | anon holds no SELECT/INSERT privilege on any public table or view | pass |
 | 261 | authenticated cannot TRUNCATE (TRUNCATE bypasses RLS) | pass |
 | 262 | every policy is scoped TO authenticated | pass |
-| 263 | private artifact A18 is invisible to its owner's teammate (Arun) | pass |
+| 263 | private artifact A92 is invisible to its owner's teammate (Meera) | pass |
 | 264 | versions of a private artifact are invisible to a teammate | pass |
-| 265 | a student cannot read a teammate's marks | pass |
-| 266 | rubric sheet shows a teammate's cells but not their marks | pass |
-| 267 | private notes are not readable directly (schema private has no grants) | pass |
-| 268 | "what faculty sees" never lists a private artifact | pass |
-| 269 | the owner sees their own private artifact A18 | pass |
-| 270 | ...but it is absent from the owner's "what faculty sees" view | pass |
-| 271 | faculty never see a private artifact, even in a project they teach | pass |
-| 272 | faculty read chunk text only once it is submitted | pass |
-| 273 | lab CIE: (5+19)*30/120 = 6.0 and (4.5+18)*30/120 = 5.625 -> 5.6 | pass |
-| 274 | F02 (does not teach CD252IA) sees no P06 claims | pass |
-| 275 | F02 sees no P06 marks | pass |
-| 276 | a student cannot write marks (not even their own) | pass |
-| 277 | a student cannot file a claim in a teammate's name | pass |
-| 278 | a student cannot file a claim for another team | pass |
-| 279 | a student files their own claim for their own team | pass |
-| 280 | a teammate countersigns a pending claim | pass |
-| 281 | ...and the derived claim status becomes confirmed | pass |
-| 282 | a student cannot countersign in someone else's name | pass |
-| 283 | a confirmed claim cannot be edited (only pending claims are) | pass |
-| 284 | a student cannot lock a milestone (no row is updatable) | pass |
-| 285 | a student cannot create a private artifact owned by someone else | pass |
-| 286 | a student cannot TRUNCATE | pass |
-| 287 | a teamless student joins a team as themself | pass |
-| 288 | a student cannot add someone else to a team | pass |
-| 289 | faculty cannot file claims | pass |
-| 290 | the teaching faculty enters a mark in their own name | pass |
-| 291 | faculty cannot sign a mark in another faculty's name | pass |
-| 292 | the teaching faculty locks a milestone | pass |
-| 293 | faculty may change nothing on a milestone except locked_at | pass |
-| 294 | faculty cannot unlock a locked milestone | pass |
-| 295 | faculty cannot mark a project they do not teach | pass |
-| 296 | faculty cannot lock a milestone of a project they do not teach | pass |
-| 297 | an admin can unlock a milestone | pass |
-| 298 | even an admin does not see private artifacts | pass |
+| 265 | Arun's private artifact A18 is invisible to other students | pass |
+| 266 | a student cannot read a teammate's marks | pass |
+| 267 | rubric sheet shows a teammate's cells but not their marks | pass |
+| 268 | private notes are not readable directly (schema private has no grants) | pass |
+| 269 | "what faculty sees" never lists a private artifact | pass |
+| 270 | the owner sees their own private artifact A92 | pass |
+| 271 | ...but it is absent from the owner's "what faculty sees" view | pass |
+| 272 | Arun (solo team T00) sees his own private artifact A18 | pass |
+| 273 | ...and A18 is absent from his "what faculty sees" view | pass |
+| 274 | faculty never see a private artifact, even in a project they teach | pass |
+| 275 | faculty read chunk text only once it is submitted | pass |
+| 276 | lab CIE: (4+16)*30/120 = 5.0, (4.5+17) -> 5.375 -> 5.4, (3+12) -> 3.75 -> 3.8, (5+19) -> 6.0 | pass |
+| 277 | F02 (does not teach CD252IA) sees no P06 claims | pass |
+| 278 | F02 sees no P06 marks | pass |
+| 279 | a student cannot write marks (not even their own) | pass |
+| 280 | a student cannot file a claim for another team | pass |
+| 281 | a student files their own claim for their own team | pass |
+| 282 | a student cannot lock a milestone (no row is updatable) | pass |
+| 283 | a student cannot TRUNCATE | pass |
+| 284 | a student cannot file a claim in a teammate's name | pass |
+| 285 | a teammate (Meera) countersigns a pending claim | pass |
+| 286 | ...and the derived claim status becomes confirmed | pass |
+| 287 | a student cannot countersign in someone else's name | pass |
+| 288 | a student cannot create a private artifact owned by someone else | pass |
+| 289 | a confirmed claim cannot be edited (only pending claims are) | pass |
+| 290 | a teamless student joins a team as themself | pass |
+| 291 | a student cannot add someone else to a team | pass |
+| 292 | faculty cannot file claims | pass |
+| 293 | the teaching faculty enters a mark in their own name | pass |
+| 294 | faculty cannot sign a mark in another faculty's name | pass |
+| 295 | the teaching faculty locks a milestone | pass |
+| 296 | faculty may change nothing on a milestone except locked_at | pass |
+| 297 | faculty cannot unlock a locked milestone | pass |
+| 298 | faculty cannot mark a project they do not teach | pass |
+| 299 | faculty cannot lock a milestone of a project they do not teach | pass |
+| 300 | an admin can unlock a milestone | pass |
+| 301 | even an admin does not see private artifacts | pass |
 
 <!-- END generated -->
 
@@ -591,10 +593,10 @@ Run of `supabase/tests/04_abuse_cases.sql` on the local stack: **53 / 53 pass**.
 | 18 | lock: a countersign on a locked claim cannot be withdrawn | pass |
 | 19 | lock: ... nor flipped to a dispute | pass |
 | 20 | lock: a pending claim cannot be moved onto a locked component | pass |
-| 21 | lock: Arun's C1 receipt is unchanged | pass |
+| 21 | lock: Karthik's C1 receipt is unchanged | pass |
 | | **3. Countersign is bound to the revision the signer read** | |
 | 22 | revision: editing the statement bumps claim.revision | pass |
-| 23 | revision: a confirm of the text he read is refused after the edit | pass |
+| 23 | revision: a confirm of the text she read is refused after the edit | pass |
 | 24 | revision: re-reading and signing the current revision works | pass |
 | 25 | finality: an UPDATE of a confirmed claim matches no row (RLS: pending only) ... | pass |
 | 26 | ... so the confirmed text is unchanged | pass |
@@ -603,25 +605,25 @@ Run of `supabase/tests/04_abuse_cases.sql` on the local stack: **53 / 53 pass**.
 | 28 | evidence: cannot cite a teammate's contribution as your own | pass |
 | 29 | evidence: a url must be http(s) (no javascript: links) | pass |
 | 30 | evidence: a commit must be a hex SHA | pass |
-| 31 | evidence: cite A17@v1 once ... | pass |
+| 31 | evidence: cite A20@v2 once ... | pass |
 | 32 | ... but not twice | pass |
 | 33 | skill_evidence: usn must be the claim's claimant (composite FK on a superkey) | pass |
 | | **5. Artifacts: no hijacking, hiding, moving or un-submitting** | |
 | 34 | artifact: a submitted artifact cannot be made private | pass |
 | 35 | artifact: ... nor un-submitted or moved to another component | pass |
-| 36 | artifact: a teammate's shared draft cannot be taken over and hidden | pass |
-| 37 | artifact: team_id / project_id are not updatable (no column privilege) | pass |
-| 38 | artifact: cannot be created as submitted (only submitting does that) | pass |
-| 39 | artifact: making your OWN solo draft private is allowed | pass |
-| 40 | ... and sharing it again | pass |
-| 41 | artifact: no path moves an artifact to another team | pass |
+| 36 | artifact: team_id / project_id are not updatable (no column privilege) | pass |
+| 37 | artifact: cannot be created as submitted (only submitting does that) | pass |
+| 38 | artifact: making your OWN solo draft private is allowed | pass |
+| 39 | ... and sharing it again | pass |
+| 40 | artifact: no path moves an artifact to another team | pass |
+| 41 | artifact: a teammate's shared draft cannot be taken over and hidden | pass |
 | 42 | artifact: faculty still see submitted A13 | pass |
 | | **6. Submissions: frozen, never backdated, same component, chunks follow** | |
 | 43 | submission: an earlier submission cannot gain artifacts later | pass |
 | 44 | submission: submitted_at is server-owned (no backdating) | pass |
 | 45 | ids are server-owned: a client cannot pick claim_id | pass |
 | 46 | submission: a C4 artifact cannot be frozen into C3 | pass |
-| 47 | chunks: Sanvid submits A17 for C3 | pass |
+| 47 | chunks: Arun submits A17 for C3 | pass |
 | 48 | chunks: ... and its text becomes visible to the teaching faculty with it | pass |
 | | **7. Directory, default privileges, CIE layout, history FKs** | |
 | 49 | directory: a login with no profile reads no students, rosters or skills | pass |
@@ -678,11 +680,11 @@ Afterwards, ramesh reads Meera's P06/C2 row: `[]`: every attempt was refused and
 
 Reading the trace:
 
-* **Rows 1 and 2 show the order of the layers.** 4.25 is caught by the RPC (layer 2, `marks`). 7 passes the RPC's checks (it is non-negative, with one decimal) and is caught by the trigger (layer 3, `assessment_marks_le_max`). The RPC does not compare with `max_marks`; the trigger is the single place that rule lives. A CHECK cannot express it, because the maximum is in another table (`milestone`). For the same reason, the trigger `trg_milestone_max_marks_guard` refuses to lower a `max_marks` below an existing mark (gallery row 32).
+* **Rows 1 and 2 show the order of the layers.** 4.25 is caught by the RPC (layer 2, `marks`). 7 passes the RPC's checks (it is non-negative, with one decimal) and is caught by the trigger (layer 3, `assessment_marks_le_max`). The RPC does not compare with `max_marks`; the trigger is the single place that rule lives. A CHECK cannot express it, because the maximum is in another table (`milestone`). For the same reason, the trigger `trg_milestone_max_marks_guard` refuses to lower a `max_marks` below an existing mark (gallery row 33).
 * **Row 3 is row 2 without the RPC**: the same refusal, word for word. **Row 4** shows a plain CHECK (`assessment_marks_check`, `marks >= 0`).
-* **Rows 5 to 7 are about who may write, not what.** The RPC refuses Lakshmi (`teaches_project_required`) and Arun (`faculty_required`). Lakshmi's direct INSERT is refused by RLS (`assessment_insert` WITH CHECK). Faculty also cannot sign in another faculty member's name (RLS matrix check 291).
+* **Rows 5 to 7 are about who may write, not what.** The RPC refuses Lakshmi (`teaches_project_required`) and Arun (`faculty_required`). Lakshmi's direct INSERT is refused by RLS (`assessment_insert` WITH CHECK). Faculty also cannot sign in another faculty member's name (RLS matrix check 294).
 * **Rows 8 and 9** repeat the pattern for the claim statement: `file_claim` returns `statement`, and the direct INSERT hits CHECK `claim_statement_check`. Both map to the same message, "Describe the work in at least 10 characters."
-* **One honest gap.** The column type `NUMERIC(4,1)` rounds a value with two decimals (4.25 is stored as 4.3) instead of rejecting it. Only layer 2 (the RPC) refuses 4.25. A direct INSERT of 4.25 by the teaching faculty would be stored as 4.3. This is harmless (the stored value is still within one decimal and the maximum), but strictly the "one decimal" rule is enforced by layers 1 and 2 only.
+* **A gap that is now closed.** Until migration 0007 the column type was `NUMERIC(4,1)`, and PostgreSQL rounds a value to the column's type modifier before any trigger or CHECK sees the row: a direct INSERT of 4.25 was stored as 4.3, so the one-decimal rule held only in layers 1 and 2. Migration 0007 (strict marks) makes `marks` an unconstrained `NUMERIC` and adds CHECK `assessment_marks_one_decimal` (`marks = round(marks, 1)`), so the table now refuses 4.25 on every path (gallery row 10, 23514); a trigger stores accepted marks at scale 1 as before.
 
 **Back in the browser.** For each refusal, PostgREST returns `{code, message, details, hint}`. `toAppError` finds the rule key in `details` (rows 1, 2, 3, 5, 7, 8), or the constraint name in `message` (rows 4, 9), or falls back to the SQLSTATE (row 6, where it recognises the RLS message). The last column of the trace table was produced by running each response through the real `errors.ts`.
 
@@ -694,7 +696,7 @@ One violating statement per integrity rule, each run as `postgres` inside the te
 
 <!-- BEGIN generated: diagrams/c8/generated/gallery.md -->
 
-Generated by re-running every `throws_ok` statement of `supabase/tests/01_constraints.sql` in a rolled-back transaction and capturing the error (`GET STACKED DIAGNOSTICS`), then passing the error, as PostgREST would return it, through `toAppError()` in `web/src/lib/errors.ts`. **35 of 35** statements fail with the SQLSTATE the test expects. Rows are numbered as in the test's TAP output.
+Generated by re-running every `throws_ok` statement of `supabase/tests/01_constraints.sql` in a rolled-back transaction and capturing the error (`GET STACKED DIAGNOSTICS`), then passing the error, as PostgREST would return it, through `toAppError()` in `web/src/lib/errors.ts`. **36 of 36** statements fail with the SQLSTATE the test expects. Rows are numbered as in the test's TAP output.
 
 | # | Rule and the violating statement | SQLSTATE · constraint / rule key | Database message | Message the web shows (title: text) |
 |--:|:----------------------------|:----------|:--------------|:--------------|
@@ -703,51 +705,54 @@ Generated by re-running every `throws_ok` statement of `supabase/tests/01_constr
 | 3 | CHECK: artifact.type is an enumerated domain: `INSERT INTO artifact (artifact_id, team_id, project_id, milestone_no, title, type, source) VALUES ('A99', 'T01', 'P01', 1, 'Clip', 'video', 'editor')` | 23514 · `artifact_type_check` | new row for relation "artifact" violates check constraint "artifact_type_check" | **Not allowed:** That value breaks one of the rules. |
 | 4 | CHECK: a private artifact needs an owner: `INSERT INTO artifact (artifact_id, team_id, project_id, milestone_no, title, type, source, visibility) VALUES ('A99', 'T01', 'P01', 1, 'Secret', 'note', 'editor', 'private')` | 23514 · `artifact_private_needs_owner` | new row for relation "artifact" violates check constraint "artifact_private_needs_owner" | **Private needs an owner:** A private artifact must have an owner. |
 | 5 | CHECK: app_user role must match its identifier (faculty with a USN): `INSERT INTO app_user (user_id, role, usn) VALUES (gen_random_uuid(), 'faculty', '1RV24CY047')` | 23514 · `app_user_role_consistency` | new row for relation "app_user" violates check constraint "app_user_role_consistency" | **Profile is inconsistent:** A student profile needs a USN and a faculty profile needs a faculty id. |
-| 6 | CHECK: evidence kind must match the pointer that is filled: `INSERT INTO claim_evidence (claim_id, evidence_no, kind, ref) SELECT claim_id, 9, 'contribution', 'abc' FROM claim WHERE usn = '1RV24CY051' AND milestone_no = 3 AND project_id = 'P06'` | 23514 · `claim_evidence_kind_matches` | new row for relation "claim_evidence" violates check constraint "claim_evidence_kind_matches" | **Check the reference:** The reference does not match the kind of evidence chosen. (field `ref`) |
-| 7 | CHECK: a dispute needs a comment: `INSERT INTO countersign (claim_id, endorser_usn, verdict) SELECT claim_id, '1RV24CY047', 'dispute' FROM claim WHERE usn = '1RV24CY051' AND milestone_no = 3 AND project_id = 'P06'` | 23514 · `countersign_dispute_needs_comment` | new row for relation "countersign" violates check constraint "countersign_dispute_needs_comment" | **Say what is wrong:** A dispute needs a comment saying what is wrong. (field `comment`) |
+| 6 | CHECK: evidence kind must match the pointer that is filled: `INSERT INTO claim_evidence (claim_id, evidence_no, kind, ref) SELECT claim_id, 9, 'contribution', 'abc' FROM claim WHERE usn = '1RV24CY011' AND milestone_no = 4 AND project_id = 'P06' AND contribution_type = 'review'` | 23514 · `claim_evidence_kind_matches` | new row for relation "claim_evidence" violates check constraint "claim_evidence_kind_matches" | **Check the reference:** The reference does not match the kind of evidence chosen. (field `ref`) |
+| 7 | CHECK: a dispute needs a comment: `INSERT INTO countersign (claim_id, endorser_usn, verdict) SELECT claim_id, '1RV24CY033', 'dispute' FROM claim WHERE usn = '1RV24CY011' AND milestone_no = 4 AND project_id = 'P06' AND contribution_type = 'review'` | 23514 · `countersign_dispute_needs_comment` | new row for relation "countersign" violates check constraint "countersign_dispute_needs_comment" | **Say what is wrong:** A dispute needs a comment saying what is wrong. (field `comment`) |
 | 8 | CHECK: a claim statement needs at least 10 characters: `INSERT INTO claim (usn, team_id, project_id, milestone_no, statement) VALUES ('1RV24CY047', 'T00', 'P06', 5, 'did it')` | 23514 · `claim_statement_check` | new row for relation "claim" violates check constraint "claim_statement_check" | **Say a little more:** Describe the work in at least 10 characters. (field `statement`) |
 | 9 | CHECK: marks cannot be negative: `INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by) VALUES ('1RV24CY047', 'P06', 5, -1, 'F01')` | 23514 · `assessment_marks_check` | new row for relation "assessment" violates check constraint "assessment_marks_check" | **Marks cannot be negative:** Enter marks of 0 or more. (field `marks`) |
-| 10 | EXCLUDE: academic terms cannot overlap: `INSERT INTO academic_term (term_id, name, start_date, end_date) VALUES ('2026-X', 'Overlapping term', '2026-12-01', '2027-01-31')` | 23P01 · `academic_term_no_overlap` | conflicting key value violates exclusion constraint "academic_term_no_overlap" | **Overlaps:** That overlaps an existing record. |
-| 11 | FK: team_member.usn must be an existing student: `INSERT INTO team_member (team_id, usn, role) VALUES ('T02', '1RV24CY999', 'member')` | 23503 · `team_member_usn_fkey` | insert or update on table "team_member" violates foreign key constraint "team_member_usn_fkey" | **Linked record missing:** This refers to something that does not exist, or that you cannot see. |
-| 12 | Composite FK: a T03 (P02) artifact cannot be filed under a P01 milestone: `INSERT INTO artifact (artifact_id, team_id, project_id, milestone_no, title, type, source) VALUES ('A99', 'T03', 'P01', 1, 'Misfiled', 'report', 'editor')` | 23503 · `artifact_team_project_fkey` | insert or update on table "artifact" violates foreign key constraint "artifact_team_project_fkey" | **Linked record missing:** This refers to something that does not exist, or that you cannot see. |
-| 13 | Composite FK: a project's offering must be of the same course: `INSERT INTO project (project_id, course_code, title, start_date, end_date, offering_id) SELECT 'P99', 'CD253IA', 'Wrong offering', '2026-09-01', '2026-12-01', offering_id FROM course_offering WHERE course_code = 'CD252IA' AND term_id = '2026-ODD' AND section = 'A'` | 23503 · `project_offering_fkey` | insert or update on table "project" violates foreign key constraint "project_offering_fkey" | **Linked record missing:** This refers to something that does not exist, or that you cannot see. |
-| 14 | RESTRICT: a student with a login and recorded work cannot be deleted (the first RESTRICT key checked is the login, `app_user_usn_fkey`; `contribution_usn_fkey` is RESTRICT too): `DELETE FROM student WHERE usn = '1RV24CY047'` | 23503 · `app_user_usn_fkey` | update or delete on table "student" violates foreign key constraint "app_user_usn_fkey" on table "app_user" | **Linked record missing:** This refers to something that does not exist, or that you cannot see. |
-| 15 | RESTRICT: a course with offerings and projects cannot be deleted (the first key checked is `course_offering_course_code_fkey`; `project_course_code_fkey` is RESTRICT too): `DELETE FROM course WHERE course_code = 'CD254TA'` | 23503 · `course_offering_course_code_fkey` | update or delete on table "course" violates foreign key constraint "course_offering_course_code_fkey" on table "course_offering" | **Linked record missing:** This refers to something that does not exist, or that you cannot see. |
-| 16 | RESTRICT: a project with teams, submissions, claims and marks cannot be deleted (the first key checked is `team_project_id_fkey`): `DELETE FROM project WHERE project_id = 'P06'` | 23503 · `team_project_id_fkey` | update or delete on table "project" violates foreign key constraint "team_project_id_fkey" on table "team" | **Linked record missing:** This refers to something that does not exist, or that you cannot see. |
-| 17 | UNIQUE: a redelivered commit cannot create a duplicate contribution: `INSERT INTO contribution (usn, artifact_id, contribution_type, source, source_ref) VALUES ('1RV24CY047', 'A15', 'code', 'github', '3f9c2ab')` | 23505 · `contribution_idempotency_key` | duplicate key value violates unique constraint "contribution_idempotency_key" | **Already exists:** That already exists. |
-| 18 | UNIQUE: one submission per (team, component, attempt_no): `INSERT INTO submission (team_id, project_id, milestone_no, submitted_by) VALUES ('T00', 'P06', 4, '1RV24CY051')` | 23505 · `submission_attempt_key` | duplicate key value violates unique constraint "submission_attempt_key" | **Submitted at the same moment:** A teammate submitted this component at the same moment. Refresh and try again. |
-| 19 | Capacity: Team Alpha T01 is full (fixture Q36): `INSERT INTO team_member (team_id, usn, role) VALUES ('T01', '1RV24CY077', 'member')` | 23514 · `team_capacity` | Team T01 is full (4 / 4) | **Team is full:** This team already has 4 of 4 members. Pick another team. (field `team_id`) |
-| 20 | Capacity: moving into a full team via UPDATE is also refused: `UPDATE team_member SET team_id = 'T01' WHERE team_id = 'T02' AND usn = '1RV24CY041'` | 23514 · `team_capacity` | Team T01 is full (4 / 4) | **Team is full:** This team already has 4 of 4 members. Pick another team. (field `team_id`) |
-| 21 | Capacity: max_size cannot shrink below the member count: `UPDATE team SET max_size = 2 WHERE team_id = 'T01'` | 23514 · `team_capacity` | Team T01 already has 4 members; max_size 2 is too small | **Team is full:** This team already has as many members as it allows. Pick another team. (field `team_id`) |
-| 22 | One team per project: Arun (T01) cannot also join T02 (both P01): `INSERT INTO team_member (team_id, usn, role) VALUES ('T02', '1RV24CY047', 'member')` | 23505 · `one_team_per_project` | Student 1RV24CY047 is already in team T01 for project P01 | **Already in a team:** You are already in a team for this project. A student joins one team per project. (field `team_id`) |
-| 23 | Membership: a non-member cannot record a contribution: `INSERT INTO contribution (usn, artifact_id, contribution_type) VALUES ('1RV24CY077', 'A01', 'code')` | 23514 · `contribution_member_required` | Student 1RV24CY077 is not a member of team T01 | **Team members only:** Only members of this team can record work in it. |
-| 24 | Membership: a non-member cannot author a chunk: `INSERT INTO artifact_chunk (artifact_id, version_no, author_usn, content) VALUES ('A01', 3, '1RV24CY077', 'x')` | 23514 · `artifact_chunk_member_required` | Student 1RV24CY077 is not a member of team T01 | **Team members only:** Only members of this team can record work in it. |
-| 25 | Membership: a non-member cannot file a claim: `INSERT INTO claim (usn, team_id, project_id, milestone_no, statement) VALUES ('1RV24CY077', 'T00', 'P06', 3, 'I drew the whole ER diagram.')` | 23514 · `claim_member_required` | Student 1RV24CY077 is not a member of team T00 | **Team members only:** Only members of this team can record work in it. |
-| 26 | Membership: only a student in a team of the project can be assessed: `INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by) VALUES ('1RV24CY077', 'P06', 4, 10, 'F01')` | 23514 · `assessment_member_required` | Student 1RV24CY077 is not in any team of project P06 | **Not in this project:** That student is not in any team of this project. (field `usn`) |
-| 27 | Countersign: a student cannot countersign their own claim: `INSERT INTO countersign (claim_id, endorser_usn, verdict) SELECT claim_id, '1RV24CY051', 'confirm' FROM claim WHERE usn = '1RV24CY051' AND milestone_no = 3 AND project_id = 'P06'` | 23514 · `countersign_not_self` | Student 1RV24CY051 cannot countersign their own claim 5 | **Not your own claim:** You cannot countersign your own claim. A teammate has to. |
-| 28 | Countersign: only a teammate of the claimant may countersign: `INSERT INTO countersign (claim_id, endorser_usn, verdict) SELECT claim_id, '1RV24CY011', 'confirm' FROM claim WHERE usn = '1RV24CY051' AND milestone_no = 3 AND project_id = 'P06'` | 23514 · `countersign_teammate_required` | Student 1RV24CY011 is not a member of team T00 | **Teammates only:** Only a teammate of the claimant can countersign this claim. |
-| 29 | Evidence: a claim cannot cite another team's work: `INSERT INTO claim_evidence (claim_id, evidence_no, kind, artifact_id, version_no) SELECT claim_id, 9, 'artifact_version', 'A19', 1 FROM claim WHERE usn = '1RV24CY051' AND milestone_no = 3 AND project_id = 'P06'` | 23514 · `claim_evidence_same_team` | Evidence belongs to team T06, but claim 5 is for team T00 | **Evidence from another team:** Evidence must come from your own team's work. (field `ref`) |
-| 30 | Submission: cannot submit another team's artifact: `INSERT INTO submission_artifact (submission_id, artifact_id, version_no) SELECT submission_id, 'A19', 1 FROM submission WHERE team_id = 'T00' AND milestone_no = 1` | 23514 · `submission_artifact_same_team` | Artifact A19 belongs to team T06, not the submitting team T00 | **Not your team's artifact:** You can only submit artifacts that belong to your own team. (field `artifact_ids`) |
-| 31 | Marks: cannot exceed milestone.max_marks (ER Diagram = 10): `INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by) VALUES ('1RV24CY047', 'P06', 3, 11, 'F01')` | 23514 · `assessment_marks_le_max` | Marks 11.0 exceed the maximum 10 for milestone P06/3 | **Marks exceed the maximum:** 11.0 is more than this component's maximum of 10. (field `marks`) |
-| 32 | Marks: max_marks cannot drop below an existing mark (Arun has 19/20): `UPDATE milestone SET max_marks = 15 WHERE project_id = 'P06' AND milestone_no = 4` | 23514 · `assessment_marks_le_max` | Milestone P06/4 has marks above 15 | **Marks exceed the maximum:** That is more than this component's maximum. (field `marks`) |
-| 33 | Locked milestone: C1 marks cannot be edited: `UPDATE assessment SET marks = 4 WHERE usn = '1RV24CY047' AND project_id = 'P06' AND milestone_no = 1` | 55000 · `milestone_locked` | Milestone P06/1 is locked (since 2026-09-20 11:30:00+00); marks can no longer change | **Component is locked:** Marks for this component are final, so its claims, countersigns and submissions can no longer change. |
-| 34 | Locked milestone: C1 marks cannot be deleted: `DELETE FROM assessment WHERE usn = '1RV24CY047' AND project_id = 'P06' AND milestone_no = 1` | 55000 · `milestone_locked` | Milestone P06/1 is locked (since 2026-09-20 11:30:00+00); marks can no longer change | **Component is locked:** Marks for this component are final, so its claims, countersigns and submissions can no longer change. |
-| 36 | Capacity: ... and the next joiner is refused: `INSERT INTO team_member (team_id, usn, role) VALUES ('T02', '1RV24CY082', 'member')` | 23514 · `team_capacity` | Team T02 is full (4 / 4) | **Team is full:** This team already has 4 of 4 members. Pick another team. (field `team_id`) |
+| 10 | CHECK: marks have at most one decimal; 4.25 is refused, not rounded (0007): `INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by) VALUES ('1RV24CY047', 'P06', 5, 4.25, 'F01')` | 23514 · `assessment_marks_one_decimal` | new row for relation "assessment" violates check constraint "assessment_marks_one_decimal" | **Check the marks:** Marks can have at most one decimal place (4.5, not 4.25). (field `marks`) |
+| 11 | EXCLUDE: academic terms cannot overlap: `INSERT INTO academic_term (term_id, name, start_date, end_date) VALUES ('2026-X', 'Overlapping term', '2026-12-01', '2027-01-31')` | 23P01 · `academic_term_no_overlap` | conflicting key value violates exclusion constraint "academic_term_no_overlap" | **Overlaps:** That overlaps an existing record. |
+| 12 | FK: team_member.usn must be an existing student: `INSERT INTO team_member (team_id, usn, role) VALUES ('T02', '1RV24CY999', 'member')` | 23503 · `team_member_usn_fkey` | insert or update on table "team_member" violates foreign key constraint "team_member_usn_fkey" | **Linked record missing:** This refers to something that does not exist, or that you cannot see. |
+| 13 | Composite FK: a T03 (P02) artifact cannot be filed under a P01 milestone: `INSERT INTO artifact (artifact_id, team_id, project_id, milestone_no, title, type, source) VALUES ('A99', 'T03', 'P01', 1, 'Misfiled', 'report', 'editor')` | 23503 · `artifact_team_project_fkey` | insert or update on table "artifact" violates foreign key constraint "artifact_team_project_fkey" | **Linked record missing:** This refers to something that does not exist, or that you cannot see. |
+| 14 | Composite FK: a project's offering must be of the same course: `INSERT INTO project (project_id, course_code, title, start_date, end_date, offering_id) SELECT 'P99', 'CD253IA', 'Wrong offering', '2026-09-01', '2026-12-01', offering_id FROM course_offering WHERE course_code = 'CD252IA' AND term_id = '2026-ODD' AND section = 'A'` | 23503 · `project_offering_fkey` | insert or update on table "project" violates foreign key constraint "project_offering_fkey" | **Linked record missing:** This refers to something that does not exist, or that you cannot see. |
+| 15 | RESTRICT: a student with a login and recorded work cannot be deleted (the first RESTRICT key checked is the login, `app_user_usn_fkey`; `contribution_usn_fkey` is RESTRICT too): `DELETE FROM student WHERE usn = '1RV24CY047'` | 23503 · `app_user_usn_fkey` | update or delete on table "student" violates foreign key constraint "app_user_usn_fkey" on table "app_user" | **Linked record missing:** This refers to something that does not exist, or that you cannot see. |
+| 16 | RESTRICT: a course with offerings and projects cannot be deleted (the first key checked is `course_offering_course_code_fkey`; `project_course_code_fkey` is RESTRICT too): `DELETE FROM course WHERE course_code = 'CD254TA'` | 23503 · `course_offering_course_code_fkey` | update or delete on table "course" violates foreign key constraint "course_offering_course_code_fkey" on table "course_offering" | **Linked record missing:** This refers to something that does not exist, or that you cannot see. |
+| 17 | RESTRICT: a project with teams, submissions, claims and marks cannot be deleted (the first key checked is `team_project_id_fkey`): `DELETE FROM project WHERE project_id = 'P06'` | 23503 · `team_project_id_fkey` | update or delete on table "project" violates foreign key constraint "team_project_id_fkey" on table "team" | **Linked record missing:** This refers to something that does not exist, or that you cannot see. |
+| 18 | UNIQUE: a redelivered commit cannot create a duplicate contribution: `INSERT INTO contribution (usn, artifact_id, contribution_type, source, source_ref) VALUES ('1RV24CY047', 'A15', 'code', 'github', '3f9c2ab')` | 23505 · `contribution_idempotency_key` | duplicate key value violates unique constraint "contribution_idempotency_key" | **Already exists:** That already exists. |
+| 19 | UNIQUE: one submission per (team, component, attempt_no): `INSERT INTO submission (team_id, project_id, milestone_no, submitted_by) VALUES ('T00', 'P06', 4, '1RV24CY047')` | 23505 · `submission_attempt_key` | duplicate key value violates unique constraint "submission_attempt_key" | **Submitted at the same moment:** A teammate submitted this component at the same moment. Refresh and try again. |
+| 20 | Capacity: Team Alpha T01 is full (fixture Q36): `INSERT INTO team_member (team_id, usn, role) VALUES ('T01', '1RV24CY077', 'member')` | 23514 · `team_capacity` | Team T01 is full (4 / 4) | **Team is full:** This team already has 4 of 4 members. Pick another team. (field `team_id`) |
+| 21 | Capacity: moving into a full team via UPDATE is also refused: `UPDATE team_member SET team_id = 'T01' WHERE team_id = 'T02' AND usn = '1RV24CY041'` | 23514 · `team_capacity` | Team T01 is full (4 / 4) | **Team is full:** This team already has 4 of 4 members. Pick another team. (field `team_id`) |
+| 22 | Capacity: max_size cannot shrink below the member count: `UPDATE team SET max_size = 2 WHERE team_id = 'T01'` | 23514 · `team_capacity` | Team T01 already has 4 members; max_size 2 is too small | **Team is full:** This team already has as many members as it allows. Pick another team. (field `team_id`) |
+| 23 | One team per project: Arun (T01) cannot also join T02 (both P01): `INSERT INTO team_member (team_id, usn, role) VALUES ('T02', '1RV24CY047', 'member')` | 23505 · `one_team_per_project` | Student 1RV24CY047 is already in team T01 for project P01 | **Already in a team:** You are already in a team for this project. A student joins one team per project. (field `team_id`) |
+| 24 | Membership: a non-member cannot record a contribution: `INSERT INTO contribution (usn, artifact_id, contribution_type) VALUES ('1RV24CY077', 'A01', 'code')` | 23514 · `contribution_member_required` | Student 1RV24CY077 is not a member of team T01 | **Team members only:** Only members of this team can record work in it. |
+| 25 | Membership: a non-member cannot author a chunk: `INSERT INTO artifact_chunk (artifact_id, version_no, author_usn, content) VALUES ('A01', 3, '1RV24CY077', 'x')` | 23514 · `artifact_chunk_member_required` | Student 1RV24CY077 is not a member of team T01 | **Team members only:** Only members of this team can record work in it. |
+| 26 | Membership: a non-member cannot file a claim: `INSERT INTO claim (usn, team_id, project_id, milestone_no, statement) VALUES ('1RV24CY077', 'T00', 'P06', 3, 'I drew the whole ER diagram.')` | 23514 · `claim_member_required` | Student 1RV24CY077 is not a member of team T00 | **Team members only:** Only members of this team can record work in it. |
+| 27 | Membership: only a student in a team of the project can be assessed: `INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by) VALUES ('1RV24CY077', 'P06', 4, 10, 'F01')` | 23514 · `assessment_member_required` | Student 1RV24CY077 is not in any team of project P06 | **Not in this project:** That student is not in any team of this project. (field `usn`) |
+| 28 | Countersign: a student cannot countersign their own claim: `INSERT INTO countersign (claim_id, endorser_usn, verdict) SELECT claim_id, '1RV24CY011', 'confirm' FROM claim WHERE usn = '1RV24CY011' AND milestone_no = 4 AND project_id = 'P06' AND contribution_type = 'review'` | 23514 · `countersign_not_self` | Student 1RV24CY011 cannot countersign their own claim 8 | **Not your own claim:** You cannot countersign your own claim. A teammate has to. |
+| 29 | Countersign: only a teammate of the claimant may countersign: `INSERT INTO countersign (claim_id, endorser_usn, verdict) SELECT claim_id, '1RV24CY047', 'confirm' FROM claim WHERE usn = '1RV24CY011' AND milestone_no = 4 AND project_id = 'P06' AND contribution_type = 'review'` | 23514 · `countersign_teammate_required` | Student 1RV24CY047 is not a member of team T06 | **Teammates only:** Only a teammate of the claimant can countersign this claim. |
+| 30 | Evidence: a claim cannot cite another team's work: `INSERT INTO claim_evidence (claim_id, evidence_no, kind, artifact_id, version_no) SELECT claim_id, 9, 'artifact_version', 'A13', 1 FROM claim WHERE usn = '1RV24CY011' AND milestone_no = 4 AND project_id = 'P06' AND contribution_type = 'review'` | 23514 · `claim_evidence_same_team` | Evidence belongs to team T00, but claim 8 is for team T06 | **Evidence from another team:** Evidence must come from your own team's work. (field `ref`) |
+| 31 | Submission: cannot submit another team's artifact: `INSERT INTO submission_artifact (submission_id, artifact_id, version_no) SELECT submission_id, 'A19', 1 FROM submission WHERE team_id = 'T00' AND milestone_no = 1` | 23514 · `submission_artifact_same_team` | Artifact A19 belongs to team T06, not the submitting team T00 | **Not your team's artifact:** You can only submit artifacts that belong to your own team. (field `artifact_ids`) |
+| 32 | Marks: cannot exceed milestone.max_marks (ER Diagram = 10): `INSERT INTO assessment (usn, project_id, milestone_no, marks, assessed_by) VALUES ('1RV24CY047', 'P06', 3, 11, 'F01')` | 23514 · `assessment_marks_le_max` | Marks 11.0 exceed the maximum 10 for milestone P06/3 | **Marks exceed the maximum:** 11.0 is more than this component's maximum of 10. (field `marks`) |
+| 33 | Marks: max_marks cannot drop below an existing mark (Arun has 19/20): `UPDATE milestone SET max_marks = 15 WHERE project_id = 'P06' AND milestone_no = 4` | 23514 · `assessment_marks_le_max` | Milestone P06/4 has marks above 15 | **Marks exceed the maximum:** That is more than this component's maximum. (field `marks`) |
+| 34 | Locked milestone: C1 marks cannot be edited: `UPDATE assessment SET marks = 4 WHERE usn = '1RV24CY047' AND project_id = 'P06' AND milestone_no = 1` | 55000 · `milestone_locked` | Milestone P06/1 is locked (since 2026-09-20 11:30:00+00); marks can no longer change | **Component is locked:** Marks for this component are final, so its claims, countersigns and submissions can no longer change. |
+| 35 | Locked milestone: C1 marks cannot be deleted: `DELETE FROM assessment WHERE usn = '1RV24CY047' AND project_id = 'P06' AND milestone_no = 1` | 55000 · `milestone_locked` | Milestone P06/1 is locked (since 2026-09-20 11:30:00+00); marks can no longer change | **Component is locked:** Marks for this component are final, so its claims, countersigns and submissions can no longer change. |
+| 37 | Capacity: ... and the next joiner is refused: `INSERT INTO team_member (team_id, usn, role) VALUES ('T02', '1RV24CY082', 'member')` | 23514 · `team_capacity` | Team T02 is full (4 / 4) | **Team is full:** This team already has 4 of 4 members. Pick another team. (field `team_id`) |
 
-The other 10 assertions of the file are happy paths and derived-value checks (run of the unmodified file: **45 / 45 pass**):
+The other 12 assertions of the file are happy paths and derived-value checks (run of the unmodified file: **48 / 48 pass**):
 
 | # | Happy path / derived value (test description) | Result |
 |--:|:--------------------------|:--|
-| 35 | Capacity: Nikhil takes the last free seat of T02 (3/4 -> 4/4) | pass |
-| 37 | Capacity: updating a non-team column of a full team is allowed | pass |
-| 38 | Contribution: a member records work; the id comes from the identity column | pass |
-| 39 | Identity sequence continues after the fixture and demo ids | pass |
-| 40 | Idempotency: ON CONFLICT DO NOTHING turns a redelivery into a no-op | pass |
-| 41 | Marks: a mark within max_marks on an unlocked milestone is accepted | pass |
-| 42 | Claim status: a hand-written status is overwritten by the derived value | pass |
-| 43 | Claim status: a teammate's confirm makes the claim confirmed | pass |
-| 44 | Claim status: any dispute makes the claim contested | pass |
-| 45 | Demo seed: T06's synopsis claim is contested | pass |
+| 36 | Capacity: Nikhil takes the last free seat of T02 (3/4 -> 4/4) | pass |
+| 38 | Capacity: updating a non-team column of a full team is allowed | pass |
+| 39 | Contribution: a member records work; the id comes from the identity column | pass |
+| 40 | Identity sequence continues after the fixture and demo ids | pass |
+| 41 | Idempotency: ON CONFLICT DO NOTHING turns a redelivery into a no-op | pass |
+| 42 | Marks: a mark within max_marks on an unlocked milestone is accepted | pass |
+| 43 | Claim status: a hand-written status is overwritten by the derived value | pass |
+| 44 | Claim status: a teammate's confirm (Meera) makes the claim confirmed | pass |
+| 45 | Claim status: any dispute makes the claim contested | pass |
+| 46 | Demo seed: T06's synopsis claim is contested | pass |
+| 47 | Demo seed: T00 is a solo team (Arun only) | pass |
+| 48 | Demo seed: with no teammate to countersign, Arun's C1, C3 and C4 claims stay pending | pass |
 
 <!-- END generated -->
 
@@ -755,9 +760,9 @@ The other 10 assertions of the file are happy paths and derived-value checks (ru
 
 How to read the last column:
 
-* **Rules on paths that users write** (rows 4 to 9, 18 to 34 and 36) have their own entry in `errors.ts`, and most name the field to mark, for example `team_capacity` on the team card, `countersign_dispute_needs_comment` on *comment*, and `assessment_marks_le_max` on *marks*. Where the message carries numbers, they are taken from the database message ("11.0 is more than this component's maximum of 10").
-* **Rules only an admin, the seed or the pipeline can hit** (rows 1 to 3 and 10 to 17: `team.max_size`, `student.semester`, `artifact.type`, term overlap, foreign keys, delete restrictions, the commit idempotency key) fall back to the generic SQLSTATE sentence ("That value breaks one of the rules.", "Linked record missing", "Already exists"). No end-user form writes those columns, so no specific sentence was written for them.
-* **Delete actions are part of validation.** Rows 14 to 16 show that `ON DELETE RESTRICT` refuses the delete, and the constraint column names the **first** RESTRICT key PostgreSQL checked, which is not always the one the history rule is about: deleting Arun fails on `app_user_usn_fkey` (his login) before `contribution_usn_fkey` is reached; deleting CD254TA fails on `course_offering_course_code_fkey` before `project_course_code_fkey`; deleting P06 fails on `team_project_id_fkey`. All of these keys are `ON DELETE RESTRICT` (checked in `pg_constraint.confdeltype` on the local stack, 5 November 2026), so removing the first blocker would only expose the next. Erasure is a procedure, not a cascade.
+* **Rules on paths that users write** (rows 4 to 10, 19 to 35 and 37) have their own entry in `errors.ts`, and most name the field to mark, for example `team_capacity` on the team card, `countersign_dispute_needs_comment` on *comment*, and `assessment_marks_le_max` on *marks*. Where the message carries numbers, they are taken from the database message ("11.0 is more than this component's maximum of 10").
+* **Rules only an admin, the seed or the pipeline can hit** (rows 1 to 3 and 11 to 18: `team.max_size`, `student.semester`, `artifact.type`, term overlap, foreign keys, delete restrictions, the commit idempotency key) fall back to the generic SQLSTATE sentence ("That value breaks one of the rules.", "Linked record missing", "Already exists"). No end-user form writes those columns, so no specific sentence was written for them.
+* **Delete actions are part of validation.** Rows 15 to 17 show that `ON DELETE RESTRICT` refuses the delete, and the constraint column names the **first** RESTRICT key PostgreSQL checked, which is not always the one the history rule is about: deleting Arun fails on `app_user_usn_fkey` (his login) before `contribution_usn_fkey` is reached; deleting CD254TA fails on `course_offering_course_code_fkey` before `project_course_code_fkey`; deleting P06 fails on `team_project_id_fkey`. All of these keys are `ON DELETE RESTRICT` (checked in `pg_constraint.confdeltype` on the local stack, 5 November 2026), so removing the first blocker would only expose the next. Erasure is a procedure, not a cascade.
 
 ## C.4 Summary for the viva
 
@@ -766,4 +771,4 @@ How to read the last column:
 3. **Authorization.** `app_user` maps a login to student, faculty or admin. SECURITY DEFINER helpers in schema `app` answer "is this mine / my team / my project?". 102 RLS policies (101 in `public` plus 1 on `realtime.messages`), all `TO authenticated`, at most one per table and command. Column grants make ids and timestamps server-owned. Six `security_invoker` views. A private schema with no grants, reached only through owner-filtering RPCs. Anon has nothing.
 4. **SECURITY DEFINER** is used only where it must be (52 functions: policy helpers, integrity triggers, private-note and pipeline RPCs). All pin `search_path = ''`; none is executable by anon.
 5. **Validation** is three layers: zod, the RPC pre-check, and CHECK/FK/trigger. Only the third is a guarantee, as the worked example shows by sending the same bad input past each layer in turn.
-6. **Evidence.** pgTAP 657/657: the constraint gallery 45/45, the RLS matrix 298/298 (256 persona × relation cells), the abuse cases 53/53.
+6. **Evidence.** pgTAP 710/710 in seven files: the constraint gallery 48/48, the RLS matrix 301/301 (256 persona × relation cells), the abuse cases 53/53.

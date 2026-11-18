@@ -45,7 +45,9 @@ User requests never go through either (they run as the caller, see app/auth.py).
 
 CLI (in api/):
     uv run python -m app.worker --once              drain until the queue is empty, then exit
-    uv run python -m app.worker --loop              keep draining (Ctrl-C to stop)
+    uv run python -m app.worker --loop              keep draining (Ctrl-C to stop); a Postgres or
+                                                    Mongo outage is logged to stderr and retried
+                                                    with backoff (1 s doubling to 30 s), never fatal
     uv run python -m app.worker --resync-notes      rebuild vault notes from the raw log
     uv run python -m app.worker --reproject-from-log  replay the Mongo raw log into Postgres
                                                     (ingest_receive + drain; idempotent)
@@ -68,6 +70,7 @@ from urllib.parse import quote
 import httpx
 from pymongo import MongoClient
 from pymongo.database import Database
+from pymongo.errors import PyMongoError
 
 from . import embeddings
 from .config import ConfigError, Settings, get_settings
@@ -81,6 +84,8 @@ MAX_ATTEMPTS = 5         # same limit as project_push's dead letter
 MAX_READS = 3 * MAX_ATTEMPTS   # read this often without finishing: dead letter before any work
 SECONDS_PER_MESSAGE = 12       # worst case (Mongo server selection 10 s): batch * this < vt
 FOLLOWUP_GRACE = 30            # s: leave a just-projected event to the worker that projected it
+LOOP_BACKOFF_MIN = 1.0         # s: --loop waits this long after the first failed drain,
+LOOP_BACKOFF_MAX = 30.0        #    doubling per consecutive failure up to this cap
 
 
 class StoreError(RuntimeError):
@@ -217,24 +222,30 @@ class SqlStore:
     it has exactly the privileges the REST path has. Inside an outer transaction (tests) each
     call becomes a savepoint, and an error rolls back only that call."""
 
-    def __init__(self, conn: Any):
+    def __init__(self, conn: Any, url: str | None = None):
         self.conn = conn
+        self._url = url          # set by connect(): a closed connection is reopened on next use
 
-    @classmethod
-    def connect(cls, url: str) -> SqlStore:
+    @staticmethod
+    def _open(url: str) -> Any:
         import psycopg
         from psycopg.rows import dict_row
 
         try:
-            conn = psycopg.connect(url, autocommit=True, row_factory=dict_row, connect_timeout=10,
+            return psycopg.connect(url, autocommit=True, row_factory=dict_row, connect_timeout=10,
                                    application_name="countersign-worker")
         except psycopg.Error as exc:
             raise StoreError(f"Postgres unreachable ({type(exc).__name__})") from None
-        return cls(conn)
+
+    @classmethod
+    def connect(cls, url: str) -> SqlStore:
+        return cls(cls._open(url), url)
 
     def _q(self, sql: str, params: tuple = ()) -> list[dict[str, Any]]:
         import psycopg
 
+        if self._url and self.conn.closed:      # lost during an outage (--loop keeps going)
+            self.conn = self._open(self._url)
         try:
             with self.conn.transaction(), self.conn.cursor() as cur:
                 cur.execute("SET LOCAL ROLE service_role")
@@ -666,7 +677,14 @@ class Worker:
         stats = {"recovered": 0, "note_versions": 0, "missing_raw": 0, "errors": 0}
         older_than = datetime.now(UTC) - timedelta(seconds=min_age)
         for ev in self.store.pending_followups(limit, older_than):
-            doc = self.db.github_events.find_one({"_id": ev["delivery_id"]})
+            try:
+                doc = self.db.github_events.find_one({"_id": ev["delivery_id"]})
+            except PyMongoError as exc:
+                # Mongo is down: stop this pass (the next drain runs it again); the queued
+                # messages are still processed, and each records its own raw-log failure
+                stats["errors"] += 1
+                stats["mongo_error"] = _short(exc)  # type: ignore[assignment]
+                break
             if not doc or not isinstance(doc.get("payload"), dict):
                 stats["missing_raw"] += 1
                 continue
@@ -798,6 +816,37 @@ class Worker:
 # CLI
 # =====================================================================================
 
+def run_loop(drain: Callable[[], dict[str, Any]], interval: float, *,
+             sleep: Callable[[float], None] = time.sleep,
+             out: Callable[[str], None] = lambda line: print(line, flush=True),
+             err: Callable[[str], None] = lambda line: print(line, file=sys.stderr, flush=True),
+             max_iterations: int | None = None) -> None:
+    """--loop: drain forever. An outage of Postgres (StoreError) or Mongo (PyMongoError) in a
+    drain is logged to `err` as one JSON line and retried after a bounded exponential backoff
+    (LOOP_BACKOFF_MIN doubling to LOOP_BACKOFF_MAX); the first successful drain resets it.
+    Nothing is lost by retrying: every step is idempotent and unfinished messages reappear
+    after their visibility timeout. Other exceptions (bugs) still end the process.
+    max_iterations bounds the loop for tests (None = forever)."""
+    backoff = 0.0
+    n = 0
+    while max_iterations is None or n < max_iterations:
+        n += 1
+        try:
+            summary = drain()
+        except (StoreError, PyMongoError) as exc:
+            backoff = LOOP_BACKOFF_MIN if not backoff else min(backoff * 2, LOOP_BACKOFF_MAX)
+            err(json.dumps({"event": "drain_failed", "error": _short(exc), "retry_in_s": backoff}))
+            sleep(backoff)
+            continue
+        if backoff:
+            err(json.dumps({"event": "drain_recovered"}))
+        backoff = 0.0
+        if summary["processed"]:
+            out(json.dumps({k: v for k, v in summary.items() if k != "outcomes"}, default=str))
+        if summary["queue_empty"]:
+            sleep(interval)
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m app.worker", description=__doc__.split("\n\n")[0])
     mode = ap.add_mutually_exclusive_group()
@@ -839,12 +888,7 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps({**target, "embedded": worker.embed_missing()}))
         elif args.loop:
             print(json.dumps({**target, "mode": "loop"}), flush=True)
-            while True:
-                summary = worker.drain(args.max, args.batch, args.vt)
-                if summary["processed"]:
-                    print(json.dumps({k: v for k, v in summary.items() if k != "outcomes"}), flush=True)
-                if summary["queue_empty"]:
-                    time.sleep(args.interval)
+            run_loop(lambda: worker.drain(args.max, args.batch, args.vt), args.interval)
         else:
             summary = worker.drain(args.max, args.batch, args.vt)
             if not args.verbose:

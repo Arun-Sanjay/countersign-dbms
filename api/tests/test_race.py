@@ -3,7 +3,9 @@ container elp-race-pg is up) one real race.
 
 The offline test points RACE_DSN at a closed port, so it passes whether or not the container
 runs. The live test is skipped when the lab does not answer; it never writes to the reported
-results (exp.* tables) and leaves T02 at 3/4.
+results (exp.* tables) and leaves T02 at 3/4. The lab-ownership tests run run_race against
+a fake harness and a fake admin connection (no network): a request refused with 409 must
+never reset T02 or the strategy under someone else's race.
 """
 
 from __future__ import annotations
@@ -87,3 +89,87 @@ def test_live_race_counts_add_up(client, auth, monkeypatch):
     two = r.json()
     ops = {(e["txn"], e["op"]) for e in two["schedule"]}
     assert ("T1", "r") in ops and ("T2", "r") in ops
+
+
+# ---------------------------------------------------------------- lab ownership (no network)
+
+class _FakeAdmin:
+    """The admin connection of run_race: answers the readiness and busy checks, records
+    every statement it is asked to execute."""
+
+    def __init__(self, busy: int):
+        self.busy = busy
+        self.executed: list[str] = []
+        self.closed = False
+
+    async def fetchval(self, sql: str, *args):
+        return self.busy if "pg_stat_activity" in sql else True
+
+    async def execute(self, sql: str, *args):
+        self.executed.append(sql if not args else f"{sql} {args}")
+
+    async def fetchrow(self, sql: str, *args):
+        return (4, 4)
+
+    def is_closed(self) -> bool:
+        return self.closed
+
+    async def close(self, timeout: float | None = None) -> None:
+        self.closed = True
+
+
+class _FakeClient:
+    async def close(self, timeout: float | None = None) -> None:
+        pass
+
+    def terminate(self) -> None:
+        pass
+
+
+def _fake_lab(monkeypatch, busy: int) -> _FakeAdmin:
+    import types
+
+    admin = _FakeAdmin(busy)
+
+    async def connect(_asyncpg, _dsn, app_name, **_settings):
+        return admin if app_name == race_mod.LIVE_ADMIN_APP else _FakeClient()
+
+    async def one_client(_conn, _strategy, _iso, client_no, _barrier, _sched):
+        return {"client_no": client_no, "outcome": "admitted" if client_no == 1 else "refused",
+                "sqlstate": None, "latency_ms": 1.0, "retries": 0, "n40001": 0}
+
+    class Schedule:
+        def __init__(self):
+            self.events: list = []
+
+    fake = types.SimpleNamespace(TEAM="T02", Schedule=Schedule, one_client=one_client)
+    monkeypatch.setattr(race_mod, "harness", lambda: fake)
+    monkeypatch.setattr(race_mod, "_connect", connect)
+    monkeypatch.setenv("RACE_DSN", "postgresql://postgres:unused@127.0.0.1:1/race")
+    return admin
+
+
+def test_a_busy_request_never_resets_the_lab(monkeypatch):
+    """409 race_busy: the lab belongs to someone else (the harness or another API), so this
+    request must not run exp.reset_t02() / use_strategy('S1') under their race."""
+    import asyncio
+
+    from fastapi import HTTPException
+
+    admin = _fake_lab(monkeypatch, busy=1)
+    with pytest.raises(HTTPException) as exc:
+        asyncio.run(race_mod.run_race(race_mod.RaceIn(**BODY)))
+    assert exc.value.status_code == 409 and exc.value.detail["code"] == "race_busy"
+    assert admin.executed == []
+    assert admin.closed
+
+
+def test_the_owner_resets_the_lab_before_and_after(monkeypatch):
+    import asyncio
+
+    admin = _fake_lab(monkeypatch, busy=0)
+    out = asyncio.run(race_mod.run_race(race_mod.RaceIn(**BODY)))
+    assert out["admitted"] == 1 and out["refused"] == 1 and out["final_size"] == 4
+    assert admin.executed == ["SELECT exp.reset_t02()", "SELECT exp.use_strategy($1) ('S2',)",
+                              "SELECT exp.reset_t02()", "SELECT exp.use_strategy('S1')"]
+    assert admin.closed

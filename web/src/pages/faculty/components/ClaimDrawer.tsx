@@ -36,6 +36,7 @@ import {
   type CellEvidence,
   type Milestone,
 } from '@/data/faculty'
+import { SOLO_TEAM_NOTE } from '@/lib/course'
 import { componentLabel, formatDate, formatDateTime, formatMarks } from '@/lib/format'
 import { applyServerError, toastSuccess } from '@/lib/notify'
 import { marksSchema } from '@/lib/rules'
@@ -48,6 +49,8 @@ export interface CellRef {
   teamName: string
   projectId: string
   milestone: Milestone
+  /** Members in the student's team, when the opener knows it (1 = a solo team: nobody can countersign). */
+  teamSize?: number
 }
 
 interface ClaimDrawerProps {
@@ -140,7 +143,7 @@ export function ClaimDrawer({ cell, onOpenChange, canRecord, highlightClaimId, a
                 ) : (
                   <ol className="space-y-3">
                     {claims.data.map((c) => (
-                      <ClaimCard key={c.claim_id} claim={c} highlighted={c.claim_id === highlightClaimId} />
+                      <ClaimCard key={c.claim_id} claim={c} highlighted={c.claim_id === highlightClaimId} solo={cell.teamSize === 1} />
                     ))}
                   </ol>
                 )}
@@ -274,7 +277,7 @@ function MarkForm({ cell, initialMarks, initialRemarks }: { cell: CellRef; initi
 
 // ---- claim card ----------------------------------------------------------------------------------
 
-function ClaimCard({ claim, highlighted }: { claim: CellClaim; highlighted: boolean }) {
+function ClaimCard({ claim, highlighted, solo = false }: { claim: CellClaim; highlighted: boolean; solo?: boolean }) {
   return (
     <li
       id={`claim-${claim.claim_id}`}
@@ -336,7 +339,13 @@ function ClaimCard({ claim, highlighted }: { claim: CellClaim; highlighted: bool
           ))}
           {claim.countersign.length === 0 ? (
             <TimelineItem icon={PenLine} tone="pending">
-              <span className="text-muted-foreground">Waiting for a teammate&apos;s countersign</span>
+              {solo ? (
+                <span className="text-muted-foreground" data-testid="solo-team-note">
+                  {SOLO_TEAM_NOTE}
+                </span>
+              ) : (
+                <span className="text-muted-foreground">Waiting for a teammate&apos;s countersign</span>
+              )}
             </TimelineItem>
           ) : null}
         </ol>

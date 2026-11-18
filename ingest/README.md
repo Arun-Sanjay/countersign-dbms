@@ -183,10 +183,10 @@ uv run --python 3.12 python scripts/replay_webhooks.py --fresh  # new delivery i
 
 | File | What it is |
 |---|---|
-| `t00_push_01..05.json` | This repo's real `git log` on main as pushes to `Arun-Sanjay/countersign-dbms`: real SHAs, tree ids, messages, timestamps and files. Commits less than 10 minutes apart form one push. Markdown files of 40 kB or less carry their text. |
+| `t00_push_01..05.json` | This repo's real `git log` on main as pushes to `Arun-Sanjay/countersign-dbms`: real SHAs, tree ids, messages, timestamps and files. Commits less than 10 minutes apart form one push. Markdown files of 40 kB or less carry their text. This is a solo project: the few words in early history that name a person who is no longer part of it are redacted by the builder (texts, messages, paths; see "Redaction" in `build_fixtures.py`), so the replay never writes them to Postgres or Mongo. |
 | `t01_push_01.json` | T01 (`rvce-el/team-alpha`), pushed by Karthik: FK/CHECK schema work with `AI-Assisted: yes`. |
 | `t01_push_01b.json` | T01, pushed by Aditi: her vault note `shared/Literature survey.md`; the commit carries only her college e-mail, so the author is matched by e-mail and the pusher by GitHub id. |
-| `t01_push_02.json` | T01, pushed by Meera: her `shared/ER diagram decisions.md` and `docs/er-diagram.drawio`, an **unknown author**'s commit (skipped, with a warning), and her seed script with `Co-Authored-By` only (not AI-assisted). |
+| `t01_push_02.json` | T01, pushed by Meera: her `shared/ER diagram decisions.md` and `docs/er-diagram.drawio`, a commit by **`outside-dev`**, an unlinked GitHub login with no `student_identity` row (logged in Mongo, credits nobody: skipped with an *unknown author* warning), and her seed script with `Co-Authored-By` only (not AI-assisted). |
 | `t01_push_feature_branch.json` | a push to `feature/normalization`, logged as ignored |
 | `t03_push_01.json` | T03 (`rvce-el/team-gamma`), pushed by Priya: her data loader, and Rohan's AI-assisted training loop, which is logged but **not credited** (pushed by someone else: unverified) |
 | `ping.json`, `issues.json` | the webhook ping (200) and a non-push event (202, ignored) |

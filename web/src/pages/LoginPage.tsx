@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowRight, CheckCircle2, FileCode2, GitCommitHorizontal, Loader2 } from 'lucide-react'
+import { ArrowRight, CheckCircle2, FileCode2, Loader2, PenLine } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link } from 'react-router'
@@ -34,7 +34,7 @@ function ReceiptIllustration() {
           <div className="text-sm font-semibold">Test</div>
         </div>
         <div className="tabular text-right">
-          <span className="text-2xl font-semibold tracking-tight">19</span>
+          <span className="text-2xl font-semibold tracking-tight">17</span>
           <span className="text-sm text-muted-foreground"> / 20</span>
         </div>
       </div>
@@ -43,19 +43,19 @@ function ReceiptIllustration() {
         <div className="flex items-start justify-between gap-3">
           <p className="text-pretty text-muted-foreground">
             <span className="font-medium text-foreground">Claim · </span>
-            Wrote and executed the SQL Test queries on our own schema in Supabase.
+            Answered the SQL part of the Test (Team Sigma).
           </p>
           <StatusBadge status="confirmed" />
         </div>
         <div className="flex flex-wrap gap-1.5">
           <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
-            <GitCommitHorizontal className="size-3" /> 3f9c2ab
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
-            <FileCode2 className="size-3" /> 03_queries.sql
+            <FileCode2 className="size-3" /> A20 v1
           </span>
           <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
-            AI declared: assisted
+            <PenLine className="size-3" /> SQL answers
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
+            AI declared: none
           </span>
         </div>
       </div>
@@ -63,9 +63,9 @@ function ReceiptIllustration() {
       <div className="flex items-center gap-2 text-sm">
         <CheckCircle2 className="size-4 text-confirmed" />
         <span>
-          Countersigned by <span className="font-medium">Sanvid Razdan</span>
+          Countersigned by <span className="font-medium">Aditi Rao</span>
         </span>
-        <span className="ml-auto font-mono text-[11px] text-muted-foreground">rev 3</span>
+        <span className="ml-auto font-mono text-[11px] text-muted-foreground">rev 2</span>
       </div>
     </div>
   )

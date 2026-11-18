@@ -168,7 +168,8 @@ function RubricSheet({ projectId }: { projectId: string }) {
 
   const openCell = (s: StudentRow, m: Milestone) => {
     returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    setSelected({ usn: s.usn, name: s.name, teamId: s.teamId, teamName: s.teamName, projectId, milestone: m })
+    const teamSize = teams.find((t) => t.teamId === s.teamId)?.students.length
+    setSelected({ usn: s.usn, name: s.name, teamId: s.teamId, teamName: s.teamName, projectId, milestone: m, teamSize })
   }
   // keep the drawer's milestone fresh (e.g. after locking it)
   const selectedLive = selected

@@ -3,8 +3,10 @@
 ## Context
 `PROJECT_MASTER.md` is the source of truth (vision, 13-table schema, seed, 37 SQL + 25 Mongo verified queries, rubric, open items). Synopsis + Component 4 (Test) are done; **no application code exists**. Arun asked for: a full plan using the whole master file, an improved idea, the biggest problems (idea + design), the best upgrades, and an exact list of what to hand over (esp. MongoDB) so Claude can run the project end-to-end.
 
+> **Status (19 Nov 2026).** This is the approved plan as written before the build; it is kept as a record. The project is now a solo project by S Arun Sanjay (1RV24CY047). What was built: migrations 0001–0007 (all live on `countersign-dbms`), the web app incl. the Race arena page (`/race`), the API, ingestion and search. Not built: viva practice, the hash-chained `audit_log`, consent records, the EXPLAIN bench, embeddings in use, hosting. Current state: `README.md` § Status.
+
 This plan merges 6 independent critiques (idea, grading, schema, architecture, privacy, demo) + a synthesis + a skeptic pass.
-Constraints from Arun: **new Supabase project in Mumbai**, **2+ months runway**, **Arun builds with Claude; Sanvid does docs/diagrams/testing**, **AI budget < $10**.
+Constraints from Arun: **new Supabase project in Mumbai**, **2+ months runway**, **solo project: Arun builds, documents, diagrams and tests it, with Claude**, **AI budget < $10**.
 
 Facts found in this session:
 - Repo dir only has `PROJECT_MASTER.md` + `atlas-credentials.env` (no `.gitignore`, not a git repo). The `dbms_test/*.sql`, Synopsis DOCX etc. listed in §10 are **not in the folder**.
@@ -121,8 +123,7 @@ Everything else hangs off trustworthy contribution rows: the semester hub, skill
 
 **Grade guardrail.** `02_seed.sql` is frozen as `fixture_v1`, and CI re-runs Q1–Q37 and M1–M25 against Appendix H outputs. New real data goes in `02b_demo_seed.sql`, never inside fixture P01:
 - a new project **P06 "CD252IA Lab 2026-27"** with 11 milestones, where milestone_no = component number;
-- team T00 (Arun + Sanvid);
-- Sanvid added as a student;
+- team T00 (Arun, a solo team);
 - synthetic `@example.edu` auth emails.
 
 ## 3. Best upgrades (tiered: MUST ≤ 5)
@@ -133,15 +134,15 @@ Everything else hangs off trustworthy contribution rows: the semester hub, skill
 | 3 | **Claims + evidence + countersign**, exactly 3 tables:<br>• `claim`<br>• `claim_evidence` (weak entity)<br>• `countersign` (trigger: the endorser must be a teammate and not the claimant; a cross-table rule a CHECK can't express)<br>• `contested_claims` view as the faculty queue | MUST | C3 (real ternary + 2nd weak entity), C8, C9 |
 | 4 | **C8 security pack**:<br>• RLS via `app_user`<br>• security_invoker views<br>• `private.note`<br>• pgTAP RLS matrix (persona × table × expected rows, green/red grid)<br>• Supabase advisors at zero<br>• 3-layer validation (zod → Pydantic → CHECK)<br>• `constraint_message` friendly errors<br>• Mongo `$jsonSchema`<br>• forms catalogue doc<br>• live "try to break it" segment | MUST | C8 entirely |
 | 5 | **Innovative Experiment v2**: "declarative vs procedural integrity under concurrency"<br>• Strategies: S1 naive, S2 current trigger, S3 conditional `UPDATE … WHERE count<max`, S4 SERIALIZABLE + retry, S6 `team_seat` UNIQUE<br>• Each strategy × RC/RR/SER × N = 2/8/32/100 async clients behind a barrier (local Docker)<br>• Results persisted in `experiment_run/attempt/schedule_log`<br>• **Recursive CTE builds the precedence graph and detects cycles** (labelled "logical client-recorded schedule")<br>• Live `pg_locks` ⋈ `pg_blocking_pids()` panel and a "Race Arena" page | MUST | C10 (unreduced 10), Unit IV |
-| 6 | Normalization dossier:<br>• marks sheet UNF→BCNF in depth (FDs, minimal cover, chase-tableau lossless proof, dependency preservation)<br>• a per-table FD/key table for *every* final table<br>• ENROLLMENT 3NF-not-BCNF case | SHOULD (Sanvid) | C6, C7 |
+| 6 | Normalization dossier:<br>• marks sheet UNF→BCNF in depth (FDs, minimal cover, chase-tableau lossless proof, dependency preservation)<br>• a per-table FD/key table for *every* final table<br>• ENROLLMENT 3NF-not-BCNF case | SHOULD | C6, C7 |
 | 7 | Fat DB, thin API:<br>• logic in SECURITY INVOKER RPCs (`join_team`, `submit_milestone`, `find_teammates`, `skill_gap`, `skill_subtree`, `search_chunks`)<br>• **Show-the-SQL drawer** (static registry: SQL + relational algebra + RLS policies applied)<br>• EXPLAIN before/after an index on the bench data | SHOULD | C9, Unit III |
 | 8 | Evidence-derived skills:<br>• `skill_evidence`<br>• MV with REFRESH CONCURRENTLY<br>• WITH RECURSIVE skill rollup<br>• `project_skill.min_level`<br>• `course_skill` INTERSECT<br>• complementary teammate finder | SHOULD | C9, Unit II RA |
-| 9 | Ingestion + **dogfooding**:<br>• repo webhook → Edge Function → `ingest_receive` RPC → pgmq → worker → Mongo log → Postgres projection<br>• replay fixtures<br>• consistency page<br>• run *your own repo* through it: you and Sanvid file real C1–C11 claims, `Co-Authored-By: Claude` trailers set `ai_assisted`, and you countersign each other | SHOULD | C9, C11, Unit V, makes the meta hook literal |
-| 10 | Permission-aware assistant:<br>• SQL-template intents<br>• `search_chunks()` = RRF over `ts_rank` + HNSW in one SQL statement, with Claude citations mapped to chunk_id and a server check that cited ⊆ retrieved<br>• `ai_query_log`<br>• demo: same question as Arun / Sanvid / faculty gives 3 different row sets<br>• viva practice built from confirmed claims<br>• prompt-injection test notes | SHOULD | C9, C11 |
+| 9 | Ingestion + **dogfooding**:<br>• repo webhook → Edge Function → `ingest_receive` RPC → pgmq → worker → Mongo log → Postgres projection<br>• replay fixtures<br>• consistency page<br>• run *your own repo* through it: you file real C1–C11 claims and `Co-Authored-By: Claude` trailers set `ai_assisted` (T00 is a solo team, so its claims rest on their evidence and the faculty review; the countersign flow is shown on a seeded fixture team) | SHOULD | C9, C11, Unit V, makes the meta hook literal |
+| 10 | Permission-aware assistant:<br>• SQL-template intents<br>• `search_chunks()` = RRF over `ts_rank` + HNSW in one SQL statement, with Claude citations mapped to chunk_id and a server check that cited ⊆ retrieved<br>• `ai_query_log`<br>• demo: same question as Arun / another student / faculty gives 3 different row sets<br>• viva practice built from confirmed claims<br>• prompt-injection test notes | SHOULD | C9, C11 |
 | 11 | Trust ledger:<br>• hash-chained `audit_log` (pgcrypto, verified in one LAG query; demo: tamper with a mark → verify shows the break)<br>• consent records<br>• "what my faculty sees" preview | SHOULD | C8, C11 |
 | 12 | Stretch:<br>• Yjs co-editing<br>• genealogy (pgvector kNN over past abstracts)<br>• LLM cross-course suggestions<br>• work signature (student-only)<br>• local sharded/replica-set Mongo lab for Unit V<br>• time-travel membership | STRETCH | extra |
 
-**Ownership for the viva.** Even if Arun builds most of it, Sanvid must own at least one graded database object end to end, e.g. **RLS policies + Mongo validators + experiment analysis**, besides ER, DFD, normalization and reports. Both of you should be able to hand-write the core SQL.
+**Ownership for the viva.** This is a solo project: Arun owns every graded database object end to end (schema, RLS policies, Mongo validators, experiment analysis, ER, DFD, normalization and reports) and must be able to hand-write the core SQL.
 
 ## 4. Revised data model (summary)
 - **Keep all 13 tables.** Changes are append-only columns and constraints, so Q1–Q37 still run on the frozen fixture.
@@ -242,7 +243,7 @@ Re-map these windows once you give the real component dates.
    - Note: the Atlas Data API has reached end of life, so I won't use it.
 
 ### Supabase
-1. **Approval to create the new project** (`countersign-dbms`, region ap-south-1). Recommended: create it in a **new free organization** so Teron is isolated and Sanvid can join without seeing your other projects. Tokyo stays paused and is never deleted.
+1. **Approval to create the new project** (`countersign-dbms`, region ap-south-1). Recommended: create it in a **new free organization** so Teron is isolated. Tokyo stays paused and is never deleted.
 2. **Scope the Supabase MCP** to the new project. Add `?project_ref=<new-ref>` to its URL; only you can edit the MCP config.
 3. **DB password.** Set or reset it in the dashboard (the MCP can't return one). Send the **pooler connection strings**: session (port 5432) and transaction (port 6543).
 4. **The secret / service_role key**, for `api/.env` only. I can fetch the publishable key myself.
@@ -252,7 +253,7 @@ Re-map these windows once you give the real component dates.
 ### GitHub
 1. Repo owner (personal account or a new org) and visibility (private recommended).
 2. Run `! gh auth refresh -s repo,workflow,admin:repo_hook`.
-3. Sanvid's GitHub username and the commit emails for both of you. The emails must be verified on GitHub.
+3. Your GitHub username and commit email. The email must be verified on GitHub.
 4. A **GitHub OAuth App** client ID + secret, for Supabase Auth GitHub login and identity binding. There is no GitHub App.
 5. Turn on secret scanning and push protection.
 
@@ -273,7 +274,7 @@ Re-map these windows once you give the real component dates.
 8. Whether AI-tool use must be declared, and whether the demo must run on the cloud.
 9. Whether `@rvce.edu.in` is on Google Workspace.
 10. Demo setup: projectors, Wi-Fi.
-11. Sanvid's section, email and **consent to dogfood real data**.
+11. **Consent to dogfood real data** (your own repository and claims).
 
 ### Security, today
 Confirm `atlas-credentials.env` has never been shared or committed. If it has, rotate the Atlas password. I'll add `.gitignore` (`*.env`, `*.env.*`, `!*.env.example`) **before** `git init`, and move the secrets to `api/.env`.

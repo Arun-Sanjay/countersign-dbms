@@ -2,7 +2,7 @@
 title: "Component 6 - Normalized Tables"
 subtitle: "Unified Experiential Learning and Project Intelligence Platform (product name: Countersign)"
 author:
-  - "S Arun Sanjay (1RV24CY047), Sanvid Razdan (1RV24CY051)"
+  - "S Arun Sanjay (1RV24CY047)"
   - "Database Management Systems (CD252IA)"
   - "RV College of Engineering, Bengaluru"
 date: "November 2026"
@@ -90,14 +90,14 @@ Each paper sheet is one tuple. Its repeating group is a set-valued attribute, an
 
 $$\begin{aligned}\text{MARKS\_SHEET}(&\text{USN}, \text{Name}, \text{Sec}, \text{Proj}, \text{Course}, \text{Title},\\ &\{\text{No}, \text{Submission(Max)}, \text{Marks}, \text{Signature}\},\\ &\text{Total120}, \text{Reduced30}, \text{LabCIE50})\end{aligned}$$
 
-The UNF instance below shows two sheets, built from the fixture and the demo seed. The braces hold the repeating group. A dash marks a blank cell, i.e. a component that has not yet been assessed.
+The UNF instance below shows two sheets of project P06, built from the fixture and the demo seed: S Arun Sanjay (solo team T00) and Karthik M (team T06). The braces hold the repeating group. A dash marks a blank cell, i.e. a component that has not yet been assessed.
 
 **Illustrative instance.** The marks are the demo seed's sample values, not real grades, and the signing faculty F01 is a fictional fixture row (Section 0).
 
 | USN | Name | Sec | Proj | Course | Title | {No, Submission(Max), Marks, Signature} | Total 120 to 30 | Lab CIE /50 |
 |-----------|--------|---|----|-------|----------|------------------------------|--------|-----|
 | 1RV24CY047 | S Arun Sanjay | A | P06 | CD252IA | Countersign: every mark has a receipt | {(1, Synopsis (5), 5.0, F01), (2, Requirement Specification (5), -, -), (3, ER Diagram (10), -, -), (4, Test (20), 19.0, F01), (5, DFD (10), -, -), ..., (11, Final Demo and Report (10), -, -)} | 24.0 to 6.0 | 6.0 |
-| 1RV24CY051 | Sanvid Razdan | A | P06 | CD252IA | Countersign: every mark has a receipt | {(1, Synopsis (5), 4.5, F01), ..., (4, Test (20), 18.0, F01), ...} | 22.5 to 5.6 | 5.6 |
+| 1RV24CY024 | Karthik M | A | P06 | CD252IA | Lab inventory tracker | {(1, Synopsis (5), 4.5, F01), ..., (4, Test (20), 17.0, F01), ...} | 21.5 to 5.4 | 5.4 |
 
 **Why this is not 1NF:**
 
@@ -133,8 +133,8 @@ Its primary key is (USN, Proj, No); Section A.6 proves this. One tuple is one **
 |-----------|----|---|--------|---|-------|----|-------------|---------|---|-------|-----|----|----------|
 | 1RV24CY047 | P06 | 1 | S Arun Sanjay | A | CD252IA | T00 | Countersign: ... | Synopsis | 5 | reduced | 5.0 | F01 | Dr. Ramesh Babu |
 | 1RV24CY047 | P06 | 4 | S Arun Sanjay | A | CD252IA | T00 | Countersign: ... | Test | 20 | reduced | 19.0 | F01 | Dr. Ramesh Babu |
-| 1RV24CY051 | P06 | 1 | Sanvid Razdan | A | CD252IA | T00 | Countersign: ... | Synopsis | 5 | reduced | 4.5 | F01 | Dr. Ramesh Babu |
-| 1RV24CY051 | P06 | 4 | Sanvid Razdan | A | CD252IA | T00 | Countersign: ... | Test | 20 | reduced | 18.0 | F01 | Dr. Ramesh Babu |
+| 1RV24CY024 | P06 | 1 | Karthik M | A | CD252IA | T06 | Lab inventory ... | Synopsis | 5 | reduced | 4.5 | F01 | Dr. Ramesh Babu |
+| 1RV24CY024 | P06 | 4 | Karthik M | A | CD252IA | T06 | Lab inventory ... | Test | 20 | reduced | 17.0 | F01 | Dr. Ramesh Babu |
 
 ```{=latex}
 \smalltablesfalse
@@ -146,7 +146,7 @@ Component 6 (Normalized Tables) has not been assessed for either student, so it 
 
 | Anomaly | Example |
 |--------|------------------------------|
-| Update | Correcting Sanvid's section means updating one tuple per assessed line (up to 11). Renaming the team's title means updating every assessed line of both members (up to 22 tuples: 2 students $\times$ 11 components). Renaming component 6 means updating one tuple per student assessed on it. |
+| Update | Correcting Karthik's section means updating one tuple per assessed line (up to 11). Renaming a team's title means updating every assessed line of every member: up to 11 tuples for the solo team T00, and up to 33 for team T06 (3 students $\times$ 11 components). Renaming component 6 means updating one tuple per student assessed on it. |
 | Insertion | A component (e.g. C10, Innovative Experiment, max 10, deadline 12 Dec) cannot be recorded until some student has been assessed on it, so the definition of the rubric depends on marks existing. Likewise, a student, a team or a faculty member cannot be recorded until a mark involving them exists. |
 | Deletion | Deleting the only assessed tuple of a component also deletes the fact that the component exists and what it is worth. Deleting a student's last assessed line forgets the student's name and section. |
 
@@ -397,14 +397,14 @@ The price of this decomposition is that **USN, Proj $\to$ Team is no longer pres
 
 ### A.11.1 Instances of the normalized relations
 
-The instances below show the BCNF relations (equivalently, the implemented tables, restricted to the sheet's columns) for team T00 of project P06. They hold exactly the information of the four SHEET_1NF tuples in A.4, and each fact is now stored **once**. Rows from the fixture and the demo seed; **marks illustrative**; F01 is a fictional fixture faculty row.
+The instances below show the BCNF relations (equivalently, the implemented tables, restricted to the sheet's columns) for the two students of project P06 shown in A.4 (S Arun Sanjay of the solo team T00, and Karthik M of team T06). They hold exactly the information of the four SHEET_1NF tuples in A.4, and each fact is now stored **once**. Rows from the fixture and the demo seed; **marks illustrative**; F01 is a fictional fixture faculty row.
 
 **STUDENT** (`student`): each name and section is stored once, not once per assessed line.
 
 | USN | Name | Sec |
 |---|---|---|
 | 1RV24CY047 | S Arun Sanjay | A |
-| 1RV24CY051 | Sanvid Razdan | A |
+| 1RV24CY024 | Karthik M | A |
 
 **PROJECT** (`project`):
 
@@ -417,13 +417,14 @@ The instances below show the BCNF relations (equivalently, the implemented table
 | Team | Proj | Title |
 |---|---|---|
 | T00 | P06 | Countersign: every mark has a receipt |
+| T06 | P06 | Lab inventory tracker |
 
-**TEAM_MEMBER** (`team_member`): only the membership pairs; the project is reached through TEAM. (1RV24CY047 is also in fixture teams T01 and T03 of other projects; those rows are omitted.)
+**TEAM_MEMBER** (`team_member`): only the membership pairs; the project is reached through TEAM. (Both students are also in fixture teams of other projects, and T06 has two more members, 1RV24CY011 and 1RV24CY033; those rows are omitted.)
 
 | Team | USN |
 |---|---|
 | T00 | 1RV24CY047 |
-| T00 | 1RV24CY051 |
+| T06 | 1RV24CY024 |
 
 **MILESTONE** (`milestone`): the whole rubric of the lab, recorded before any mark exists. This removes the insertion and deletion anomalies of A.4: component 6 is defined even though no one has been assessed on it.
 
@@ -447,8 +448,8 @@ The instances below show the BCNF relations (equivalently, the implemented table
 |---|---|---|---|---|
 | 1RV24CY047 | P06 | 1 | 5.0 | F01 |
 | 1RV24CY047 | P06 | 4 | 19.0 | F01 |
-| 1RV24CY051 | P06 | 1 | 4.5 | F01 |
-| 1RV24CY051 | P06 | 4 | 18.0 | F01 |
+| 1RV24CY024 | P06 | 1 | 4.5 | F01 |
+| 1RV24CY024 | P06 | 4 | 17.0 | F01 |
 
 **FACULTY** (`faculty`, fixture row): the signer's name is stored once, not once per signature.
 
@@ -456,7 +457,7 @@ The instances below show the BCNF relations (equivalently, the implemented table
 |---|---|
 | F01 | Dr. Ramesh Babu |
 
-Compared with SHEET_1NF, where the four lines above repeated the name, section, course, team, title and faculty name in every tuple, the redundancy is gone: correcting Sanvid's section, the team's title or a component's maximum is now a one-row update.
+Compared with SHEET_1NF, where the four lines above repeated the name, section, course, team, title and faculty name in every tuple, the redundancy is gone: correcting Karthik's section, a team's title or a component's maximum is now a one-row update.
 
 ## A.12 Proof of the nonadditive (lossless) join property
 
@@ -632,11 +633,11 @@ JOIN milestone m    ON (m.project_id, m.milestone_no) = (a.project_id, a.milesto
 JOIN team_member tm ON tm.usn = a.usn
 JOIN team t         ON t.team_id = tm.team_id AND t.project_id = a.project_id
 JOIN faculty f      ON f.faculty_id = a.assessed_by
-WHERE t.team_id = 'T00'
+WHERE a.usn IN ('1RV24CY047', '1RV24CY024')
 ORDER BY s.usn, m.milestone_no;
 ```
 
-Output (**illustrative marks** from the demo seed; topic_title = "Countersign: every mark has a receipt" in every row; course CD252IA; faculty name Dr. Ramesh Babu, a fictional fixture row):
+Output (**illustrative marks** from the demo seed; topic_title = "Countersign: every mark has a receipt" in the T00 rows and "Lab inventory tracker" in the T06 rows; course CD252IA; faculty name Dr. Ramesh Babu, a fictional fixture row):
 
 ```{=latex}
 \smalltablestrue
@@ -646,14 +647,14 @@ Output (**illustrative marks** from the demo seed; topic_title = "Countersign: e
 |-----------|---------|----|-----|----|-----|---------|----|-------|-----|--------|
 | 1RV24CY047 | S Arun Sanjay | A | P06 | T00 | 1 | Synopsis | 5 | reduced | 5.0 | F01 |
 | 1RV24CY047 | S Arun Sanjay | A | P06 | T00 | 4 | Test | 20 | reduced | 19.0 | F01 |
-| 1RV24CY051 | Sanvid Razdan | A | P06 | T00 | 1 | Synopsis | 5 | reduced | 4.5 | F01 |
-| 1RV24CY051 | Sanvid Razdan | A | P06 | T00 | 4 | Test | 20 | reduced | 18.0 | F01 |
+| 1RV24CY024 | Karthik M | A | P06 | T06 | 1 | Synopsis | 5 | reduced | 4.5 | F01 |
+| 1RV24CY024 | Karthik M | A | P06 | T06 | 4 | Test | 20 | reduced | 17.0 | F01 |
 
 ```{=latex}
 \smalltablesfalse
 ```
 
-Over all 10 assessed lines in the seed, the join returns 10 rows with 10 distinct (USN, Proj, No) values, so no spurious tuples are produced.
+Over all 8 assessed lines in the seed (without the WHERE clause), the join returns 8 rows with 8 distinct (USN, Proj, No) values, so no spurious tuples are produced.
 
 **Unassessed cells.** The join starts from `assessment`, whose `marks` and `assessed_by` are NOT NULL (migration 0002), so it returns assessed lines only, exactly as SHEET_1NF is defined. The full paper sheet, blank cells included, is a *presentation* of the data, not a stored relation. It is rebuilt by an outer join: the view `v_rubric_sheet` (migration 0003) computes `team_member JOIN team JOIN student JOIN milestone LEFT JOIN assessment`, which returns one row per (member, component) and NULL `marks` and `assessed_by` where no assessment exists. The NULLs appear only in this query result; no base table stores them.
 
@@ -732,14 +733,13 @@ $$\text{total\_50}(u,p) = \text{reduced\_30}(u,p) + \text{innovative\_10}(u,p) +
 | usn | name | team | raw_total | raw_max | assessed | reduced_30 | innovative_10 | final_10 | total_50 |
 |-----------|----------|----|------|-----|-----|------|-------|-------|------|
 | 1RV24CY047 | S Arun Sanjay | T00 | 24.0 | 120 | 2 | 6.0 | NULL | NULL | 6.0 |
-| 1RV24CY051 | Sanvid Razdan | T00 | 22.5 | 120 | 2 | 5.6 | NULL | NULL | 5.6 |
 | 1RV24CY011 | Aditi Rao | T06 | 20.0 | 120 | 2 | 5.0 | NULL | NULL | 5.0 |
 | 1RV24CY024 | Karthik M | T06 | 21.5 | 120 | 2 | 5.4 | NULL | NULL | 5.4 |
 | 1RV24CY033 | Meera Iyer | T06 | 15.0 | 120 | 2 | 3.8 | NULL | NULL | 3.8 |
 
 Two of these (illustrative) values can be checked by hand:
 
-* Sanvid: $22.5 \times 30 / 120 = 5.625$, which rounds to $5.6$.
+* Karthik: $21.5 \times 30 / 120 = 5.375$, which rounds to $5.4$.
 * Meera: $15 \times 30/120 = 3.75$, which rounds to $3.8$ (NUMERIC `round` rounds half away from zero).
 
 The rounding rule (round once, to one decimal, then add) is an **assumption** that is documented in the view and still to be confirmed with the course faculty. Because the totals are derived, a change to the rule is a one-line change to the view, and no stored data has to be migrated.
@@ -901,7 +901,7 @@ $$\begin{gathered}\text{TEAM\_ASSIGNMENT}(\text{USN}, \text{Proj}, \text{Team}),
 
 This is the same structure as Elmasri and Navathe's TEACH(Student, Course, Instructor). A relation can have no nonprime attributes at all and still contain redundancy.
 
-**Instance** (fixture and demo seed): team T01 belongs to P01, and team T00 belongs to P06.
+**Instance** (fixture and demo seed): team T01 belongs to P01, and teams T00 and T06 belong to P06.
 
 | USN | Proj | Team |
 |---|---|---|
@@ -910,7 +910,7 @@ This is the same structure as Elmasri and Navathe's TEACH(Student, Course, Instr
 | 1RV24CY024 | P01 | T01 |
 | 1RV24CY033 | P01 | T01 |
 | 1RV24CY047 | P06 | T00 |
-| 1RV24CY051 | P06 | T00 |
+| 1RV24CY024 | P06 | T06 |
 
 **Anomalies, all caused by FD2:**
 
@@ -964,7 +964,7 @@ Its candidate keys are {USN, Course} and {USN, Faculty}. It is in **3NF** (Cours
 | $t_1$ | 1RV24CY047 | CD252IA | F01 |
 | $t_2$ | 1RV24CY047 | CD253IA | F02 |
 | $t_3$ | 1RV24CY011 | CD253IA | F03 |
-| $t_4$ | 1RV24CY051 | CD252IA | F01 |
+| $t_4$ | 1RV24CY033 | CD252IA | F01 |
 
 The pair (F01, CD252IA) is stored once for every student F01 teaches, and the course a faculty member teaches cannot be recorded until a student enrolls.
 

@@ -68,7 +68,7 @@ JS
   echo "print('@@DROPPED ' + !db.getMongo().getDBNames().includes('$SCRATCH'))"
 } > "$WORK/check.js"
 
-npx -y mongosh@latest "$URI" --quiet < "$WORK/check.js" > "$WORK/out.txt" 2>&1 || true
+npx -y "${MONGOSH_NPX:-mongosh@2.14.1}" "$URI" --quiet < "$WORK/check.js" > "$WORK/out.txt" 2>&1 || true
 
 grep -E 'MongoServerError|MongoBulkWriteError|SyntaxError|ReferenceError|TypeError' "$WORK/out.txt" \
   && { echo "FAIL: errors while running fixture blocks against validators" >&2; exit 1; }

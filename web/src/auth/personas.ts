@@ -25,17 +25,9 @@ export const PERSONAS: Persona[] = [
     name: 'S Arun Sanjay',
     role: 'student',
     ref: '1RV24CY047',
-    blurb: 'Team Countersign lead. Confirmed claims for C1 and C4; a teammate claim awaits his countersign.',
-    tags: ['T00 lead'],
-  },
-  {
-    key: 'sanvid',
-    email: 'sanvid@example.edu',
-    name: 'Sanvid Razdan',
-    role: 'student',
-    ref: '1RV24CY051',
-    blurb: 'Team Countersign. Has a pending C3 claim and a private artifact only he can see.',
-    tags: ['T00'],
+    blurb:
+      'Solo team Countersign (T00) lead. Pending claims for C1, C3 and C4 backed by evidence (no teammate to countersign), and a private artifact only he can see.',
+    tags: ['T00 lead', 'solo team'],
   },
   {
     key: 'nikhil',
@@ -53,8 +45,9 @@ export const PERSONAS: Persona[] = [
     name: 'Meera Iyer',
     role: 'student',
     ref: '1RV24CY033',
-    blurb: 'Team Sigma member with marks on C1 and C4 but no recorded evidence yet: the claim flow starts here.',
-    tags: ['T06', 'no evidence yet'],
+    blurb:
+      'Team Sigma (T06) member. A teammate’s C4 claim is waiting for her countersign, and she can still file her own claims.',
+    tags: ['T06', 'countersign queue'],
   },
   {
     key: 'ramesh',

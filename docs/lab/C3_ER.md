@@ -2,14 +2,14 @@
 title: "Component 3 — ER Diagram and Relational Schema"
 subtitle: "Unified Experiential Learning and Project Intelligence Platform (product name: Countersign)"
 author:
-  - "S Arun Sanjay (1RV24CY047) · Sanvid Razdan (1RV24CY051)"
+  - "S Arun Sanjay (1RV24CY047)"
   - "Database Management Systems (CD252IA) · RV College of Engineering, Bengaluru · Department of CSE"
-date: "November 2026 (revision 2)"
+date: "November 2026 (revision 3)"
 ---
 
 # 1. Scope, sources and conventions
 
-This document gives the conceptual Entity–Relationship (ER) schema of the platform, its mapping to the relational model, and the relational schema diagram. The three are kept consistent with each other and with the database as it is actually built. Revision 2 applies the examiner's corrections; Appendix D lists each one and what was done.
+This document gives the conceptual Entity–Relationship (ER) schema of the platform, its mapping to the relational model, and the relational schema diagram. The three are kept consistent with each other and with the database as it is actually built. Revision 2 applies the examiner's corrections; Appendix D lists each one and what was done. Revision 3 (19 November 2026) follows the project becoming a solo project: the worked example of §9 uses the current demo data, and migration 0007 is recorded in the sources and in §5.
 
 **Sources (the real schema, not a design sketch).**
 
@@ -19,7 +19,8 @@ This document gives the conceptual Entity–Relationship (ER) schema of the plat
 | `supabase/migrations/20261104000001_core_schema.sql` | The same 13 relations, with row-level security switched on |
 | `supabase/migrations/20261104000002_app_core.sql` | Append-only extension: terms, offerings, enrolment, versions, submissions, assessment, claims, evidence, countersigns, skill evidence, private notes, integrity triggers |
 | `supabase/migrations/20261104000003_security.sql`, `…0004_rpc.sql` | RLS policies, views, stored procedures (no new base relations) |
-| `supabase/seed/demo.sql` | Real demo data (project P06 = the CD252IA lab, team T00) used for the example in §9 |
+| `supabase/migrations/20261105000005_ingest.sql`, `…0006_ingest_worker.sql`, `…0007_strict_marks.sql` | Ingestion infrastructure (outside the core ER diagram) and the strict-marks CHECKs on `assessment.marks`; no new entity types |
+| `supabase/seed/demo.sql` | Real demo data (project P06 = the CD252IA lab; solo team T00 and fixture team T06) used for the example in §9 |
 | `docs/lab/C2_SRS.md` | Functional requirements FR1–FR11, traced to the ER constructs in §2.2 |
 
 **Conventions.** We use Chen notation as given in Elmasri & Navathe (Ch. 3 and Ch. 9); Fig. C3-1 is the key.
@@ -261,7 +262,7 @@ The ternary is therefore not decomposable without loss.
 |---|---|
 | Only a faculty member who teaches the project may record or change a mark, and only in their own name | RPC `record_assessment` (refuses with `teaches_project_required`; sets `assessed_by` to the caller). Also the RLS policies `assessment_insert` and `assessment_update` (migration 0003): `app.teaches_project(project_id) AND assessed_by = app.current_faculty_id()`, with an administrator bypass (`app.is_admin()`). Deleting a mark is admin-only (`assessment_delete`) |
 | The assessed student is in a team of that project | Trigger `check_assessment` (`assessment_member_required`) |
-| marks ≤ the component's max_marks | Trigger `check_assessment` (`assessment_marks_le_max`); CHECK marks ≥ 0 |
+| marks ≤ the component's max_marks, with at most one decimal | Trigger `check_assessment` (`assessment_marks_le_max`); CHECK marks ≥ 0; since migration 0007, CHECK `assessment_marks_one_decimal` (marks = round(marks, 1)) and `assessment_marks_precision` (marks < 1000) on an unconstrained NUMERIC column, so a second decimal is refused on every write path instead of being rounded |
 | No change after the component is locked (`milestone.locked_at`) | Trigger `check_assessment` (`milestone_locked`; it reads the milestone row FOR SHARE) |
 | max_marks may not be lowered below a recorded mark | Trigger `guard_milestone_max_marks` |
 
@@ -621,18 +622,20 @@ The listing below is also generated from the catalogue. Primary key columns are 
 
 # 9. Worked example from the real demo data
 
-These rows are from `supabase/seed/demo.sql`. One row of the paper marks sheet ("Sanvid Razdan — Test — 18/20 — signed") is stored as follows.
+These rows are from `supabase/seed/demo.sql`. One row of the paper marks sheet ("S Arun Sanjay — Test — 19/20 — signed") is stored as follows.
 
 - **The component.** `milestone (P06, 4)` is "Test", out of 20. It is a weak entity identified by project P06.
-- **The mark.** `assessment ('1RV24CY051', P06, 4, 18.0, assessed_by 'F01')` is one ASSESSES instance:
-  - STUDENT = Sanvid;
+- **The mark.** `assessment ('1RV24CY047', P06, 4, 19.0, assessed_by 'F01')` is one ASSESSES instance:
+  - STUDENT = Arun;
   - MILESTONE = (P06, 4);
   - FACULTY = F01.
 - **The receipt behind the mark.**
-  - The claim `claim (… '1RV24CY051', T00, P06, 4, 'Executed the MongoDB Test queries M1–M5 …')` (FILES, CLAIMED_IN, CLAIM_FOR).
-  - The claim is backed by `claim_evidence (claim, 1, kind 'contribution')`. That evidence CITES_CONTRIB the contribution `contribution ('1RV24CY051', A16, 'code', source_ref '8d41e07')`.
-  - It is countersigned by Arun: `countersign (claim, '1RV24CY047', 'confirm')`. The trigger then derives `claim.status = 'confirmed'`.
-- **What was submitted.** `submission (T00, P06, 4, attempt 1)` FREEZES `artifact_version (A16, 1)`.
+  - The claim `claim (… '1RV24CY047', T00, P06, 4, 'Wrote and executed the SQL Test queries … and executed the MongoDB Test queries M1-M5 …')` (FILES, CLAIMED_IN, CLAIM_FOR).
+  - The claim is backed by three evidence items. Item 3, `claim_evidence (claim, 3, kind 'contribution')`, CITES_CONTRIB the contribution `contribution ('1RV24CY047', A16, 'code', source_ref '8d41e07')`.
+  - T00 is a solo team, so no teammate can countersign: the claim takes part in no COUNTERSIGNS instance, and the trigger keeps `claim.status = 'pending'`. The participation of CLAIM in COUNTERSIGNS is (0,N), so this is a legal state; the claim rests on its evidence and the faculty review.
+- **What was submitted.** `submission (T00, P06, 4, attempt 1)` FREEZES `artifact_version (A15, 1)` and `artifact_version (A16, 1)`.
+
+The same component on team T06 shows a countersign. `assessment ('1RV24CY024', P06, 4, 17.0, 'F01')` is Karthik M's mark. His claim `claim (… '1RV24CY024', T06, P06, 4, 'Answered the SQL part of the Test.')` CITES_CONTRIB `contribution ('1RV24CY024', A20, 'code', source_ref 'A20@v1')`, and his teammate Aditi Rao countersigned it: `countersign (claim, '1RV24CY011', 'confirm')`. The trigger then derives `claim.status = 'confirmed'`.
 
 # Appendix A — Infrastructure relations (in the physical schema, not in the core ER diagram)
 
@@ -704,3 +707,4 @@ All under `docs/lab/diagrams/c3/`.
 | 12 | Weak arguments (SUBMISSION, `verified_level`) | SUBMISSION justified by its own key attribute only; `verified_level` stated as derived from data outside the diagram |
 | 13 | Notation coverage | Stated in §4.1; the key shows every symbol on a real attribute, including the multivalued {skills} |
 | 14 | Overstated crossing claim | Minimality claim removed; only "at least one crossing is unavoidable" (K~3,3~) is kept |
+| 15 | Revision 3 (19 Nov 2026): the project is now solo | Author line has one name; §9 worked example rebuilt on Arun's Test mark (a pending claim of solo team T00) and Karthik M's countersigned T06 claim; source table lists migrations 0005–0007; the marks rule of §5 records the 0007 CHECKs |

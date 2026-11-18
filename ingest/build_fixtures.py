@@ -26,6 +26,14 @@ x_contents: GitHub push payloads list paths, not file bodies. The ingestion work
 a payload with commits[i].x_contents = {path: text} (fetched from the contents API at that
 commit) before projection; the fixtures carry it inline so a replay needs no GitHub access.
 
+Redaction: the project is now a solo project. Early commits of the real history still name
+a person who is no longer part of it (planning docs, persona lists, an e2e spec file name).
+The builder replaces those words in the T00 payloads (texts, messages and paths) before
+writing them, so the replay never puts that person's name or USN into Postgres chunks or
+Mongo. REDACTED_WORDS holds sha256 digests of the lowercased words, so this file does not
+repeat them. Everything else (SHAs, tree ids, timestamps, the other text) is unchanged; the
+redacted x_contents therefore differ from the blobs at those SHAs only in those words.
+
 Delivery ids are UUIDv5 of a stable name, so rebuilding gives the same ids.
 """
 
@@ -73,6 +81,41 @@ T00_REPO = {
 }
 ARUN_SENDER = {"login": "Arun-Sanjay", "id": 228202223, "node_id": "U_kgDODZoW7w",
                "type": "User", "site_admin": False}
+
+
+# sha256 of each lowercased word to redact (a name, a surname, a USN); see "Redaction" above
+REDACTED_WORDS = {
+    "0b7256ec1d274ad207ce46b3afd682b7d978a39db437b542ba11a5a92af9ff63",
+    "a3136642b71806b470a4babfc628be367ccb5131ba3fa831a79f901d722a4f39",
+    "2786cf93aec16c760c24e12a9886dcad0cb90f01fed1b623d06106abe0800554",
+}
+WORD = re.compile(r"[A-Za-z0-9]+")
+TEXT_MARK = "[redacted]"
+PATH_MARK = "teammate"           # e.g. an e2e spec file name keeps a readable path
+
+
+def _redacted(word: str) -> bool:
+    return hashlib.sha256(word.lower().encode()).hexdigest() in REDACTED_WORDS
+
+
+def redact_text(text: str, mark: str = TEXT_MARK) -> str:
+    out = WORD.sub(lambda m: mark if _redacted(m.group(0)) else m.group(0), text)
+    # "First Last" -> one mark, not two
+    pair = re.escape(mark) + r"[ \t]+" + re.escape(mark)
+    while re.search(pair, out):
+        out = re.sub(pair, mark, out)
+    return out
+
+
+def redact_commit(c: dict) -> dict:
+    for side in ("author", "committer"):
+        c[side] = {k: (redact_text(v) if isinstance(v, str) and k == "name" else v) for k, v in c[side].items()}
+    c["message"] = redact_text(c["message"])
+    for key in ("added", "removed", "modified"):
+        c[key] = sorted(redact_text(p, PATH_MARK) for p in c[key])
+    if "x_contents" in c:
+        c["x_contents"] = {redact_text(p, PATH_MARK): redact_text(t) for p, t in c["x_contents"].items()}
+    return c
 
 
 def delivery(name: str) -> str:
@@ -125,7 +168,7 @@ def real_commit(sha: str) -> dict:
     }
     if contents:
         commit["x_contents"] = contents
-    return commit
+    return redact_commit(commit)
 
 
 def real_pushes(until: str) -> list[list[dict]]:
@@ -283,7 +326,9 @@ def synthetic_pushes() -> list[tuple[str, dict]]:
     meera = {"name": "Meera Iyer", "email": "meera.cy24@rvce.edu.in", "username": "meera-iyer"}
     arun = {"name": "Arun Sanjay", "email": "228202223+Arun-Sanjay@users.noreply.github.com",
             "username": "Arun-Sanjay"}
-    stranger = {"name": "Ext Contributor", "email": "ext.contributor@example.com", "username": "ext-contributor"}
+    # an UNLINKED GitHub login: supabase/seed/ingest.sql gives it no student_identity row, so its
+    # commit is logged in Mongo but credits nobody
+    outside = {"name": "Outside Dev", "email": "outside-dev@example.com", "username": "outside-dev"}
     priya = {"name": "Priya Menon", "email": "priya.cy24@rvce.edu.in", "username": "priya-menon"}
     rohan = {"name": "Rohan Kulkarni", "email": "rohan.cy24@rvce.edu.in", "username": "rohan-kulkarni"}
 
@@ -310,13 +355,13 @@ def synthetic_pushes() -> list[tuple[str, dict]]:
                        {"name": "aditi-rao", "email": "aditi.cy24@rvce.edu.in"},
                        "refs/heads/main", c1["id"], [c2], "2026-11-03T18:41:00+05:30")
 
-    # T01 push 2: Meera's ER note + diagram, an unknown author's commit she merged, and her
+    # T01 push 2: Meera's ER note + diagram, an unlinked login's commit she merged, and her
     # seed script with a Co-Authored-By line but no AI-Assisted trailer
     c3 = synth_commit(alpha, "t01-c3", meera, "2026-11-04T10:05:00+05:30",
                       "Vault: ER diagram decisions (weak entities, M:N)",
                       added=["shared/ER diagram decisions.md", "docs/er-diagram.drawio"],
                       contents={"shared/ER diagram decisions.md": ER_DECISIONS})
-    c4 = synth_commit(alpha, "t01-c4", stranger, "2026-11-04T10:20:00+05:30",
+    c4 = synth_commit(alpha, "t01-c4", outside, "2026-11-04T10:20:00+05:30",
                       "Fix typo in README", modified=["README.md"])
     c5 = synth_commit(alpha, "t01-c5", meera, "2026-11-04T11:02:00+05:30",
                       "Seed sample data for the schema\n\n"
@@ -427,7 +472,7 @@ def main() -> None:
          "description": "valid signature of the original body, but the body was changed in transit -> 401",
          "expect": {"http": 401}},
         {"name": "t01-push-02", "file": "t01_push_02.json", "event": "push", "delivery": d2, "sign": "valid",
-         "description": "T01: Meera's ER note + drawio, an unknown author (skipped, warning), Co-Authored-By without the trailer",
+         "description": "T01: Meera's ER note + drawio, a commit by the unlinked login outside-dev (logged, credits nobody), Co-Authored-By without the trailer",
          "expect": {"http": 202, "status": "queued", "duplicate": False}},
         {"name": "t01-feature-branch", "file": "t01_push_feature_branch.json", "event": "push", "delivery": d3,
          "sign": "valid", "description": "push to a feature branch: logged as ignored, never queued",

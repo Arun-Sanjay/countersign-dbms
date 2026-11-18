@@ -14,7 +14,9 @@ Differences from the harness's own run_trial, on purpose:
   * nothing is written to exp.experiment_run / experiment_attempt / schedule_log, so a live
     race never changes the reported results;
   * T02 is put back to 3/4 and the default strategy (S1, as the harness leaves it) is
-    restored afterwards, whatever happened;
+    restored afterwards, whatever happened, but only by the request that owns the lab: one
+    that is refused with 409 (or finds schema exp missing) never touches T02 or the strategy,
+    so it cannot reset a race another caller (or the harness) is running;
   * one race at a time: a second request, or a harness run in progress, gets 409.
 
 Configuration: RACE_DSN (default postgresql://postgres:localdev@localhost:55433/race, the
@@ -115,6 +117,7 @@ async def run_race(body: RaceIn) -> dict[str, Any]:
         except asyncpg.PostgresError as exc:
             raise offline_problem(target, f"the server refused the connection ({exc.sqlstate})")
         conns: list[Any] = []
+        owns_lab = False      # set once the busy check passed: only then is T02 ours to reset
         try:
             ready = await admin.fetchval("SELECT to_regproc('exp.use_strategy') IS NOT NULL "
                                          "AND to_regproc('exp.reset_t02') IS NOT NULL")
@@ -127,6 +130,7 @@ async def run_race(body: RaceIn) -> dict[str, Any]:
             if busy:
                 raise problem(409, "race_busy",
                               "The race harness (or another API) is using the race lab right now. Try again when it finishes.")
+            owns_lab = True
 
             iso = ISOLATIONS[body.isolation]
             await admin.execute("SELECT exp.reset_t02()")
@@ -158,7 +162,7 @@ async def run_race(body: RaceIn) -> dict[str, Any]:
                 except Exception:  # noqa: BLE001 - best effort; terminate below
                     c.terminate()
             try:
-                if not admin.is_closed():
+                if owns_lab and not admin.is_closed():
                     await admin.execute("SELECT exp.reset_t02()")
                     await admin.execute("SELECT exp.use_strategy('S1')")
             except Exception:  # noqa: BLE001 - the next race resets T02 first anyway

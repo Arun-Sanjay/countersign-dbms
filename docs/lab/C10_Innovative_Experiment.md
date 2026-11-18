@@ -1,6 +1,6 @@
 ---
 title-meta: "Innovative Experiment: Unified Experiential Learning and Project Intelligence Platform (Countersign)"
-author-meta: "S Arun Sanjay (1RV24CY047); Sanvid Razdan (1RV24CY051)"
+author-meta: "S Arun Sanjay (1RV24CY047)"
 subject: "CD252IA Database Management Systems, Lab Component 10"
 lang: en-GB
 ---
@@ -27,13 +27,12 @@ lang: en-GB
 | USN | Name |
 |:--|:--|
 | 1RV24CY047 | S Arun Sanjay |
-| 1RV24CY051 | Sanvid Razdan |
 
 &nbsp;
 
 Semester V, 2026-27
 
-Revision 1.1, 5 November 2026
+Revision 1.2, 19 November 2026
 :::
 
 ::: toc
@@ -52,6 +51,7 @@ Revision 1.1, 5 November 2026
 | Harness, strategy objects, analysis SQL | `experiments/race/harness.py`, `schema.sql`, `analysis.sql`, `analysis_selftest.sql`, `live_locks.sql`, `demo_locks.sh`, `setup.sh`, `report.py` |
 | Measured results (tables, CSVs, charts) | `experiments/race/results/results.md`, `analysis_output.txt`, `analysis_selftest_output.txt`, `demo_locks_*.txt`, `*.csv`, `*.png` |
 | Narrative and day-1 finding | `experiments/race/README.md`, `experiments/race/FINDINGS.md` |
+| The Race arena page in the product (Section 12.4) | `web/src/pages/race/` (route `/race`), `web/scripts/race-results.mjs` (copies the measured results into `web/src/data/race-results.json`), `api/app/race.py` (`POST /race/run`), e2e spec `web/e2e/11-race.spec.ts` |
 | The graded fixture (read, never edited) | `supabase/fixture/01_schema.sql`, `02_seed.sql`, `03_queries.sql` (Q35 to Q37) |
 | The product's rules | `supabase/migrations/20261104000002_app_core.sql` (capacity v2, one team per project, membership write-lock, claim revision) |
 
@@ -72,7 +72,7 @@ Revision 1.1, 5 November 2026
 | Analysis and discussion | Section 9 |
 | Threats to validity | Section 10 |
 | Conclusion | Section 11 |
-| How the product applies the result | Section 12 |
+| How the product applies the result, and the Race arena page (`/race`) | Section 12 |
 | Reproduction steps | Section 13 |
 
 # 1. Aim
@@ -844,14 +844,14 @@ The membership rule was tested the same way (`membership_skew_check.sh`, FINDING
 
 Because REPEATABLE READ and SERIALIZABLE answer with 40001 instead of blocking, the web client treats 40001 and 40P01 as a separate error kind, `serialization` ("Someone else changed this at the same moment. Please try again."). `web/src/lib/query.ts` retries a mutation automatically up to two times on that kind only; permission and rule errors are never retried. This is the S4 contract, applied where it is useful.
 
-## 12.4 Not built yet, and deviations from the midterm plan
+## 12.4 The Race arena page, and deviations from the midterm plan
 
-The midterm report (C7 §11 and the week-3 row of C7 §12) listed three things as remaining for Component 10. Their state on 5 November 2026:
+The midterm report (C7 §11 and the week-3 row of C7 §12) listed three things as remaining for Component 10. Their state on 19 November 2026:
 
-| Promised in C7 | State | Why, and what replaces it |
+| Promised in C7 | State | Notes |
 |---|---|---|
 | The C10 experiment report | Done | This document. |
-| A "Race Arena" page in the web client that runs a small race live and shows the wait-for graph | **Not built** | Outside the prototype scope (`docs/PROTOTYPE_PLAN.md`); the experiment runs only in the throwaway local container and never against the cloud project. The same live view is given in the terminal by `experiments/race/demo_locks.sh` (Section 8), which is what the C9 demo uses. |
+| A "Race Arena" page in the web client that runs a small race live | **Built** | The page `/race` (sidebar **Race arena**, open to every signed-in user) replays the recorded results: the 72-cell over-admission matrix of the 72,000 races, the p95 latency per strategy, one card per strategy with its SQL, and the two worked precedence graphs of Section 7. Its **Run a live race** panel calls `POST /race/run` (faculty and admins only; a student sees the page but not the button), which runs **one** race (strategy, isolation level, N from 2 to 100) in the throwaway container `elp-race-pg` with the harness's own code (`api/app/race.py` imports `harness.py`), never in the product database. A live race writes nothing to `exp.experiment_run`, `exp.experiment_attempt` or `exp.schedule_log`, so it cannot change the reported results; for N = 2 the panel draws that race's precedence graph. One race runs at a time: a second request, or a harness run in progress, gets 409 `race_busy`, and only the request that owns the lab puts T02 back to 3/4 and restores strategy S1 afterwards, so a refused request never resets someone else's race. If the container is down the panel answers 503 `race_lab_offline` with the command that starts it. The page shows the precedence graph, not PostgreSQL's wait-for graph: the live lock table of Section 8 is still printed in the terminal by `experiments/race/demo_locks.sh`. Tests: e2e spec 11 (5 tests) and the API tests of `api/tests/test_race.py`. |
 | An EXPLAIN before/after comparison for an index on the bench data | **Not done** | Dropped to finish the 72-cell matrix and the precedence-graph analysis, which answer the experiment's question (correctness under concurrency); an index does not change whether a capacity rule over-admits. It remains future work (C11 §8.4). |
 
 The experiment is run from the scripts in Section 13.

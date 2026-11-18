@@ -44,6 +44,7 @@ export function MyClaimCard({
   locked,
   options,
   lookups,
+  solo = false,
 }: {
   claim: ClaimRow
   projectId: string
@@ -51,6 +52,8 @@ export function MyClaimCard({
   locked: boolean
   options: EvidenceOptions
   lookups: EvidenceLookups
+  /** I am the only member of my team: nobody can countersign this claim. */
+  solo?: boolean
 }) {
   const [adding, setAdding] = useState(false)
   const canAdd = claim.status === 'pending' && !locked
@@ -72,7 +75,7 @@ export function MyClaimCard({
         </div>
         <div className="space-y-1.5">
           <p className="text-xs font-medium text-muted-foreground">Countersigns</p>
-          <CountersignList countersigns={claim.countersigns} currentRevision={claim.revision} />
+          <CountersignList countersigns={claim.countersigns} currentRevision={claim.revision} solo={solo} />
         </div>
       </div>
       {canAdd ? (

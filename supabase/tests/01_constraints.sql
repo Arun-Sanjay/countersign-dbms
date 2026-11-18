@@ -5,7 +5,7 @@
 --   23P01 exclusion_violation   55000 object_not_in_prerequisite_state
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(46);
+SELECT plan(48);
 
 -- ===================== A. Declarative CHECK constraints =====================
 SELECT throws_ok(
@@ -34,12 +34,12 @@ SELECT throws_ok(
 
 SELECT throws_ok(
     $$INSERT INTO claim_evidence (claim_id, evidence_no, kind, ref)
-      SELECT claim_id, 9, 'contribution', 'abc' FROM claim WHERE usn = '1RV24CY051' AND milestone_no = 3 AND project_id = 'P06'$$,
+      SELECT claim_id, 9, 'contribution', 'abc' FROM claim WHERE usn = '1RV24CY011' AND milestone_no = 4 AND project_id = 'P06' AND contribution_type = 'review'$$,
     '23514', NULL, 'CHECK: evidence kind must match the pointer that is filled');
 
 SELECT throws_ok(
     $$INSERT INTO countersign (claim_id, endorser_usn, verdict)
-      SELECT claim_id, '1RV24CY047', 'dispute' FROM claim WHERE usn = '1RV24CY051' AND milestone_no = 3 AND project_id = 'P06'$$,
+      SELECT claim_id, '1RV24CY033', 'dispute' FROM claim WHERE usn = '1RV24CY011' AND milestone_no = 4 AND project_id = 'P06' AND contribution_type = 'review'$$,
     '23514', NULL, 'CHECK: a dispute needs a comment');
 
 SELECT throws_ok(
@@ -98,7 +98,7 @@ SELECT throws_ok(
 
 SELECT throws_ok(
     $$INSERT INTO submission (team_id, project_id, milestone_no, submitted_by)
-      VALUES ('T00', 'P06', 4, '1RV24CY051')$$,
+      VALUES ('T00', 'P06', 4, '1RV24CY047')$$,
     '23505', NULL, 'UNIQUE: one submission per (team, component, attempt_no)');
 
 -- ===================== D. Trigger rules (cross-row / cross-table) =====================
@@ -148,19 +148,19 @@ SELECT throws_ok(
 -- Countersign
 SELECT throws_ok(
     $$INSERT INTO countersign (claim_id, endorser_usn, verdict)
-      SELECT claim_id, '1RV24CY051', 'confirm' FROM claim WHERE usn = '1RV24CY051' AND milestone_no = 3 AND project_id = 'P06'$$,
+      SELECT claim_id, '1RV24CY011', 'confirm' FROM claim WHERE usn = '1RV24CY011' AND milestone_no = 4 AND project_id = 'P06' AND contribution_type = 'review'$$,
     '23514', NULL, 'Countersign: a student cannot countersign their own claim');
 
 SELECT throws_ok(
     $$INSERT INTO countersign (claim_id, endorser_usn, verdict)
-      SELECT claim_id, '1RV24CY011', 'confirm' FROM claim WHERE usn = '1RV24CY051' AND milestone_no = 3 AND project_id = 'P06'$$,
-    '23514', 'Student 1RV24CY011 is not a member of team T00',
+      SELECT claim_id, '1RV24CY047', 'confirm' FROM claim WHERE usn = '1RV24CY011' AND milestone_no = 4 AND project_id = 'P06' AND contribution_type = 'review'$$,
+    '23514', 'Student 1RV24CY047 is not a member of team T06',
     'Countersign: only a teammate of the claimant may countersign');
 
 -- Evidence and submissions stay inside the team
 SELECT throws_ok(
     $$INSERT INTO claim_evidence (claim_id, evidence_no, kind, artifact_id, version_no)
-      SELECT claim_id, 9, 'artifact_version', 'A19', 1 FROM claim WHERE usn = '1RV24CY051' AND milestone_no = 3 AND project_id = 'P06'$$,
+      SELECT claim_id, 9, 'artifact_version', 'A13', 1 FROM claim WHERE usn = '1RV24CY011' AND milestone_no = 4 AND project_id = 'P06' AND contribution_type = 'review'$$,
     '23514', NULL, 'Evidence: a claim cannot cite another team''s work');
 
 SELECT throws_ok(
@@ -202,7 +202,7 @@ SELECT lives_ok(
 
 SELECT lives_ok(
     $$INSERT INTO contribution (usn, artifact_id, contribution_type, description, source, source_ref)
-      VALUES ('1RV24CY051', 'A17', 'design', 'Added cardinalities', 'editor', 'A17@v2')$$,
+      VALUES ('1RV24CY047', 'A17', 'design', 'Added cardinalities', 'editor', 'A17@v2')$$,
     'Contribution: a member records work; the id comes from the identity column');
 
 SELECT is(
@@ -222,27 +222,36 @@ SELECT lives_ok(
     'Marks: a mark within max_marks on an unlocked milestone is accepted');
 
 -- claim.status is derived from countersigns and cannot be set by hand
-UPDATE claim SET status = 'confirmed' WHERE usn = '1RV24CY051' AND project_id = 'P06' AND milestone_no = 3;
+UPDATE claim SET status = 'confirmed' WHERE usn = '1RV24CY011' AND milestone_no = 4 AND project_id = 'P06' AND contribution_type = 'review';
 SELECT is(
-    (SELECT status FROM claim WHERE usn = '1RV24CY051' AND project_id = 'P06' AND milestone_no = 3)::text,
+    (SELECT status FROM claim WHERE usn = '1RV24CY011' AND milestone_no = 4 AND project_id = 'P06' AND contribution_type = 'review')::text,
     'pending', 'Claim status: a hand-written status is overwritten by the derived value');
 
 INSERT INTO countersign (claim_id, endorser_usn, verdict)
-SELECT claim_id, '1RV24CY047', 'confirm' FROM claim WHERE usn = '1RV24CY051' AND project_id = 'P06' AND milestone_no = 3;
+SELECT claim_id, '1RV24CY033', 'confirm' FROM claim WHERE usn = '1RV24CY011' AND milestone_no = 4 AND project_id = 'P06' AND contribution_type = 'review';
 SELECT is(
-    (SELECT status FROM claim WHERE usn = '1RV24CY051' AND project_id = 'P06' AND milestone_no = 3)::text,
-    'confirmed', 'Claim status: a teammate''s confirm makes the claim confirmed');
+    (SELECT status FROM claim WHERE usn = '1RV24CY011' AND milestone_no = 4 AND project_id = 'P06' AND contribution_type = 'review')::text,
+    'confirmed', 'Claim status: a teammate''s confirm (Meera) makes the claim confirmed');
 
-UPDATE countersign SET verdict = 'dispute', comment = 'Cardinalities were mine.'
-WHERE endorser_usn = '1RV24CY047'
-  AND claim_id = (SELECT claim_id FROM claim WHERE usn = '1RV24CY051' AND project_id = 'P06' AND milestone_no = 3);
+UPDATE countersign SET verdict = 'dispute', comment = 'The HAVING fix was Karthik''s.'
+WHERE endorser_usn = '1RV24CY033'
+  AND claim_id = (SELECT claim_id FROM claim WHERE usn = '1RV24CY011' AND milestone_no = 4 AND project_id = 'P06' AND contribution_type = 'review');
 SELECT is(
-    (SELECT status FROM claim WHERE usn = '1RV24CY051' AND project_id = 'P06' AND milestone_no = 3)::text,
+    (SELECT status FROM claim WHERE usn = '1RV24CY011' AND milestone_no = 4 AND project_id = 'P06' AND contribution_type = 'review')::text,
     'contested', 'Claim status: any dispute makes the claim contested');
 
 SELECT is(
     (SELECT status FROM claim WHERE usn = '1RV24CY011' AND project_id = 'P06' AND milestone_no = 1)::text,
     'contested', 'Demo seed: T06''s synopsis claim is contested');
+
+SELECT is(
+    (SELECT array_agg(usn::text) FROM team_member WHERE team_id = 'T00'), ARRAY['1RV24CY047'],
+    'Demo seed: T00 is a solo team (Arun only)');
+
+SELECT is(
+    (SELECT array_agg(milestone_no || ':' || status ORDER BY milestone_no) FROM claim WHERE team_id = 'T00'),
+    ARRAY['1:pending', '3:pending', '4:pending'],
+    'Demo seed: with no teammate to countersign, Arun''s C1, C3 and C4 claims stay pending');
 
 SELECT * FROM finish();
 ROLLBACK;

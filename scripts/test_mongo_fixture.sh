@@ -35,7 +35,7 @@ docker run -d --name "$CONTAINER" -p "127.0.0.1:${PORT}:27017" "$IMAGE" >/dev/nu
 if docker exec "$CONTAINER" sh -c 'command -v mongosh' >/dev/null 2>&1; then
   mongosh_in() { docker exec -i "$CONTAINER" mongosh --quiet "$@"; }
 else
-  mongosh_in() { npx -y mongosh@latest --quiet "mongodb://127.0.0.1:${PORT}" "$@"; }
+  mongosh_in() { npx -y "${MONGOSH_NPX:-mongosh@2.14.1}" --quiet "mongodb://127.0.0.1:${PORT}" "$@"; }
 fi
 
 for _ in $(seq 1 60); do

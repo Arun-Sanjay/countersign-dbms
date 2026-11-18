@@ -36,7 +36,6 @@ DEFAULT_PASSWORD = "Countersign@2026"
 # email -> (role, usn, faculty_id)
 PERSONAS: list[tuple[str, str, str | None, str | None]] = [
     ("arun@example.edu",    "student", "1RV24CY047", None),
-    ("sanvid@example.edu",  "student", "1RV24CY051", None),
     ("nikhil@example.edu",  "student", "1RV24CY077", None),
     ("meera@example.edu",   "student", "1RV24CY033", None),
     ("ramesh@example.edu",  "faculty", None, "F01"),
