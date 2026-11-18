@@ -488,6 +488,13 @@ Use this only when targeted undo is impossible. Take both backups (§4) first, a
   `drop schema pgmq cascade`; then `npx supabase db push --linked --yes` (applies 0005-0007); then load
   the seeds by hand (step 2 below).
 - The reset also removed every `auth.users` row, so step 3 re-created all 6 personas.
+- **Grants were missing afterwards.** Every page failed with `permission denied for table app_user`
+  (42501). 0003 changes the default privileges with `ALTER DEFAULT PRIVILEGES ... REVOKE ALL ON
+  TABLES FROM authenticated`, and that change survived the reset. So the tables that 0001/0002
+  re-created never got Supabase's default `authenticated` grants, and 26 relations had no
+  `authenticated` entry. The fix: diff `relacl` for `public`, `app` and `private` against a fresh
+  local stack, then `GRANT` the missing entries. After that, every table, column, function and
+  schema ACL matched local. **After any `db reset --linked`, run this ACL diff before the demo.**
 - Before replaying, the 9 replay events (the ones with a string `_id`) were deleted from Atlas
   `github_events`: `deleteMany({_id: {$type: "string"}})`. The 3 fixture events with an ObjectId
   `_id` were kept. Then all 16 fixtures were replayed to the live function and drained with
